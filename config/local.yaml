@@ -1,0 +1,6 @@
+env: "local"
+
+http_server:
+  address: ":8080"
+  read_timeout: 5s
+  write_timeout: 10s

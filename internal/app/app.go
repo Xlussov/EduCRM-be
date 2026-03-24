@@ -5,6 +5,7 @@ import (
 	"net/http"
 	"sync"
 
+	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/labstack/echo/v4"
@@ -24,20 +25,36 @@ type App struct {
 	log  Logger
 	wg   sync.WaitGroup
 	echo *echo.Echo
+	db   *postgres.Pool
 }
 
-func New(cfg *config.Config, log Logger) *App {
-	a := &App{
-		cfg: cfg,
-		log: log,
-	}
-
+func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	e := echo.New()
-	a.echo = e
 
 	httprouter.Init(log, cfg, e)
 
-	return a
+	pgCfg := postgres.Config{
+		User:     cfg.Postgres.User,
+		Password: cfg.Postgres.Password,
+		Host:     cfg.Postgres.Host,
+		Port:     cfg.Postgres.Port,
+		DBName:   cfg.Postgres.DBName,
+		SSLMode:  cfg.Postgres.SSLMode,
+	}
+
+	dbPool, err := postgres.New(ctx, pgCfg, log)
+	if err != nil {
+		log.Errorf("failed to init postgres: %v", err)
+		return nil, err
+	}
+	log.Info("successfully connected to postgres")
+
+	return &App{
+		cfg:  cfg,
+		log:  log,
+		echo: e,
+		db:   dbPool,
+	}, nil
 }
 
 func (a *App) Start(ctx context.Context) {
@@ -61,6 +78,11 @@ func (a *App) Stop(ctx context.Context) error {
 
 	if err := a.echo.Shutdown(ctx); err != nil {
 		return err
+	}
+
+	if err := a.db; err != nil {
+		a.db.Close()
+		a.log.Info("postgres pool closed")
 	}
 
 	a.wg.Wait()

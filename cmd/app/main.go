@@ -18,7 +18,10 @@ func main() {
 	ctx, stop := signal.NotifyContext(context.Background(), syscall.SIGINT, syscall.SIGTERM)
 	defer stop()
 
-	a := app.New(cfg, log)
+	a, err := app.New(ctx, cfg, log)
+	if err != nil {
+		panic("the application crashed due to a critical error")
+	}
 
 	a.Start(ctx)
 

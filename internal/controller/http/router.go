@@ -1,14 +1,18 @@
 package http
 
 import (
-	"net/http"
-	"time"
-
 	mw "github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
 )
+
+type Handlers struct {
+	AuthLogin     echo.HandlerFunc
+	AuthRefresh   echo.HandlerFunc
+	UsersAdmins   echo.HandlerFunc
+	UsersTeachers echo.HandlerFunc
+}
 
 type Logger interface {
 	Debug(msg string)
@@ -19,19 +23,25 @@ type Logger interface {
 	Errorf(format string, args ...any)
 }
 
-func Init(log Logger, cfg *config.Config, e *echo.Echo) {
+func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 	e.Use(mw.RequestLogger(log))
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(middleware.CORS())
 
-	e.GET("/ping", func(c echo.Context) error {
-		time.Sleep(1 * time.Second)
-		return c.String(http.StatusOK, "pong")
-	})
+	v1 := e.Group("/api/v1")
+	{
+		// Public routes (Auth)
+		authGroup := v1.Group("/auth")
+		authGroup.POST("/login", h.AuthLogin)
+		authGroup.POST("/refresh", h.AuthRefresh)
 
-	//todo
-	// api := e.Group("/api")
-	// v1 := api.Group("/v1")
+		// Protected routes
+		protected := v1.Group("")
+		protected.Use(mw.JWT(cfg.JWTSecret))
 
+		usersGroup := protected.Group("/users")
+		usersGroup.POST("/admins", h.UsersAdmins)
+		usersGroup.POST("/teachers", h.UsersTeachers)
+	}
 }

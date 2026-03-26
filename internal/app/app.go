@@ -5,8 +5,13 @@ import (
 	"net/http"
 	"sync"
 
+	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres"
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
+	"github.com/Xlussov/EduCRM-be/internal/auth/login"
+	"github.com/Xlussov/EduCRM-be/internal/auth/refresh"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
+	"github.com/Xlussov/EduCRM-be/internal/users/admins"
+	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/labstack/echo/v4"
 )
@@ -31,8 +36,6 @@ type App struct {
 func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	e := echo.New()
 
-	httprouter.Init(log, cfg, e)
-
 	pgCfg := postgres.Config{
 		User:     cfg.Postgres.User,
 		Password: cfg.Postgres.Password,
@@ -48,6 +51,23 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		return nil, err
 	}
 	log.Info("successfully connected to postgres")
+
+	userRepo := repo.NewUserRepository(dbPool.Conn())
+	authRepo := repo.NewAuthRepository(dbPool.Conn())
+
+	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
+	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
+	adminsUC := admins.NewUseCase(userRepo)
+	teachersUC := teachers.NewUseCase(userRepo)
+
+	h := httprouter.Handlers{
+		AuthLogin:     login.NewHandler(loginUC).Handle,
+		AuthRefresh:   refresh.NewHandler(refreshUC).Handle,
+		UsersAdmins:   admins.NewHandler(adminsUC).Handle,
+		UsersTeachers: teachers.NewHandler(teachersUC).Handle,
+	}
+
+	httprouter.Init(log, cfg, e, h)
 
 	return &App{
 		cfg:  cfg,

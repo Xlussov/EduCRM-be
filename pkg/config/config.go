@@ -12,6 +12,7 @@ import (
 
 type Config struct {
 	Env        string     `yaml:"env" env-default:"prod" env-required:"true"`
+	JWTSecret  string     `yaml:"jwt_secret" env:"JWT_SECRET" env-required:"true"`
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Postgres   Postgres   `yaml:"postgres"`
 }

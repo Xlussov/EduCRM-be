@@ -6,12 +6,20 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
 type Querier interface {
+	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	GetUserByEmail(ctx context.Context, email string) (User, error)
-	ListUsers(ctx context.Context) ([]User, error)
+	GetRefreshToken(ctx context.Context, tokenHash string) (RefreshToken, error)
+	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
+	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
+	GetUserByPhone(ctx context.Context, phone string) (User, error)
+	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
+	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
+	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error
 }
 
 var _ Querier = (*Queries)(nil)

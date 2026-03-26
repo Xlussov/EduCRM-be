@@ -5,12 +5,323 @@
 package postgres
 
 import (
+	"database/sql/driver"
+	"fmt"
+
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+type EntityStatus string
+
+const (
+	EntityStatusACTIVE   EntityStatus = "ACTIVE"
+	EntityStatusARCHIVED EntityStatus = "ARCHIVED"
+)
+
+func (e *EntityStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = EntityStatus(s)
+	case string:
+		*e = EntityStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for EntityStatus: %T", src)
+	}
+	return nil
+}
+
+type NullEntityStatus struct {
+	EntityStatus EntityStatus `json:"entity_status"`
+	Valid        bool         `json:"valid"` // Valid is true if EntityStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullEntityStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.EntityStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.EntityStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullEntityStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.EntityStatus), nil
+}
+
+type LessonStatus string
+
+const (
+	LessonStatusSCHEDULED LessonStatus = "SCHEDULED"
+	LessonStatusCOMPLETED LessonStatus = "COMPLETED"
+	LessonStatusCANCELLED LessonStatus = "CANCELLED"
+)
+
+func (e *LessonStatus) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = LessonStatus(s)
+	case string:
+		*e = LessonStatus(s)
+	default:
+		return fmt.Errorf("unsupported scan type for LessonStatus: %T", src)
+	}
+	return nil
+}
+
+type NullLessonStatus struct {
+	LessonStatus LessonStatus `json:"lesson_status"`
+	Valid        bool         `json:"valid"` // Valid is true if LessonStatus is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullLessonStatus) Scan(value interface{}) error {
+	if value == nil {
+		ns.LessonStatus, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.LessonStatus.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullLessonStatus) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.LessonStatus), nil
+}
+
+type PlanType string
+
+const (
+	PlanTypeINDIVIDUAL PlanType = "INDIVIDUAL"
+	PlanTypeGROUP      PlanType = "GROUP"
+)
+
+func (e *PlanType) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = PlanType(s)
+	case string:
+		*e = PlanType(s)
+	default:
+		return fmt.Errorf("unsupported scan type for PlanType: %T", src)
+	}
+	return nil
+}
+
+type NullPlanType struct {
+	PlanType PlanType `json:"plan_type"`
+	Valid    bool     `json:"valid"` // Valid is true if PlanType is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullPlanType) Scan(value interface{}) error {
+	if value == nil {
+		ns.PlanType, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.PlanType.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullPlanType) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.PlanType), nil
+}
+
+type UserRole string
+
+const (
+	UserRoleSUPERADMIN UserRole = "SUPERADMIN"
+	UserRoleADMIN      UserRole = "ADMIN"
+	UserRoleTEACHER    UserRole = "TEACHER"
+)
+
+func (e *UserRole) Scan(src interface{}) error {
+	switch s := src.(type) {
+	case []byte:
+		*e = UserRole(s)
+	case string:
+		*e = UserRole(s)
+	default:
+		return fmt.Errorf("unsupported scan type for UserRole: %T", src)
+	}
+	return nil
+}
+
+type NullUserRole struct {
+	UserRole UserRole `json:"user_role"`
+	Valid    bool     `json:"valid"` // Valid is true if UserRole is not NULL
+}
+
+// Scan implements the Scanner interface.
+func (ns *NullUserRole) Scan(value interface{}) error {
+	if value == nil {
+		ns.UserRole, ns.Valid = "", false
+		return nil
+	}
+	ns.Valid = true
+	return ns.UserRole.Scan(value)
+}
+
+// Value implements the driver Valuer interface.
+func (ns NullUserRole) Value() (driver.Value, error) {
+	if !ns.Valid {
+		return nil, nil
+	}
+	return string(ns.UserRole), nil
+}
+
+type Attendance struct {
+	ID        pgtype.UUID        `json:"id"`
+	LessonID  pgtype.UUID        `json:"lesson_id"`
+	StudentID pgtype.UUID        `json:"student_id"`
+	IsPresent bool               `json:"is_present"`
+	Notes     pgtype.Text        `json:"notes"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Branch struct {
+	ID        pgtype.UUID        `json:"id"`
+	Name      string             `json:"name"`
+	Address   string             `json:"address"`
+	City      string             `json:"city"`
+	Status    NullEntityStatus   `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt pgtype.Timestamptz `json:"updated_at"`
+}
+
+type Group struct {
+	ID        pgtype.UUID        `json:"id"`
+	BranchID  pgtype.UUID        `json:"branch_id"`
+	Name      string             `json:"name"`
+	Status    NullEntityStatus   `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Lesson struct {
+	ID         pgtype.UUID        `json:"id"`
+	BranchID   pgtype.UUID        `json:"branch_id"`
+	TemplateID pgtype.UUID        `json:"template_id"`
+	TeacherID  pgtype.UUID        `json:"teacher_id"`
+	SubjectID  pgtype.UUID        `json:"subject_id"`
+	StudentID  pgtype.UUID        `json:"student_id"`
+	GroupID    pgtype.UUID        `json:"group_id"`
+	Date       pgtype.Date        `json:"date"`
+	StartTime  pgtype.Time        `json:"start_time"`
+	EndTime    pgtype.Time        `json:"end_time"`
+	Status     NullLessonStatus   `json:"status"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+}
+
+type LessonTemplate struct {
+	ID        pgtype.UUID `json:"id"`
+	BranchID  pgtype.UUID `json:"branch_id"`
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	SubjectID pgtype.UUID `json:"subject_id"`
+	StudentID pgtype.UUID `json:"student_id"`
+	GroupID   pgtype.UUID `json:"group_id"`
+	DayOfWeek int32       `json:"day_of_week"`
+	StartTime pgtype.Time `json:"start_time"`
+	EndTime   pgtype.Time `json:"end_time"`
+	StartDate pgtype.Date `json:"start_date"`
+	EndDate   pgtype.Date `json:"end_date"`
+	IsActive  pgtype.Bool `json:"is_active"`
+}
+
+type PlanPricingGrid struct {
+	ID              pgtype.UUID    `json:"id"`
+	PlanID          pgtype.UUID    `json:"plan_id"`
+	LessonsPerMonth int32          `json:"lessons_per_month"`
+	PricePerLesson  pgtype.Numeric `json:"price_per_lesson"`
+}
+
+type PlanSubject struct {
+	PlanID    pgtype.UUID `json:"plan_id"`
+	SubjectID pgtype.UUID `json:"subject_id"`
+}
+
+type RefreshToken struct {
+	ID        pgtype.UUID        `json:"id"`
+	UserID    pgtype.UUID        `json:"user_id"`
+	TokenHash string             `json:"token_hash"`
+	ExpiresAt pgtype.Timestamptz `json:"expires_at"`
+	IsRevoked pgtype.Bool        `json:"is_revoked"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Student struct {
+	ID                 pgtype.UUID        `json:"id"`
+	BranchID           pgtype.UUID        `json:"branch_id"`
+	FirstName          string             `json:"first_name"`
+	LastName           string             `json:"last_name"`
+	Dob                pgtype.Date        `json:"dob"`
+	Phone              pgtype.Text        `json:"phone"`
+	Email              pgtype.Text        `json:"email"`
+	Address            pgtype.Text        `json:"address"`
+	ParentName         string             `json:"parent_name"`
+	ParentPhone        string             `json:"parent_phone"`
+	ParentEmail        pgtype.Text        `json:"parent_email"`
+	ParentRelationship pgtype.Text        `json:"parent_relationship"`
+	Status             NullEntityStatus   `json:"status"`
+	CreatedAt          pgtype.Timestamptz `json:"created_at"`
+}
+
+type StudentGroup struct {
+	StudentID pgtype.UUID        `json:"student_id"`
+	GroupID   pgtype.UUID        `json:"group_id"`
+	JoinedAt  pgtype.Timestamptz `json:"joined_at"`
+	LeftAt    pgtype.Timestamptz `json:"left_at"`
+}
+
+type StudentSubscription struct {
+	ID        pgtype.UUID        `json:"id"`
+	StudentID pgtype.UUID        `json:"student_id"`
+	PlanID    pgtype.UUID        `json:"plan_id"`
+	SubjectID pgtype.UUID        `json:"subject_id"`
+	StartDate pgtype.Date        `json:"start_date"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type Subject struct {
+	ID        pgtype.UUID        `json:"id"`
+	BranchID  pgtype.UUID        `json:"branch_id"`
+	Name      string             `json:"name"`
+	Status    NullEntityStatus   `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
+type SubscriptionPlan struct {
+	ID        pgtype.UUID        `json:"id"`
+	BranchID  pgtype.UUID        `json:"branch_id"`
+	Name      string             `json:"name"`
+	Type      PlanType           `json:"type"`
+	Status    NullEntityStatus   `json:"status"`
+	CreatedAt pgtype.Timestamptz `json:"created_at"`
+}
+
 type User struct {
-	ID           pgtype.UUID      `json:"id"`
-	Email        string           `json:"email"`
-	PasswordHash string           `json:"password_hash"`
-	CreatedAt    pgtype.Timestamp `json:"created_at"`
+	ID           pgtype.UUID        `json:"id"`
+	Phone        string             `json:"phone"`
+	PasswordHash string             `json:"password_hash"`
+	FirstName    string             `json:"first_name"`
+	LastName     string             `json:"last_name"`
+	Role         UserRole           `json:"role"`
+	IsActive     pgtype.Bool        `json:"is_active"`
+	CreatedAt    pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt    pgtype.Timestamptz `json:"updated_at"`
+}
+
+type UserBranch struct {
+	UserID   pgtype.UUID `json:"user_id"`
+	BranchID pgtype.UUID `json:"branch_id"`
 }

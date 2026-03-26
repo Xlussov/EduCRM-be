@@ -7,72 +7,130 @@ package postgres
 
 import (
 	"context"
+
+	"github.com/jackc/pgx/v5/pgtype"
 )
 
-const createUser = `-- name: CreateUser :one
-INSERT INTO users (email, password_hash)
+const assignUserToBranch = `-- name: AssignUserToBranch :exec
+INSERT INTO user_branches (user_id, branch_id)
 VALUES ($1, $2)
-RETURNING id, email, password_hash, created_at
+`
+
+type AssignUserToBranchParams struct {
+	UserID   pgtype.UUID `json:"user_id"`
+	BranchID pgtype.UUID `json:"branch_id"`
+}
+
+func (q *Queries) AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error {
+	_, err := q.db.Exec(ctx, assignUserToBranch, arg.UserID, arg.BranchID)
+	return err
+}
+
+const createUser = `-- name: CreateUser :one
+INSERT INTO users (phone, password_hash, first_name, last_name, role)
+VALUES ($1, $2, $3, $4, $5)
+RETURNING id, phone, password_hash, first_name, last_name, role, is_active, created_at, updated_at
 `
 
 type CreateUserParams struct {
-	Email        string `json:"email"`
-	PasswordHash string `json:"password_hash"`
+	Phone        string   `json:"phone"`
+	PasswordHash string   `json:"password_hash"`
+	FirstName    string   `json:"first_name"`
+	LastName     string   `json:"last_name"`
+	Role         UserRole `json:"role"`
 }
 
 func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, error) {
-	row := q.db.QueryRow(ctx, createUser, arg.Email, arg.PasswordHash)
+	row := q.db.QueryRow(ctx, createUser,
+		arg.Phone,
+		arg.PasswordHash,
+		arg.FirstName,
+		arg.LastName,
+		arg.Role,
+	)
 	var i User
 	err := row.Scan(
 		&i.ID,
-		&i.Email,
+		&i.Phone,
 		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
+		&i.IsActive,
 		&i.CreatedAt,
+		&i.UpdatedAt,
 	)
 	return i, err
 }
 
-const getUserByEmail = `-- name: GetUserByEmail :one
-SELECT id, email, password_hash, created_at FROM users WHERE email = $1
+const getUserBranchIDs = `-- name: GetUserBranchIDs :many
+SELECT branch_id
+FROM user_branches
+WHERE user_id = $1
 `
 
-func (q *Queries) GetUserByEmail(ctx context.Context, email string) (User, error) {
-	row := q.db.QueryRow(ctx, getUserByEmail, email)
-	var i User
-	err := row.Scan(
-		&i.ID,
-		&i.Email,
-		&i.PasswordHash,
-		&i.CreatedAt,
-	)
-	return i, err
-}
-
-const listUsers = `-- name: ListUsers :many
-SELECT id, email, password_hash, created_at FROM users
-`
-
-func (q *Queries) ListUsers(ctx context.Context) ([]User, error) {
-	rows, err := q.db.Query(ctx, listUsers)
+func (q *Queries) GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error) {
+	rows, err := q.db.Query(ctx, getUserBranchIDs, userID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []User
+	var items []pgtype.UUID
 	for rows.Next() {
-		var i User
-		if err := rows.Scan(
-			&i.ID,
-			&i.Email,
-			&i.PasswordHash,
-			&i.CreatedAt,
-		); err != nil {
+		var branch_id pgtype.UUID
+		if err := rows.Scan(&branch_id); err != nil {
 			return nil, err
 		}
-		items = append(items, i)
+		items = append(items, branch_id)
 	}
 	if err := rows.Err(); err != nil {
 		return nil, err
 	}
 	return items, nil
+}
+
+const getUserByID = `-- name: GetUserByID :one
+SELECT id, phone, password_hash, first_name, last_name, role, is_active, created_at, updated_at
+FROM users
+WHERE id = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByID(ctx context.Context, id pgtype.UUID) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByID, id)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const getUserByPhone = `-- name: GetUserByPhone :one
+SELECT id, phone, password_hash, first_name, last_name, role, is_active, created_at, updated_at
+FROM users
+WHERE phone = $1 LIMIT 1
+`
+
+func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error) {
+	row := q.db.QueryRow(ctx, getUserByPhone, phone)
+	var i User
+	err := row.Scan(
+		&i.ID,
+		&i.Phone,
+		&i.PasswordHash,
+		&i.FirstName,
+		&i.LastName,
+		&i.Role,
+		&i.IsActive,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }

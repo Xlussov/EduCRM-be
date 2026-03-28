@@ -1,10 +1,13 @@
 package http
 
 import (
+	"net/http"
+
 	mw "github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/labstack/echo/v4"
 	"github.com/labstack/echo/v4/middleware"
+	echoSwagger "github.com/swaggo/echo-swagger"
 )
 
 type Handlers struct {
@@ -28,6 +31,12 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 	e.Use(middleware.Recover())
 	e.Use(middleware.RequestID())
 	e.Use(middleware.CORS())
+
+	e.GET("/docs", func(c echo.Context) error {
+		return c.Redirect(http.StatusMovedPermanently, "/swagger/index.html")
+	})
+
+	e.GET("/swagger/*", echoSwagger.WrapHandler)
 
 	v1 := e.Group("/api/v1")
 	{

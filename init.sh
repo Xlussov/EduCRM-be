@@ -43,6 +43,9 @@ go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
 echo "📦 Installing golang-migrate with postgres support..."
 go install -tags "postgres" github.com/golang-migrate/migrate/v4/cmd/migrate@latest
 
+echo "📦 Installing swag (Swagger API documentation generator)..."
+go install github.com/swaggo/swag/cmd/swag@latest
+
 PROFILE_FILE="$HOME/.bashrc"
 if ! grep -q "$GOPATH_DIR/bin" "$PROFILE_FILE" 2>/dev/null; then
   echo "export PATH=\"$GOPATH_DIR/bin:\$PATH\"" >> "$PROFILE_FILE"

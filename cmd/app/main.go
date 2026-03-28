@@ -6,11 +6,17 @@ import (
 	"syscall"
 	"time"
 
+	_ "github.com/Xlussov/EduCRM-be/docs"
 	"github.com/Xlussov/EduCRM-be/internal/app"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/Xlussov/EduCRM-be/pkg/logger"
 )
 
+// @title EduCRM API
+// @version 1.0
+// @securityDefinitions.apikey BearerAuth
+// @in header
+// @name Authorization
 func main() {
 	cfg := config.MustLoad()
 	log := logger.New(cfg)

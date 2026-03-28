@@ -86,3 +86,6 @@ dev-reset: db-reset migrate-up sqlc
 
 pre-commit:
 	pre-commit run --all-files
+
+swagger:
+	swag init -g cmd/app/main.go

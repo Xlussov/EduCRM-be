@@ -17,6 +17,18 @@ func NewHandler(uc *UseCase) *Handler {
 	return &Handler{usecase: uc}
 }
 
+// @Summary Create Admin
+// @Tags users
+// @Security BearerAuth
+// @Accept json
+// @Produce json
+// @Param request body Request true "Admin details"
+// @Success 201 {object} Response "Created"
+// @Failure 400 {object} response.ErrorResponse "Bad Request"
+// @Failure 401 {object} response.ErrorResponse "Unauthorized"
+// @Failure 403 {object} response.ErrorResponse "Forbidden"
+// @Failure 500 {object} response.ErrorResponse "Internal Server Error"
+// @Router /api/v1/users/admins [post]
 func (h *Handler) Handle(c echo.Context) error {
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {

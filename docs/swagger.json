@@ -1,6 +1,7 @@
 {
     "swagger": "2.0",
     "info": {
+        "description": "Backend API for Educational Center Management System",
         "title": "EduCRM API",
         "contact": {},
         "version": "1.0"
@@ -408,6 +409,7 @@
     },
     "securityDefinitions": {
         "BearerAuth": {
+            "description": "Insert the token in the following format: Bearer {your_token}",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"

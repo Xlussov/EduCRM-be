@@ -417,6 +417,7 @@ const docTemplate = `{
     },
     "securityDefinitions": {
         "BearerAuth": {
+            "description": "Insert the token in the following format: Bearer {your_token}",
             "type": "apiKey",
             "name": "Authorization",
             "in": "header"
@@ -431,7 +432,7 @@ var SwaggerInfo = &swag.Spec{
 	BasePath:         "",
 	Schemes:          []string{},
 	Title:            "EduCRM API",
-	Description:      "",
+	Description:      "Backend API for Educational Center Management System",
 	InfoInstanceName: "swagger",
 	SwaggerTemplate:  docTemplate,
 	LeftDelim:        "{{",

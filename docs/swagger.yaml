@@ -105,6 +105,7 @@ definitions:
     type: object
 info:
   contact: {}
+  description: Backend API for Educational Center Management System
   title: EduCRM API
   version: "1.0"
 paths:
@@ -262,6 +263,7 @@ paths:
       - users
 securityDefinitions:
   BearerAuth:
+    description: 'Insert the token in the following format: Bearer {your_token}'
     in: header
     name: Authorization
     type: apiKey

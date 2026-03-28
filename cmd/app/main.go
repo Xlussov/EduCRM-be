@@ -14,9 +14,11 @@ import (
 
 // @title EduCRM API
 // @version 1.0
+// @description Backend API for Educational Center Management System
 // @securityDefinitions.apikey BearerAuth
 // @in header
 // @name Authorization
+// @description Insert the token in the following format: Bearer {your_token}
 func main() {
 	cfg := config.MustLoad()
 	log := logger.New(cfg)

@@ -1,0 +1,76 @@
+package teachers
+
+import (
+	"context"
+	"errors"
+	"testing"
+
+	"github.com/Xlussov/EduCRM-be/internal/domain"
+	"github.com/Xlussov/EduCRM-be/internal/domain/mocks"
+	"github.com/google/uuid"
+	"github.com/stretchr/testify/assert"
+	"github.com/stretchr/testify/mock"
+)
+
+func TestUseCase_Execute(t *testing.T) {
+	branchID := uuid.New()
+
+	tests := []struct {
+		name          string
+		req           Request
+		mockSetup     func(userRepo *mocks.UserRepository)
+		expectedError string
+	}{
+		{
+			name: "Success path",
+			req: Request{
+				Phone:     "123456",
+				Password:  "password123",
+				FirstName: "Teacher",
+				LastName:  "Test",
+				BranchID:  branchID,
+			},
+			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
+					return u.Phone == "123456" && u.FirstName == "Teacher" && u.Role == domain.RoleTeacher
+				})).Return(nil).Run(func(args mock.Arguments) {
+					u := args.Get(1).(*domain.User)
+					u.ID = uuid.New()
+				})
+				ur.On("AssignToBranches", mock.Anything, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{branchID}).Return(nil)
+			},
+			expectedError: "",
+		},
+		{
+			name: "Create user error",
+			req: Request{
+				Phone:    "123456",
+				Password: "pw",
+			},
+			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
+			},
+			expectedError: "db error",
+		},
+	}
+
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			userRepo := new(mocks.UserRepository)
+			tt.mockSetup(userRepo)
+
+			uc := NewUseCase(userRepo)
+			res, err := uc.Execute(context.Background(), tt.req)
+
+			if tt.expectedError != "" {
+				assert.Error(t, err)
+				assert.Contains(t, err.Error(), tt.expectedError)
+				assert.Equal(t, uuid.Nil, res.ID)
+			} else {
+				assert.NoError(t, err)
+				assert.NotEqual(t, uuid.Nil, res.ID)
+			}
+			userRepo.AssertExpectations(t)
+		})
+	}
+}

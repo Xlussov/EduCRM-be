@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
+	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetRefreshToken(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)

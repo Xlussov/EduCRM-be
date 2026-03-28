@@ -25,6 +25,24 @@ definitions:
       id:
         type: string
     type: object
+  create.Request:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      name:
+        type: string
+    required:
+    - address
+    - city
+    - name
+    type: object
+  create.Response:
+    properties:
+      id:
+        type: string
+    type: object
   login.Request:
     properties:
       password:
@@ -183,6 +201,45 @@ paths:
       summary: Refresh Token
       tags:
       - auth
+  /api/v1/branches:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Branch
+      tags:
+      - branches
   /api/v1/users/admins:
     post:
       consumes:

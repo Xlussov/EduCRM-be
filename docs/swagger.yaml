@@ -30,7 +30,20 @@ definitions:
       message:
         type: string
     type: object
-  create.Request:
+  get.Response:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_branches_create.Request:
     properties:
       address:
         type: string
@@ -43,22 +56,25 @@ definitions:
     - city
     - name
     type: object
-  create.Response:
+  internal_branches_create.Response:
     properties:
       id:
         type: string
     type: object
-  get.Response:
+  internal_subjects_create.Request:
     properties:
-      address:
+      description:
         type: string
-      city:
+      name:
+        type: string
+    type: object
+  internal_subjects_create.Response:
+    properties:
+      description:
         type: string
       id:
         type: string
       name:
-        type: string
-      status:
         type: string
     type: object
   list.BranchResponse:
@@ -278,14 +294,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/create.Request'
+          $ref: '#/definitions/internal_branches_create.Request'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/create.Response'
+            $ref: '#/definitions/internal_branches_create.Response'
         "400":
           description: Bad Request
           schema:
@@ -427,6 +443,45 @@ paths:
       summary: Archive Branch
       tags:
       - branches
+  /api/v1/subjects:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subject details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_subjects_create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created subject
+          schema:
+            $ref: '#/definitions/internal_subjects_create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Subject
+      tags:
+      - subjects
   /api/v1/users/admins:
     post:
       consumes:

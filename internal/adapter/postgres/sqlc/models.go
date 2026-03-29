@@ -293,11 +293,11 @@ type StudentSubscription struct {
 }
 
 type Subject struct {
-	ID        pgtype.UUID        `json:"id"`
-	BranchID  pgtype.UUID        `json:"branch_id"`
-	Name      string             `json:"name"`
-	Status    NullEntityStatus   `json:"status"`
-	CreatedAt pgtype.Timestamptz `json:"created_at"`
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }
 
 type SubscriptionPlan struct {

@@ -190,7 +190,7 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/create.Request"
+                            "$ref": "#/definitions/internal_branches_create.Request"
                         }
                     }
                 ],
@@ -198,7 +198,7 @@ const docTemplate = `{
                     "201": {
                         "description": "Created",
                         "schema": {
-                            "$ref": "#/definitions/create.Response"
+                            "$ref": "#/definitions/internal_branches_create.Response"
                         }
                     },
                     "400": {
@@ -415,6 +415,68 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/subjects": {
+            "post": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subjects"
+                ],
+                "summary": "Create Subject",
+                "parameters": [
+                    {
+                        "description": "Subject details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_subjects_create.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "201": {
+                        "description": "Created subject",
+                        "schema": {
+                            "$ref": "#/definitions/internal_subjects_create.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/users/admins": {
             "post": {
                 "security": [
@@ -587,7 +649,27 @@ const docTemplate = `{
                 }
             }
         },
-        "create.Request": {
+        "get.Response": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_branches_create.Request": {
             "type": "object",
             "required": [
                 "address",
@@ -606,7 +688,7 @@ const docTemplate = `{
                 }
             }
         },
-        "create.Response": {
+        "internal_branches_create.Response": {
             "type": "object",
             "properties": {
                 "id": {
@@ -614,22 +696,27 @@ const docTemplate = `{
                 }
             }
         },
-        "get.Response": {
+        "internal_subjects_create.Request": {
             "type": "object",
             "properties": {
-                "address": {
+                "description": {
                     "type": "string"
                 },
-                "city": {
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_subjects_create.Response": {
+            "type": "object",
+            "properties": {
+                "description": {
                     "type": "string"
                 },
                 "id": {
                     "type": "string"
                 },
                 "name": {
-                    "type": "string"
-                },
-                "status": {
                     "type": "string"
                 }
             }

@@ -52,11 +52,10 @@ CREATE TABLE user_branches (
 -- SUBJECTS
 CREATE TABLE subjects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    branch_id UUID REFERENCES branches(id) ON DELETE CASCADE,
-    name VARCHAR(255) NOT NULL,
-    status entity_status DEFAULT 'ACTIVE',
+    name VARCHAR(255) UNIQUE NOT NULL,
+    description TEXT,
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    UNIQUE (branch_id, name)
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
 );
 
 -- STUDENTS

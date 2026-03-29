@@ -79,3 +79,19 @@ func (r *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([
 	}
 	return res, nil
 }
+
+func (r *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Branch, error) {
+	b, err := r.q.GetBranchByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.Branch{
+		ID:        b.ID.Bytes,
+		Name:      b.Name,
+		Address:   b.Address,
+		City:      b.City,
+		Status:    domain.EntityStatus(b.Status.EntityStatus),
+		CreatedAt: b.CreatedAt.Time,
+		UpdatedAt: b.UpdatedAt.Time,
+	}, nil
+}

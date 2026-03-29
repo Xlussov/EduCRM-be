@@ -18,6 +18,7 @@ type Handlers struct {
 	BranchesCreate  echo.HandlerFunc
 	BranchesArchive echo.HandlerFunc
 	BranchesList    echo.HandlerFunc
+	BranchesGet     echo.HandlerFunc
 }
 
 type Logger interface {
@@ -59,6 +60,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		branchesGroup := protected.Group("/branches")
 		branchesGroup.POST("", h.BranchesCreate)
 		branchesGroup.GET("", h.BranchesList)
+		branchesGroup.GET("/:id", h.BranchesGet)
 		branchesGroup.PATCH("/:id/archive", h.BranchesArchive)
 	}
 }

@@ -63,6 +63,27 @@ func (q *Queries) GetAllBranches(ctx context.Context) ([]Branch, error) {
 	return items, nil
 }
 
+const getBranchByID = `-- name: GetBranchByID :one
+SELECT id, name, address, city, status, created_at, updated_at
+FROM branches
+WHERE id = $1
+`
+
+func (q *Queries) GetBranchByID(ctx context.Context, id pgtype.UUID) (Branch, error) {
+	row := q.db.QueryRow(ctx, getBranchByID, id)
+	var i Branch
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.City,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const getBranchesByUserID = `-- name: GetBranchesByUserID :many
 SELECT b.id, b.name, b.address, b.city, b.status, b.created_at, b.updated_at
 FROM branches b

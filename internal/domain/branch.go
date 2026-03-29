@@ -29,4 +29,5 @@ type BranchRepository interface {
 	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
 	GetAll(ctx context.Context) ([]*Branch, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Branch, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*Branch, error)
 }

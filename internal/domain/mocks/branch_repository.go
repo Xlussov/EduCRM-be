@@ -39,3 +39,12 @@ func (m *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([
 	}
 	return res, args.Error(1)
 }
+
+func (m *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Branch, error) {
+	args := m.Called(ctx, id)
+	var res *domain.Branch
+	if args.Get(0) != nil {
+		res = args.Get(0).(*domain.Branch)
+	}
+	return res, args.Error(1)
+}

@@ -48,6 +48,19 @@ definitions:
       id:
         type: string
     type: object
+  get.Response:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
   list.BranchResponse:
     properties:
       address:
@@ -279,6 +292,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Branch
+      tags:
+      - branches
+  /api/v1/branches/{id}:
+    get:
+      parameters:
+      - description: Branch ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Branch details
+          schema:
+            $ref: '#/definitions/get.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Branch by ID
       tags:
       - branches
   /api/v1/branches/{id}/archive:

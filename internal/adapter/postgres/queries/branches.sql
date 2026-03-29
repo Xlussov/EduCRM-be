@@ -17,3 +17,8 @@ SELECT b.id, b.name, b.address, b.city, b.status, b.created_at, b.updated_at
 FROM branches b
 JOIN user_branches ub ON b.id = ub.branch_id
 WHERE ub.user_id = $1;
+
+-- name: GetBranchByID :one
+SELECT id, name, address, city, status, created_at, updated_at
+FROM branches
+WHERE id = $1;

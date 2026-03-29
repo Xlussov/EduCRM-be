@@ -296,6 +296,7 @@ type Subject struct {
 	ID          pgtype.UUID        `json:"id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
+	Status      NullEntityStatus   `json:"status"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
 }

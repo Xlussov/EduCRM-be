@@ -47,6 +47,7 @@ db-down:
 db-reset:
 	docker compose down -v
 	docker compose up -d postgres
+	ping 127.0.0.1 -n 4 > NUL
 
 db-logs:
 	docker compose logs -f postgres
@@ -79,10 +80,10 @@ migrate-reset:
 
 # --- DEV FLOWS ---
 dev-init: db-up migrate-up sqlc
-	@echo "✅ Dev environment ready"
+	@echo "Dev environment ready"
 
 dev-reset: db-reset migrate-up sqlc
-	@echo "♻️ Dev environment reset"
+	@echo "Dev environment reset"
 
 pre-commit:
 	pre-commit run --all-files

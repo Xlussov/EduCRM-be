@@ -5,6 +5,7 @@ import (
 
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
+	"github.com/google/uuid"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -29,4 +30,11 @@ func (r *SubjectRepository) Create(ctx context.Context, subject *domain.Subject)
 	}
 	subject.ID = id.Bytes
 	return nil
+}
+
+func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
+	return r.q.UpdateSubjectStatus(ctx, sqlc.UpdateSubjectStatusParams{
+		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
+		ID:     pgtype.UUID{Bytes: id, Valid: true},
+	})
 }

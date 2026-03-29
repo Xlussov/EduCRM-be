@@ -28,3 +28,19 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (p
 	err := row.Scan(&id)
 	return id, err
 }
+
+const updateSubjectStatus = `-- name: UpdateSubjectStatus :exec
+UPDATE subjects
+SET status = $1, updated_at = NOW()
+WHERE id = $2
+`
+
+type UpdateSubjectStatusParams struct {
+	Status NullEntityStatus `json:"status"`
+	ID     pgtype.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error {
+	_, err := q.db.Exec(ctx, updateSubjectStatus, arg.Status, arg.ID)
+	return err
+}

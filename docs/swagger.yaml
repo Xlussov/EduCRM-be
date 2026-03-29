@@ -48,6 +48,19 @@ definitions:
       id:
         type: string
     type: object
+  list.BranchResponse:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
   login.Request:
     properties:
       password:
@@ -207,6 +220,29 @@ paths:
       tags:
       - auth
   /api/v1/branches:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of branches
+          schema:
+            items:
+              $ref: '#/definitions/list.BranchResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Branches
+      tags:
+      - branches
     post:
       consumes:
       - application/json

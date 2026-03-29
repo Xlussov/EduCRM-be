@@ -30,6 +30,74 @@ func (q *Queries) CreateBranch(ctx context.Context, arg CreateBranchParams) (pgt
 	return id, err
 }
 
+const getAllBranches = `-- name: GetAllBranches :many
+SELECT id, name, address, city, status, created_at, updated_at
+FROM branches
+`
+
+func (q *Queries) GetAllBranches(ctx context.Context) ([]Branch, error) {
+	rows, err := q.db.Query(ctx, getAllBranches)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Branch
+	for rows.Next() {
+		var i Branch
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.City,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getBranchesByUserID = `-- name: GetBranchesByUserID :many
+SELECT b.id, b.name, b.address, b.city, b.status, b.created_at, b.updated_at
+FROM branches b
+JOIN user_branches ub ON b.id = ub.branch_id
+WHERE ub.user_id = $1
+`
+
+func (q *Queries) GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) ([]Branch, error) {
+	rows, err := q.db.Query(ctx, getBranchesByUserID, userID)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Branch
+	for rows.Next() {
+		var i Branch
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Address,
+			&i.City,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateBranchStatus = `-- name: UpdateBranchStatus :exec
 UPDATE branches
 SET status = $1, updated_at = NOW()

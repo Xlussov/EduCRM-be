@@ -21,3 +21,21 @@ func (m *BranchRepository) UpdateStatus(ctx context.Context, id uuid.UUID, statu
 	args := m.Called(ctx, id, status)
 	return args.Error(0)
 }
+
+func (m *BranchRepository) GetAll(ctx context.Context) ([]*domain.Branch, error) {
+	args := m.Called(ctx)
+	var res []*domain.Branch
+	if args.Get(0) != nil {
+		res = args.Get(0).([]*domain.Branch)
+	}
+	return res, args.Error(1)
+}
+
+func (m *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Branch, error) {
+	args := m.Called(ctx, userID)
+	var res []*domain.Branch
+	if args.Get(0) != nil {
+		res = args.Get(0).([]*domain.Branch)
+	}
+	return res, args.Error(1)
+}

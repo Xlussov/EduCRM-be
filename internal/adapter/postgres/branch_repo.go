@@ -39,3 +39,43 @@ func (r *BranchRepository) UpdateStatus(ctx context.Context, id uuid.UUID, statu
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
 }
+
+func (r *BranchRepository) GetAll(ctx context.Context) ([]*domain.Branch, error) {
+	branches, err := r.q.GetAllBranches(ctx)
+	if err != nil {
+		return nil, err
+	}
+	var res []*domain.Branch
+	for _, b := range branches {
+		res = append(res, &domain.Branch{
+			ID:        b.ID.Bytes,
+			Name:      b.Name,
+			Address:   b.Address,
+			City:      b.City,
+			Status:    domain.EntityStatus(b.Status.EntityStatus),
+			CreatedAt: b.CreatedAt.Time,
+			UpdatedAt: b.UpdatedAt.Time,
+		})
+	}
+	return res, nil
+}
+
+func (r *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Branch, error) {
+	branches, err := r.q.GetBranchesByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+	var res []*domain.Branch
+	for _, b := range branches {
+		res = append(res, &domain.Branch{
+			ID:        b.ID.Bytes,
+			Name:      b.Name,
+			Address:   b.Address,
+			City:      b.City,
+			Status:    domain.EntityStatus(b.Status.EntityStatus),
+			CreatedAt: b.CreatedAt.Time,
+			UpdatedAt: b.UpdatedAt.Time,
+		})
+	}
+	return res, nil
+}

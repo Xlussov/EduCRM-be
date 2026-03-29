@@ -38,3 +38,23 @@ func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
 }
+
+func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, error) {
+	rows, err := r.q.GetAllSubjects(ctx)
+	if err != nil {
+		return nil, err
+	}
+
+	subjects := make([]*domain.Subject, 0, len(rows))
+	for _, row := range rows {
+		subjects = append(subjects, &domain.Subject{
+			ID:          row.ID.Bytes,
+			Name:        row.Name,
+			Description: row.Description.String,
+			Status:      domain.EntityStatus(row.Status.EntityStatus),
+			CreatedAt:   row.CreatedAt.Time,
+			UpdatedAt:   row.UpdatedAt.Time,
+		})
+	}
+	return subjects, nil
+}

@@ -16,6 +16,7 @@ type Querier interface {
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (pgtype.UUID, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetAllBranches(ctx context.Context) ([]Branch, error)
+	GetAllSubjects(ctx context.Context) ([]Subject, error)
 	GetBranchByID(ctx context.Context, id pgtype.UUID) (Branch, error)
 	GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) ([]Branch, error)
 	GetRefreshToken(ctx context.Context, tokenHash string) (RefreshToken, error)

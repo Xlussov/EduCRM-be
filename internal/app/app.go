@@ -17,6 +17,7 @@ import (
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
+	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
 	"github.com/Xlussov/EduCRM-be/internal/users/admins"
 	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
@@ -75,6 +76,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	branchesUpdateUC := branchesupdate.NewUseCase(branchRepo)
 	subjectsCreateUC := subjectscreate.NewUseCase(subjectRepo)
 	subjectsArchiveUC := subjectsarchive.NewUseCase(subjectRepo)
+	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -88,6 +90,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		BranchesUpdate:  branchesupdate.NewHandler(branchesUpdateUC).Handle,
 		SubjectsCreate:  subjectscreate.NewHandler(subjectsCreateUC).Handle,
 		SubjectsArchive: subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
+		SubjectsList:    subjectslist.NewHandler(subjectsListUC).Handle,
 	}
 
 	httprouter.Init(log, cfg, e, h)

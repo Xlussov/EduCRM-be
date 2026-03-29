@@ -29,6 +29,39 @@ func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (p
 	return id, err
 }
 
+const getAllSubjects = `-- name: GetAllSubjects :many
+SELECT id, name, description, status, created_at, updated_at
+FROM subjects
+ORDER BY name ASC
+`
+
+func (q *Queries) GetAllSubjects(ctx context.Context) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, getAllSubjects)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Subject
+	for rows.Next() {
+		var i Subject
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Description,
+			&i.Status,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const updateSubjectStatus = `-- name: UpdateSubjectStatus :exec
 UPDATE subjects
 SET status = $1, updated_at = NOW()

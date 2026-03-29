@@ -416,6 +416,46 @@ const docTemplate = `{
             }
         },
         "/api/v1/subjects": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "subjects"
+                ],
+                "summary": "List Subjects",
+                "responses": {
+                    "200": {
+                        "description": "List of subjects",
+                        "schema": {
+                            "$ref": "#/definitions/list.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -713,6 +753,17 @@ const docTemplate = `{
                 }
             }
         },
+        "domain.EntityStatus": {
+            "type": "string",
+            "enum": [
+                "ACTIVE",
+                "ARCHIVED"
+            ],
+            "x-enum-varnames": [
+                "StatusActive",
+                "StatusArchived"
+            ]
+        },
         "get.Response": {
             "type": "object",
             "properties": {
@@ -801,6 +852,40 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "status": {
+                    "type": "string"
+                }
+            }
+        },
+        "list.Response": {
+            "type": "object",
+            "properties": {
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/list.SubjectResponse"
+                    }
+                }
+            }
+        },
+        "list.SubjectResponse": {
+            "type": "object",
+            "properties": {
+                "created_at": {
+                    "type": "string"
+                },
+                "description": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.EntityStatus"
+                },
+                "updated_at": {
                     "type": "string"
                 }
             }

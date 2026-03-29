@@ -30,6 +30,14 @@ definitions:
       message:
         type: string
     type: object
+  domain.EntityStatus:
+    enum:
+    - ACTIVE
+    - ARCHIVED
+    type: string
+    x-enum-varnames:
+    - StatusActive
+    - StatusArchived
   get.Response:
     properties:
       address:
@@ -88,6 +96,28 @@ definitions:
       name:
         type: string
       status:
+        type: string
+    type: object
+  list.Response:
+    properties:
+      subjects:
+        items:
+          $ref: '#/definitions/list.SubjectResponse'
+        type: array
+    type: object
+  list.SubjectResponse:
+    properties:
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
+      updated_at:
         type: string
     type: object
   login.Request:
@@ -444,6 +474,31 @@ paths:
       tags:
       - branches
   /api/v1/subjects:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of subjects
+          schema:
+            $ref: '#/definitions/list.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Subjects
+      tags:
+      - subjects
     post:
       consumes:
       - application/json

@@ -48,3 +48,8 @@ func (m *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 	}
 	return res, args.Error(1)
 }
+
+func (m *BranchRepository) Update(ctx context.Context, branch *domain.Branch) error {
+	args := m.Called(ctx, branch)
+	return args.Error(0)
+}

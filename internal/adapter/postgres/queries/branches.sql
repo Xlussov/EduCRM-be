@@ -22,3 +22,8 @@ WHERE ub.user_id = $1;
 SELECT id, name, address, city, status, created_at, updated_at
 FROM branches
 WHERE id = $1;
+
+-- name: UpdateBranch :exec
+UPDATE branches
+SET name = $1, address = $2, city = $3, updated_at = NOW()
+WHERE id = $4;

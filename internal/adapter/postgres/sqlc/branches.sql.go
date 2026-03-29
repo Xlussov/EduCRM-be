@@ -119,6 +119,29 @@ func (q *Queries) GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) (
 	return items, nil
 }
 
+const updateBranch = `-- name: UpdateBranch :exec
+UPDATE branches
+SET name = $1, address = $2, city = $3, updated_at = NOW()
+WHERE id = $4
+`
+
+type UpdateBranchParams struct {
+	Name    string      `json:"name"`
+	Address string      `json:"address"`
+	City    string      `json:"city"`
+	ID      pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateBranch(ctx context.Context, arg UpdateBranchParams) error {
+	_, err := q.db.Exec(ctx, updateBranch,
+		arg.Name,
+		arg.Address,
+		arg.City,
+		arg.ID,
+	)
+	return err
+}
+
 const updateBranchStatus = `-- name: UpdateBranchStatus :exec
 UPDATE branches
 SET status = $1, updated_at = NOW()

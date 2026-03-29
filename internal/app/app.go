@@ -13,6 +13,7 @@ import (
 	branchescreate "github.com/Xlussov/EduCRM-be/internal/branches/create"
 	branchesget "github.com/Xlussov/EduCRM-be/internal/branches/get"
 	brancheslist "github.com/Xlussov/EduCRM-be/internal/branches/list"
+	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	"github.com/Xlussov/EduCRM-be/internal/users/admins"
 	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
@@ -68,6 +69,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	branchesArchiveUC := branchesarchive.NewUseCase(branchRepo)
 	branchesListUC := brancheslist.NewUseCase(branchRepo)
 	branchesGetUC := branchesget.NewUseCase(branchRepo)
+	branchesUpdateUC := branchesupdate.NewUseCase(branchRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -78,6 +80,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		BranchesArchive: branchesarchive.NewHandler(branchesArchiveUC).Handle,
 		BranchesList:    brancheslist.NewHandler(branchesListUC).Handle,
 		BranchesGet:     branchesget.NewHandler(branchesGetUC).Handle,
+		BranchesUpdate:  branchesupdate.NewHandler(branchesUpdateUC).Handle,
 	}
 
 	httprouter.Init(log, cfg, e, h)

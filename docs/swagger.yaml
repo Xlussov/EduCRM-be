@@ -152,6 +152,19 @@ definitions:
       id:
         type: string
     type: object
+  update.Request:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      name:
+        type: string
+    required:
+    - address
+    - city
+    - name
+    type: object
 info:
   contact: {}
   description: Backend API for Educational Center Management System
@@ -329,6 +342,52 @@ paths:
       security:
       - BearerAuth: []
       summary: Get Branch by ID
+      tags:
+      - branches
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Branch ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Update branch details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Branch
       tags:
       - branches
   /api/v1/branches/{id}/archive:

@@ -95,3 +95,12 @@ func (r *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 		UpdatedAt: b.UpdatedAt.Time,
 	}, nil
 }
+
+func (r *BranchRepository) Update(ctx context.Context, branch *domain.Branch) error {
+	return r.q.UpdateBranch(ctx, sqlc.UpdateBranchParams{
+		Name:    branch.Name,
+		Address: branch.Address,
+		City:    branch.City,
+		ID:      pgtype.UUID{Bytes: branch.ID, Valid: true},
+	})
+}

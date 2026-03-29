@@ -62,6 +62,23 @@ func (q *Queries) GetAllSubjects(ctx context.Context) ([]Subject, error) {
 	return items, nil
 }
 
+const updateSubject = `-- name: UpdateSubject :exec
+UPDATE subjects
+SET name = $1, description = $2, updated_at = NOW()
+WHERE id = $3
+`
+
+type UpdateSubjectParams struct {
+	Name        string      `json:"name"`
+	Description pgtype.Text `json:"description"`
+	ID          pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) error {
+	_, err := q.db.Exec(ctx, updateSubject, arg.Name, arg.Description, arg.ID)
+	return err
+}
+
 const updateSubjectStatus = `-- name: UpdateSubjectStatus :exec
 UPDATE subjects
 SET status = $1, updated_at = NOW()

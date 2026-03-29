@@ -58,3 +58,11 @@ func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 	}
 	return subjects, nil
 }
+
+func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) error {
+	return r.q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
+		Name:        subject.Name,
+		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
+		ID:          pgtype.UUID{Bytes: subject.ID, Valid: true},
+	})
+}

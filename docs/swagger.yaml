@@ -69,6 +69,19 @@ definitions:
       id:
         type: string
     type: object
+  internal_branches_update.Request:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      name:
+        type: string
+    required:
+    - address
+    - city
+    - name
+    type: object
   internal_subjects_create.Request:
     properties:
       description:
@@ -81,6 +94,13 @@ definitions:
       description:
         type: string
       id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_subjects_update.Request:
+    properties:
+      description:
         type: string
       name:
         type: string
@@ -197,19 +217,6 @@ definitions:
     properties:
       id:
         type: string
-    type: object
-  update.Request:
-    properties:
-      address:
-        type: string
-      city:
-        type: string
-      name:
-        type: string
-    required:
-    - address
-    - city
-    - name
     type: object
 info:
   contact: {}
@@ -405,7 +412,7 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/update.Request'
+          $ref: '#/definitions/internal_branches_update.Request'
       produces:
       - application/json
       responses:
@@ -535,6 +542,53 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Subject
+      tags:
+      - subjects
+  /api/v1/subjects/{id}:
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Subject ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Updated details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_subjects_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Success message
+          schema:
+            additionalProperties:
+              type: string
+            type: object
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Subject
       tags:
       - subjects
   /api/v1/subjects/{id}/archive:

@@ -28,6 +28,7 @@ type Querier interface {
 	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error
 	UpdateBranch(ctx context.Context, arg UpdateBranchParams) error
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
+	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) error
 	UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error
 }
 

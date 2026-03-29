@@ -11,11 +11,12 @@ import (
 )
 
 type Handlers struct {
-	AuthLogin      echo.HandlerFunc
-	AuthRefresh    echo.HandlerFunc
-	UsersAdmins    echo.HandlerFunc
-	UsersTeachers  echo.HandlerFunc
-	BranchesCreate echo.HandlerFunc
+	AuthLogin       echo.HandlerFunc
+	AuthRefresh     echo.HandlerFunc
+	UsersAdmins     echo.HandlerFunc
+	UsersTeachers   echo.HandlerFunc
+	BranchesCreate  echo.HandlerFunc
+	BranchesArchive echo.HandlerFunc
 }
 
 type Logger interface {
@@ -56,5 +57,6 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 
 		branchesGroup := protected.Group("/branches")
 		branchesGroup.POST("", h.BranchesCreate)
+		branchesGroup.PATCH("/:id/archive", h.BranchesArchive)
 	}
 }

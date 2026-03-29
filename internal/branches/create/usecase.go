@@ -31,7 +31,6 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, req Request) (
 		return Response{}, err
 	}
 
-	// Привязываем создавшего ADMIN/SUPERADMIN к новому филиалу
 	if err := uc.userRepo.AssignToBranches(ctx, userID, []uuid.UUID{branch.ID}); err != nil {
 		return Response{}, err
 	}

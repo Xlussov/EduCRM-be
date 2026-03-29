@@ -26,4 +26,5 @@ type Branch struct {
 
 type BranchRepository interface {
 	Create(ctx context.Context, branch *Branch) error
+	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
 }

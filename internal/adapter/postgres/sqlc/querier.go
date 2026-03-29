@@ -21,6 +21,7 @@ type Querier interface {
 	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
 	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error
+	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
 }
 
 var _ Querier = (*Queries)(nil)

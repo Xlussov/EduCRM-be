@@ -5,6 +5,8 @@ import (
 
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
+	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
@@ -29,4 +31,11 @@ func (r *BranchRepository) Create(ctx context.Context, branch *domain.Branch) er
 	}
 	branch.ID = id.Bytes
 	return nil
+}
+
+func (r *BranchRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
+	return r.q.UpdateBranchStatus(ctx, sqlc.UpdateBranchStatusParams{
+		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
+		ID:     pgtype.UUID{Bytes: id, Valid: true},
+	})
 }

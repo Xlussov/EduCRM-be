@@ -25,6 +25,11 @@ definitions:
       id:
         type: string
     type: object
+  archive.Response:
+    properties:
+      message:
+        type: string
+    type: object
   create.Request:
     properties:
       address:
@@ -238,6 +243,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Branch
+      tags:
+      - branches
+  /api/v1/branches/{id}/archive:
+    patch:
+      parameters:
+      - description: Branch ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived
+          schema:
+            $ref: '#/definitions/archive.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive Branch
       tags:
       - branches
   /api/v1/users/admins:

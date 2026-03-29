@@ -29,3 +29,19 @@ func (q *Queries) CreateBranch(ctx context.Context, arg CreateBranchParams) (pgt
 	err := row.Scan(&id)
 	return id, err
 }
+
+const updateBranchStatus = `-- name: UpdateBranchStatus :exec
+UPDATE branches
+SET status = $1, updated_at = NOW()
+WHERE id = $2
+`
+
+type UpdateBranchStatusParams struct {
+	Status NullEntityStatus `json:"status"`
+	ID     pgtype.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error {
+	_, err := q.db.Exec(ctx, updateBranchStatus, arg.Status, arg.ID)
+	return err
+}

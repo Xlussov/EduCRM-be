@@ -256,7 +256,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Branch details",
                         "schema": {
-                            "$ref": "#/definitions/get.Response"
+                            "$ref": "#/definitions/internal_branches_get.Response"
                         }
                     },
                     "401": {
@@ -385,7 +385,7 @@ const docTemplate = `{
                     "200": {
                         "description": "Archived",
                         "schema": {
-                            "$ref": "#/definitions/archive.Response"
+                            "$ref": "#/definitions/internal_branches_archive.Response"
                         }
                     },
                     "401": {
@@ -416,6 +416,74 @@ const docTemplate = `{
             }
         },
         "/api/v1/students": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "students"
+                ],
+                "summary": "List Students",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Branch ID",
+                        "name": "branch_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Search by first or last name",
+                        "name": "search",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Filter by status (ACTIVE or ARCHIVED)",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "List of students",
+                        "schema": {
+                            "$ref": "#/definitions/internal_students_list.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            },
             "post": {
                 "security": [
                     {
@@ -477,6 +545,128 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/students/{id}": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "students"
+                ],
+                "summary": "Get Student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Student details",
+                        "schema": {
+                            "$ref": "#/definitions/internal_students_get.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/students/{id}/archive": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "students"
+                ],
+                "summary": "Archive Student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Archived",
+                        "schema": {
+                            "$ref": "#/definitions/internal_students_archive.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/subjects": {
             "get": {
                 "security": [
@@ -495,7 +685,7 @@ const docTemplate = `{
                     "200": {
                         "description": "List of subjects",
                         "schema": {
-                            "$ref": "#/definitions/list.Response"
+                            "$ref": "#/definitions/internal_subjects_list.Response"
                         }
                     },
                     "401": {
@@ -880,14 +1070,6 @@ const docTemplate = `{
                 }
             }
         },
-        "archive.Response": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "domain.EntityStatus": {
             "type": "string",
             "enum": [
@@ -899,22 +1081,10 @@ const docTemplate = `{
                 "StatusArchived"
             ]
         },
-        "get.Response": {
+        "internal_branches_archive.Response": {
             "type": "object",
             "properties": {
-                "address": {
-                    "type": "string"
-                },
-                "city": {
-                    "type": "string"
-                },
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                },
-                "status": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -946,6 +1116,26 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_branches_get.Response": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "city": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_branches_update.Request": {
             "type": "object",
             "required": [
@@ -961,6 +1151,14 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_students_archive.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
                     "type": "string"
                 }
             }
@@ -1018,6 +1216,64 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_students_get.Response": {
+            "type": "object",
+            "properties": {
+                "address": {
+                    "type": "string"
+                },
+                "branch_id": {
+                    "type": "string"
+                },
+                "created_at": {
+                    "type": "string"
+                },
+                "dob": {
+                    "type": "string"
+                },
+                "email": {
+                    "type": "string"
+                },
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "parent_email": {
+                    "type": "string"
+                },
+                "parent_name": {
+                    "type": "string"
+                },
+                "parent_phone": {
+                    "type": "string"
+                },
+                "parent_relationship": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.EntityStatus"
+                }
+            }
+        },
+        "internal_students_list.Response": {
+            "type": "object",
+            "properties": {
+                "students": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/list.StudentResponse"
+                    }
+                }
+            }
+        },
         "internal_subjects_create.Request": {
             "type": "object",
             "properties": {
@@ -1040,6 +1296,17 @@ const docTemplate = `{
                 },
                 "name": {
                     "type": "string"
+                }
+            }
+        },
+        "internal_subjects_list.Response": {
+            "type": "object",
+            "properties": {
+                "subjects": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/list.SubjectResponse"
+                    }
                 }
             }
         },
@@ -1074,14 +1341,20 @@ const docTemplate = `{
                 }
             }
         },
-        "list.Response": {
+        "list.StudentResponse": {
             "type": "object",
             "properties": {
-                "subjects": {
-                    "type": "array",
-                    "items": {
-                        "$ref": "#/definitions/list.SubjectResponse"
-                    }
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.EntityStatus"
                 }
             }
         },

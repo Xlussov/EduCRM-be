@@ -15,7 +15,10 @@ import (
 	brancheslist "github.com/Xlussov/EduCRM-be/internal/branches/list"
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
+	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
+	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
+	studentslist "github.com/Xlussov/EduCRM-be/internal/students/list"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
@@ -82,6 +85,9 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
 	subjectsUpdateUC := subjectsupdate.NewUseCase(subjectRepo)
 	studentsCreateUC := studentscreate.NewUseCase(studentRepo, userRepo)
+	studentsArchiveUC := studentsarchive.NewUseCase(studentRepo)
+	studentsListUC := studentslist.NewUseCase(studentRepo, userRepo)
+	studentsGetUC := studentsget.NewUseCase(studentRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -98,6 +104,9 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		SubjectsList:    subjectslist.NewHandler(subjectsListUC).Handle,
 		SubjectsUpdate:  subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
 		StudentsCreate:  studentscreate.NewHandler(studentsCreateUC).Handle,
+		StudentsArchive: studentsarchive.NewHandler(studentsArchiveUC).Handle,
+		StudentsList:    studentslist.NewHandler(studentsListUC).Handle,
+		StudentsGet:     studentsget.NewHandler(studentsGetUC).Handle,
 	}
 
 	httprouter.Init(log, cfg, e, h)

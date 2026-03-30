@@ -25,11 +25,6 @@ definitions:
       id:
         type: string
     type: object
-  archive.Response:
-    properties:
-      message:
-        type: string
-    type: object
   domain.EntityStatus:
     enum:
     - ACTIVE
@@ -38,17 +33,9 @@ definitions:
     x-enum-varnames:
     - StatusActive
     - StatusArchived
-  get.Response:
+  internal_branches_archive.Response:
     properties:
-      address:
-        type: string
-      city:
-        type: string
-      id:
-        type: string
-      name:
-        type: string
-      status:
+      message:
         type: string
     type: object
   internal_branches_create.Request:
@@ -69,6 +56,19 @@ definitions:
       id:
         type: string
     type: object
+  internal_branches_get.Response:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
   internal_branches_update.Request:
     properties:
       address:
@@ -81,6 +81,11 @@ definitions:
     - address
     - city
     - name
+    type: object
+  internal_students_archive.Response:
+    properties:
+      message:
+        type: string
     type: object
   internal_students_create.Request:
     properties:
@@ -118,6 +123,44 @@ definitions:
       id:
         type: string
     type: object
+  internal_students_get.Response:
+    properties:
+      address:
+        type: string
+      branch_id:
+        type: string
+      created_at:
+        type: string
+      dob:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      parent_email:
+        type: string
+      parent_name:
+        type: string
+      parent_phone:
+        type: string
+      parent_relationship:
+        type: string
+      phone:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  internal_students_list.Response:
+    properties:
+      students:
+        items:
+          $ref: '#/definitions/list.StudentResponse'
+        type: array
+    type: object
   internal_subjects_create.Request:
     properties:
       description:
@@ -133,6 +176,13 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  internal_subjects_list.Response:
+    properties:
+      subjects:
+        items:
+          $ref: '#/definitions/list.SubjectResponse'
+        type: array
     type: object
   internal_subjects_update.Request:
     properties:
@@ -154,12 +204,16 @@ definitions:
       status:
         type: string
     type: object
-  list.Response:
+  list.StudentResponse:
     properties:
-      subjects:
-        items:
-          $ref: '#/definitions/list.SubjectResponse'
-        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
     type: object
   list.SubjectResponse:
     properties:
@@ -411,7 +465,7 @@ paths:
         "200":
           description: Branch details
           schema:
-            $ref: '#/definitions/get.Response'
+            $ref: '#/definitions/internal_branches_get.Response'
         "401":
           description: Unauthorized
           schema:
@@ -494,7 +548,7 @@ paths:
         "200":
           description: Archived
           schema:
-            $ref: '#/definitions/archive.Response'
+            $ref: '#/definitions/internal_branches_archive.Response'
         "401":
           description: Unauthorized
           schema:
@@ -517,6 +571,50 @@ paths:
       tags:
       - branches
   /api/v1/students:
+    get:
+      parameters:
+      - description: Branch ID
+        format: uuid
+        in: query
+        name: branch_id
+        required: true
+        type: string
+      - description: Search by first or last name
+        in: query
+        name: search
+        type: string
+      - description: Filter by status (ACTIVE or ARCHIVED)
+        in: query
+        name: status
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of students
+          schema:
+            $ref: '#/definitions/internal_students_list.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Students
+      tags:
+      - students
     post:
       consumes:
       - application/json
@@ -555,6 +653,84 @@ paths:
       summary: Register Student
       tags:
       - students
+  /api/v1/students/{id}:
+    get:
+      parameters:
+      - description: Student ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Student details
+          schema:
+            $ref: '#/definitions/internal_students_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Student
+      tags:
+      - students
+  /api/v1/students/{id}/archive:
+    patch:
+      parameters:
+      - description: Student ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived
+          schema:
+            $ref: '#/definitions/internal_students_archive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive Student
+      tags:
+      - students
   /api/v1/subjects:
     get:
       produces:
@@ -563,7 +739,7 @@ paths:
         "200":
           description: List of subjects
           schema:
-            $ref: '#/definitions/list.Response'
+            $ref: '#/definitions/internal_subjects_list.Response'
         "401":
           description: Unauthorized
           schema:

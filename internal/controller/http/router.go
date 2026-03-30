@@ -24,6 +24,7 @@ type Handlers struct {
 	SubjectsArchive echo.HandlerFunc
 	SubjectsList    echo.HandlerFunc
 	SubjectsUpdate  echo.HandlerFunc
+	StudentsCreate  echo.HandlerFunc
 }
 
 type Logger interface {
@@ -73,5 +74,8 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		subjectsGroup.GET("", h.SubjectsList)
 		subjectsGroup.PUT("/:id", h.SubjectsUpdate)
 		subjectsGroup.PATCH("/:id/archive", h.SubjectsArchive)
+
+		studentsGroup := protected.Group("/students")
+		studentsGroup.POST("", h.StudentsCreate)
 	}
 }

@@ -15,6 +15,7 @@ import (
 	brancheslist "github.com/Xlussov/EduCRM-be/internal/branches/list"
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
+	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
@@ -65,6 +66,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	authRepo := repo.NewAuthRepository(dbPool.Conn())
 	branchRepo := repo.NewBranchRepository(dbPool.Conn())
 	subjectRepo := repo.NewSubjectRepository(dbPool.Conn())
+	studentRepo := repo.NewStudentRepository(dbPool.Conn())
 
 	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
@@ -79,6 +81,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subjectsArchiveUC := subjectsarchive.NewUseCase(subjectRepo)
 	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
 	subjectsUpdateUC := subjectsupdate.NewUseCase(subjectRepo)
+	studentsCreateUC := studentscreate.NewUseCase(studentRepo, userRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -94,6 +97,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		SubjectsArchive: subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
 		SubjectsList:    subjectslist.NewHandler(subjectsListUC).Handle,
 		SubjectsUpdate:  subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
+		StudentsCreate:  studentscreate.NewHandler(studentsCreateUC).Handle,
 	}
 
 	httprouter.Init(log, cfg, e, h)

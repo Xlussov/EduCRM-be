@@ -82,6 +82,42 @@ definitions:
     - city
     - name
     type: object
+  internal_students_create.Request:
+    properties:
+      address:
+        type: string
+      branch_id:
+        type: string
+      dob:
+        type: string
+      email:
+        type: string
+      first_name:
+        type: string
+      last_name:
+        type: string
+      parent_email:
+        type: string
+      parent_name:
+        type: string
+      parent_phone:
+        type: string
+      parent_relationship:
+        type: string
+      phone:
+        type: string
+    required:
+    - branch_id
+    - first_name
+    - last_name
+    - parent_name
+    - parent_phone
+    type: object
+  internal_students_create.Response:
+    properties:
+      id:
+        type: string
+    type: object
   internal_subjects_create.Request:
     properties:
       description:
@@ -480,6 +516,45 @@ paths:
       summary: Archive Branch
       tags:
       - branches
+  /api/v1/students:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Student details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_students_create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_students_create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Register Student
+      tags:
+      - students
   /api/v1/subjects:
     get:
       produces:

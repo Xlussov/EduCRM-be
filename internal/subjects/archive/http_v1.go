@@ -50,10 +50,10 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid subject ID", nil)
 	}
 
-	err = h.usecase.Execute(c.Request().Context(), subjectID)
+	res, err := h.usecase.Execute(c.Request().Context(), subjectID)
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to archive subject", nil)
 	}
 
-	return response.Success(c, http.StatusOK, map[string]string{"message": "success"})
+	return response.Success(c, http.StatusNoContent, res)
 }

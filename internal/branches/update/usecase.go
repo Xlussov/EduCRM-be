@@ -17,7 +17,7 @@ func NewUseCase(br domain.BranchRepository) *UseCase {
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID, req Request) error {
+func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID, req Request) (Response, error) {
 	branch := &domain.Branch{
 		ID:      branchID,
 		Name:    req.Name,
@@ -25,5 +25,8 @@ func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID, req Request)
 		City:    req.City,
 	}
 
-	return uc.branchRepo.Update(ctx, branch)
+	if err := uc.branchRepo.Update(ctx, branch); err != nil {
+		return Response{}, err
+	}
+	return Response{Message: "success"}, nil
 }

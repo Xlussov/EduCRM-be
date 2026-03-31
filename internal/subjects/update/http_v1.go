@@ -56,10 +56,10 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid request body", nil)
 	}
 
-	err = h.usecase.Execute(c.Request().Context(), subjectID, req)
+	res, err := h.usecase.Execute(c.Request().Context(), subjectID, req)
 	if err != nil {
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to update subject", nil)
 	}
 
-	return response.Success(c, http.StatusOK, map[string]string{"message": "success"})
+	return response.Success(c, http.StatusNoContent, res)
 }

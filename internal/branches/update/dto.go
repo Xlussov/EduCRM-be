@@ -5,3 +5,7 @@ type Request struct {
 	Address string `json:"address" validate:"required"`
 	City    string `json:"city" validate:"required"`
 }
+
+type Response struct {
+	Message string `json:"message"`
+}

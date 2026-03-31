@@ -30,8 +30,9 @@ func TestUseCase_Execute(t *testing.T) {
 		}).Return(nil)
 
 		uc := NewUseCase(repo)
-		err := uc.Execute(context.Background(), branchID, req)
+		res, err := uc.Execute(context.Background(), branchID, req)
 
+		assert.Equal(t, "success", res.Message)
 		assert.NoError(t, err)
 		repo.AssertExpectations(t)
 	})
@@ -41,7 +42,7 @@ func TestUseCase_Execute(t *testing.T) {
 		repo.On("Update", mock.Anything, mock.Anything).Return(errors.New("db err"))
 
 		uc := NewUseCase(repo)
-		err := uc.Execute(context.Background(), branchID, req)
+		_, err := uc.Execute(context.Background(), branchID, req)
 
 		assert.Error(t, err)
 		repo.AssertExpectations(t)

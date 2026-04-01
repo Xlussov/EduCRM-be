@@ -10,11 +10,7 @@ import (
 )
 
 var (
-	ErrFirstNameRequired   = errors.New("first name is required")
-	ErrLastNameRequired    = errors.New("last name is required")
-	ErrParentNameRequired  = errors.New("parent name is required")
-	ErrParentPhoneRequired = errors.New("parent phone is required")
-	ErrBranchAccessDenied  = errors.New("branch access denied")
+	ErrBranchAccessDenied = errors.New("branch access denied")
 )
 
 type UseCase struct {
@@ -30,18 +26,6 @@ func NewUseCase(sr domain.StudentRepository, ur domain.UserRepository) *UseCase 
 }
 
 func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) (Response, error) {
-	if req.FirstName == "" {
-		return Response{}, ErrFirstNameRequired
-	}
-	if req.LastName == "" {
-		return Response{}, ErrLastNameRequired
-	}
-	if req.ParentName == "" {
-		return Response{}, ErrParentNameRequired
-	}
-	if req.ParentPhone == "" {
-		return Response{}, ErrParentPhoneRequired
-	}
 
 	if role == "ADMIN" {
 		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
@@ -74,10 +58,7 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 	}
 
 	if req.Dob != nil && *req.Dob != "" {
-		parsed, err := time.Parse("2006-01-02", *req.Dob)
-		if err != nil {
-			return Response{}, errors.New("invalid date of birth format, expected YYYY-MM-DD")
-		}
+		parsed, _ := time.Parse("2006-01-02", *req.Dob)
 		student.Dob = &parsed
 	}
 

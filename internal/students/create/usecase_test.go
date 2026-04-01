@@ -71,66 +71,6 @@ func TestUseCase_Execute(t *testing.T) {
 			wantErr: ErrBranchAccessDenied,
 		},
 		{
-			name: "empty first name",
-			role: "SUPERADMIN",
-			req: Request{
-				BranchID:    branchID,
-				LastName:    "Doe",
-				ParentName:  "Jane",
-				ParentPhone: "+1234567890",
-			},
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {},
-			wantErr:   ErrFirstNameRequired,
-		},
-		{
-			name: "empty last name",
-			role: "SUPERADMIN",
-			req: Request{
-				BranchID:    branchID,
-				FirstName:   "John",
-				ParentName:  "Jane",
-				ParentPhone: "+1234567890",
-			},
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {},
-			wantErr:   ErrLastNameRequired,
-		},
-		{
-			name: "empty parent name",
-			role: "SUPERADMIN",
-			req: Request{
-				BranchID:    branchID,
-				FirstName:   "John",
-				LastName:    "Doe",
-				ParentPhone: "+1234567890",
-			},
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {},
-			wantErr:   ErrParentNameRequired,
-		},
-		{
-			name: "empty parent phone",
-			role: "SUPERADMIN",
-			req: Request{
-				BranchID:   branchID,
-				FirstName:  "John",
-				LastName:   "Doe",
-				ParentName: "Jane",
-			},
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {},
-			wantErr:   ErrParentPhoneRequired,
-		},
-		{
-			name: "invalid dob format",
-			role: "SUPERADMIN",
-			req: func() Request {
-				bad := "not-a-date"
-				r := validReq
-				r.Dob = &bad
-				return r
-			}(),
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {},
-			wantErr:   errors.New("invalid date of birth format, expected YYYY-MM-DD"),
-		},
-		{
 			name: "db error on create",
 			role: "SUPERADMIN",
 			req:  validReq,

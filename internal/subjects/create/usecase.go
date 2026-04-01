@@ -2,7 +2,6 @@ package create
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 )
@@ -16,10 +15,6 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
-	if req.Name == "" {
-		return nil, errors.New("subject name is required")
-	}
-
 	subject := &domain.Subject{
 		Name:        req.Name,
 		Description: req.Description,

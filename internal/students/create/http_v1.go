@@ -6,6 +6,7 @@ import (
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
+	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
@@ -50,6 +51,11 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid request body", nil)
 	}
 
+	if err := c.Validate(&req); err != nil {
+		valErrs := validator.ParseError(err)
+		return response.Error(c, http.StatusBadRequest, "VALIDATION_FAILED", "Invalid request data", valErrs)
+	}
+
 	userID, err := uuid.Parse(userClaims.UserID)
 	if err != nil {
 		return response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Invalid user ID in token", nil)
@@ -58,11 +64,6 @@ func (h *Handler) Handle(c echo.Context) error {
 	res, err := h.usecase.Execute(c.Request().Context(), userID, userClaims.Role, req)
 	if err != nil {
 		switch {
-		case errors.Is(err, ErrFirstNameRequired),
-			errors.Is(err, ErrLastNameRequired),
-			errors.Is(err, ErrParentNameRequired),
-			errors.Is(err, ErrParentPhoneRequired):
-			return response.Error(c, http.StatusBadRequest, "VALIDATION_FAILED", err.Error(), nil)
 		case errors.Is(err, ErrBranchAccessDenied):
 			return response.Error(c, http.StatusForbidden, "BRANCH_ACCESS_DENIED", err.Error(), nil)
 		default:

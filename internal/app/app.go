@@ -26,6 +26,7 @@ import (
 	"github.com/Xlussov/EduCRM-be/internal/users/admins"
 	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
+	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/labstack/echo/v4"
 )
 
@@ -109,6 +110,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		StudentsGet:     studentsget.NewHandler(studentsGetUC).Handle,
 	}
 
+	e.Validator = validator.New()
 	httprouter.Init(log, cfg, e, h)
 
 	return &App{

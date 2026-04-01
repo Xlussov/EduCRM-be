@@ -5,6 +5,7 @@ import (
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
+	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/labstack/echo/v4"
 )
@@ -48,11 +49,13 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid request body", nil)
 	}
 
+	if err := c.Validate(&req); err != nil {
+		valErrs := validator.ParseError(err)
+		return response.Error(c, http.StatusBadRequest, "VALIDATION_FAILED", "Invalid request data", valErrs)
+	}
+
 	res, err := h.usecase.Execute(c.Request().Context(), req)
 	if err != nil {
-		if err.Error() == "subject name is required" {
-			return response.Error(c, http.StatusBadRequest, "VALIDATION_FAILED", err.Error(), nil)
-		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to create subject", nil)
 	}
 

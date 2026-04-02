@@ -607,6 +607,74 @@ const docTemplate = `{
                         }
                     }
                 }
+            },
+            "put": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "students"
+                ],
+                "summary": "Update Student",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Student ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Student details",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_students_update.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Updated",
+                        "schema": {
+                            "$ref": "#/definitions/internal_students_update.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
             }
         },
         "/api/v1/students/{id}/archive": {
@@ -1044,18 +1112,25 @@ const docTemplate = `{
             "properties": {
                 "branch_ids": {
                     "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
                     "items": {
                         "type": "string"
                     }
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 6
                 },
                 "phone": {
                     "type": "string"
@@ -1098,13 +1173,19 @@ const docTemplate = `{
             ],
             "properties": {
                 "address": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
                 },
                 "city": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 }
             }
         },
@@ -1145,13 +1226,19 @@ const docTemplate = `{
             ],
             "properties": {
                 "address": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
                 },
                 "city": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 }
             }
         },
@@ -1174,7 +1261,9 @@ const docTemplate = `{
             ],
             "properties": {
                 "address": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
                 },
                 "branch_id": {
                     "type": "string"
@@ -1186,22 +1275,30 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "parent_email": {
                     "type": "string"
                 },
                 "parent_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "parent_phone": {
                     "type": "string"
                 },
                 "parent_relationship": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "phone": {
                     "type": "string"
@@ -1274,14 +1371,80 @@ const docTemplate = `{
                 }
             }
         },
-        "internal_subjects_create.Request": {
+        "internal_students_update.Request": {
             "type": "object",
+            "required": [
+                "first_name",
+                "last_name",
+                "parent_name",
+                "parent_phone"
+            ],
             "properties": {
-                "description": {
+                "address": {
+                    "type": "string",
+                    "maxLength": 255,
+                    "minLength": 2
+                },
+                "dob": {
                     "type": "string"
                 },
-                "name": {
+                "email": {
                     "type": "string"
+                },
+                "first_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "last_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "parent_email": {
+                    "type": "string"
+                },
+                "parent_name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "parent_phone": {
+                    "type": "string"
+                },
+                "parent_relationship": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
+                },
+                "phone": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_students_update.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_subjects_create.Request": {
+            "type": "object",
+            "required": [
+                "name"
+            ],
+            "properties": {
+                "description": {
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 2
+                },
+                "name": {
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 }
             }
         },
@@ -1312,12 +1475,19 @@ const docTemplate = `{
         },
         "internal_subjects_update.Request": {
             "type": "object",
+            "required": [
+                "name"
+            ],
             "properties": {
                 "description": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 500,
+                    "minLength": 2
                 },
                 "name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 }
             }
         },
@@ -1476,18 +1646,30 @@ const docTemplate = `{
         },
         "teachers.Request": {
             "type": "object",
+            "required": [
+                "branch_id",
+                "first_name",
+                "last_name",
+                "password",
+                "phone"
+            ],
             "properties": {
                 "branch_id": {
                     "type": "string"
                 },
                 "first_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "last_name": {
-                    "type": "string"
+                    "type": "string",
+                    "maxLength": 50,
+                    "minLength": 2
                 },
                 "password": {
-                    "type": "string"
+                    "type": "string",
+                    "minLength": 6
                 },
                 "phone": {
                     "type": "string"

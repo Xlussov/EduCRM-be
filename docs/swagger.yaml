@@ -4,12 +4,19 @@ definitions:
       branch_ids:
         items:
           type: string
+        minItems: 1
         type: array
+        uniqueItems: true
       first_name:
+        maxLength: 50
+        minLength: 2
         type: string
       last_name:
+        maxLength: 50
+        minLength: 2
         type: string
       password:
+        minLength: 6
         type: string
       phone:
         type: string
@@ -41,10 +48,16 @@ definitions:
   internal_branches_create.Request:
     properties:
       address:
+        maxLength: 255
+        minLength: 2
         type: string
       city:
+        maxLength: 50
+        minLength: 2
         type: string
       name:
+        maxLength: 50
+        minLength: 2
         type: string
     required:
     - address
@@ -72,10 +85,16 @@ definitions:
   internal_branches_update.Request:
     properties:
       address:
+        maxLength: 255
+        minLength: 2
         type: string
       city:
+        maxLength: 50
+        minLength: 2
         type: string
       name:
+        maxLength: 50
+        minLength: 2
         type: string
     required:
     - address
@@ -90,6 +109,8 @@ definitions:
   internal_students_create.Request:
     properties:
       address:
+        maxLength: 255
+        minLength: 2
         type: string
       branch_id:
         type: string
@@ -98,16 +119,24 @@ definitions:
       email:
         type: string
       first_name:
+        maxLength: 50
+        minLength: 2
         type: string
       last_name:
+        maxLength: 50
+        minLength: 2
         type: string
       parent_email:
         type: string
       parent_name:
+        maxLength: 50
+        minLength: 2
         type: string
       parent_phone:
         type: string
       parent_relationship:
+        maxLength: 50
+        minLength: 2
         type: string
       phone:
         type: string
@@ -161,12 +190,61 @@ definitions:
           $ref: '#/definitions/list.StudentResponse'
         type: array
     type: object
+  internal_students_update.Request:
+    properties:
+      address:
+        maxLength: 255
+        minLength: 2
+        type: string
+      dob:
+        type: string
+      email:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      parent_email:
+        type: string
+      parent_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      parent_phone:
+        type: string
+      parent_relationship:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+    required:
+    - first_name
+    - last_name
+    - parent_name
+    - parent_phone
+    type: object
+  internal_students_update.Response:
+    properties:
+      message:
+        type: string
+    type: object
   internal_subjects_create.Request:
     properties:
       description:
+        maxLength: 500
+        minLength: 2
         type: string
       name:
+        maxLength: 50
+        minLength: 2
         type: string
+    required:
+    - name
     type: object
   internal_subjects_create.Response:
     properties:
@@ -187,9 +265,15 @@ definitions:
   internal_subjects_update.Request:
     properties:
       description:
+        maxLength: 500
+        minLength: 2
         type: string
       name:
+        maxLength: 50
+        minLength: 2
         type: string
+    required:
+    - name
     type: object
   list.BranchResponse:
     properties:
@@ -295,13 +379,24 @@ definitions:
       branch_id:
         type: string
       first_name:
+        maxLength: 50
+        minLength: 2
         type: string
       last_name:
+        maxLength: 50
+        minLength: 2
         type: string
       password:
+        minLength: 6
         type: string
       phone:
         type: string
+    required:
+    - branch_id
+    - first_name
+    - last_name
+    - password
+    - phone
     type: object
   teachers.Response:
     properties:
@@ -692,6 +787,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Get Student
+      tags:
+      - students
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Student ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Student details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_students_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated
+          schema:
+            $ref: '#/definitions/internal_students_update.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Student
       tags:
       - students
   /api/v1/students/{id}/archive:

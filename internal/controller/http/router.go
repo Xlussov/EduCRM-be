@@ -28,6 +28,7 @@ type Handlers struct {
 	StudentsArchive echo.HandlerFunc
 	StudentsList    echo.HandlerFunc
 	StudentsGet     echo.HandlerFunc
+	StudentsUpdate  echo.HandlerFunc
 }
 
 type Logger interface {
@@ -82,6 +83,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		studentsGroup.POST("", h.StudentsCreate)
 		studentsGroup.GET("", h.StudentsList)
 		studentsGroup.GET("/:id", h.StudentsGet)
+		studentsGroup.PUT("/:id", h.StudentsUpdate)
 		studentsGroup.PATCH("/:id/archive", h.StudentsArchive)
 	}
 }

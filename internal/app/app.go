@@ -19,6 +19,7 @@ import (
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
 	studentslist "github.com/Xlussov/EduCRM-be/internal/students/list"
+	studentsupdate "github.com/Xlussov/EduCRM-be/internal/students/update"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
@@ -91,6 +92,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	studentsArchiveUC := studentsarchive.NewUseCase(studentRepo)
 	studentsListUC := studentslist.NewUseCase(studentRepo, userRepo)
 	studentsGetUC := studentsget.NewUseCase(studentRepo)
+	studentsUpdateUC := studentsupdate.NewUseCase(studentRepo, userRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -110,6 +112,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		StudentsArchive: studentsarchive.NewHandler(studentsArchiveUC).Handle,
 		StudentsList:    studentslist.NewHandler(studentsListUC).Handle,
 		StudentsGet:     studentsget.NewHandler(studentsGetUC).Handle,
+		StudentsUpdate:  studentsupdate.NewHandler(studentsUpdateUC).Handle,
 	}
 
 	e.Validator = validator.New()

@@ -16,7 +16,8 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, id uuid.UUID) (Response, error) {
-	if err := uc.subjectRepo.UpdateStatus(ctx, id, domain.StatusArchived); err != nil {
+	err := uc.subjectRepo.UpdateStatus(ctx, id, domain.StatusArchived)
+	if err != nil {
 		return Response{}, err
 	}
 	return Response{Message: "success"}, nil

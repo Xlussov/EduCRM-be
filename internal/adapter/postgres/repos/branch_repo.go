@@ -44,10 +44,11 @@ func (r *BranchRepository) Create(ctx context.Context, branch *domain.Branch) er
 
 func (r *BranchRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateBranchStatus(ctx, sqlc.UpdateBranchStatusParams{
+	err := q.UpdateBranchStatus(ctx, sqlc.UpdateBranchStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
+	return err
 }
 
 func (r *BranchRepository) GetAll(ctx context.Context) ([]*domain.Branch, error) {
@@ -109,12 +110,24 @@ func (r *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 	}, nil
 }
 
-func (r *BranchRepository) Update(ctx context.Context, branch *domain.Branch) error {
+func (r *BranchRepository) Update(ctx context.Context, branch *domain.Branch) (*domain.Branch, error) {
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateBranch(ctx, sqlc.UpdateBranchParams{
+	b, err := q.UpdateBranch(ctx, sqlc.UpdateBranchParams{
 		Name:    branch.Name,
 		Address: branch.Address,
 		City:    branch.City,
 		ID:      pgtype.UUID{Bytes: branch.ID, Valid: true},
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.Branch{
+		ID:        b.ID.Bytes,
+		Name:      b.Name,
+		Address:   b.Address,
+		City:      b.City,
+		Status:    domain.EntityStatus(b.Status.EntityStatus),
+		CreatedAt: b.CreatedAt.Time,
+		UpdatedAt: b.UpdatedAt.Time,
+	}, nil
 }

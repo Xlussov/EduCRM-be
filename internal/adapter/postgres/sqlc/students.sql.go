@@ -134,12 +134,12 @@ func (q *Queries) GetStudentsByBranchID(ctx context.Context, branchID pgtype.UUI
 	return items, nil
 }
 
-const updateStudent = `-- name: UpdateStudent :exec
+const updateStudent = `-- name: UpdateStudent :one
 UPDATE students
 SET first_name = $1, last_name = $2, dob = $3, phone = $4, email = $5,
     address = $6, parent_name = $7, parent_phone = $8, parent_email = $9,
     parent_relationship = $10
-WHERE id = $11
+WHERE id = $11 RETURNING id, branch_id, first_name, last_name, dob, phone, email, address, parent_name, parent_phone, parent_email, parent_relationship, status, created_at
 `
 
 type UpdateStudentParams struct {
@@ -156,8 +156,8 @@ type UpdateStudentParams struct {
 	ID                 pgtype.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateStudent(ctx context.Context, arg UpdateStudentParams) error {
-	_, err := q.db.Exec(ctx, updateStudent,
+func (q *Queries) UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error) {
+	row := q.db.QueryRow(ctx, updateStudent,
 		arg.FirstName,
 		arg.LastName,
 		arg.Dob,
@@ -170,7 +170,24 @@ func (q *Queries) UpdateStudent(ctx context.Context, arg UpdateStudentParams) er
 		arg.ParentRelationship,
 		arg.ID,
 	)
-	return err
+	var i Student
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.FirstName,
+		&i.LastName,
+		&i.Dob,
+		&i.Phone,
+		&i.Email,
+		&i.Address,
+		&i.ParentName,
+		&i.ParentPhone,
+		&i.ParentEmail,
+		&i.ParentRelationship,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const updateStudentStatus = `-- name: UpdateStudentStatus :exec

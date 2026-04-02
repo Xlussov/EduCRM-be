@@ -119,10 +119,10 @@ func (q *Queries) GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) (
 	return items, nil
 }
 
-const updateBranch = `-- name: UpdateBranch :exec
+const updateBranch = `-- name: UpdateBranch :one
 UPDATE branches
 SET name = $1, address = $2, city = $3, updated_at = NOW()
-WHERE id = $4
+WHERE id = $4 RETURNING id, name, address, city, status, created_at, updated_at
 `
 
 type UpdateBranchParams struct {
@@ -132,14 +132,24 @@ type UpdateBranchParams struct {
 	ID      pgtype.UUID `json:"id"`
 }
 
-func (q *Queries) UpdateBranch(ctx context.Context, arg UpdateBranchParams) error {
-	_, err := q.db.Exec(ctx, updateBranch,
+func (q *Queries) UpdateBranch(ctx context.Context, arg UpdateBranchParams) (Branch, error) {
+	row := q.db.QueryRow(ctx, updateBranch,
 		arg.Name,
 		arg.Address,
 		arg.City,
 		arg.ID,
 	)
-	return err
+	var i Branch
+	err := row.Scan(
+		&i.ID,
+		&i.Name,
+		&i.Address,
+		&i.City,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
 const updateBranchStatus = `-- name: UpdateBranchStatus :exec

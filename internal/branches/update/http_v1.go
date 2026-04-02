@@ -28,7 +28,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Produce json
 // @Param id path string true "Branch ID format(uuid)"
 // @Param request body Request true "Update branch details"
-// @Success 200 {object} map[string]string "Success message"
+// @Success 200 {object} Response "Successfully updated branch"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
 // @Failure 400 {object} response.ErrorResponse "Bad Request"
@@ -82,5 +82,5 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 
-	return response.Success(c, http.StatusNoContent, res)
+	return response.Success(c, http.StatusOK, res)
 }

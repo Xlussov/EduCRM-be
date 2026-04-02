@@ -36,9 +36,13 @@ func (m *StudentRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	return res, args.Error(1)
 }
 
-func (m *StudentRepository) Update(ctx context.Context, student *domain.Student) error {
+func (m *StudentRepository) Update(ctx context.Context, student *domain.Student) (*domain.Student, error) {
 	args := m.Called(ctx, student)
-	return args.Error(0)
+	var res *domain.Student
+	if args.Get(0) != nil {
+		res = args.Get(0).(*domain.Student)
+	}
+	return res, args.Error(1)
 }
 
 func (m *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.Student, error) {

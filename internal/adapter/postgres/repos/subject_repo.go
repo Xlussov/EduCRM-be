@@ -43,10 +43,11 @@ func (r *SubjectRepository) Create(ctx context.Context, subject *domain.Subject)
 
 func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateSubjectStatus(ctx, sqlc.UpdateSubjectStatusParams{
+	err := q.UpdateSubjectStatus(ctx, sqlc.UpdateSubjectStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
+	return err
 }
 
 func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, error) {
@@ -70,11 +71,22 @@ func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 	return subjects, nil
 }
 
-func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) error {
+func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) (*domain.Subject, error) {
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
+	s, err := q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
 		Name:        subject.Name,
 		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
 		ID:          pgtype.UUID{Bytes: subject.ID, Valid: true},
 	})
+	if err != nil {
+		return nil, err
+	}
+	return &domain.Subject{
+		ID:          s.ID.Bytes,
+		Name:        s.Name,
+		Description: s.Description.String,
+		Status:      domain.EntityStatus(s.Status.EntityStatus),
+		CreatedAt:   s.CreatedAt.Time,
+		UpdatedAt:   s.UpdatedAt.Time,
+	}, nil
 }

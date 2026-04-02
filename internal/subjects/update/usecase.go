@@ -22,8 +22,16 @@ func (uc *UseCase) Execute(ctx context.Context, subjectID uuid.UUID, req Request
 		Description: req.Description,
 	}
 
-	if err := uc.subjectRepo.Update(ctx, subject); err != nil {
+	updatedSubject, err := uc.subjectRepo.Update(ctx, subject)
+	if err != nil {
 		return Response{}, err
 	}
-	return Response{Message: "success"}, nil
+	return Response{
+		ID:          updatedSubject.ID.String(),
+		Name:        updatedSubject.Name,
+		Description: updatedSubject.Description,
+		Status:      string(updatedSubject.Status),
+		CreatedAt:   updatedSubject.CreatedAt,
+		UpdatedAt:   updatedSubject.UpdatedAt,
+	}, nil
 }

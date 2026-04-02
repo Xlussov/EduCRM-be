@@ -27,7 +27,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Produce json
 // @Param id path string true "Student ID" format(uuid)
 // @Param request body Request true "Student details"
-// @Success 200 {object} Response "Updated"
+// @Success 200 {object} Response "Updated student"
 // @Failure 400 {object} response.ErrorResponse "Bad Request"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"

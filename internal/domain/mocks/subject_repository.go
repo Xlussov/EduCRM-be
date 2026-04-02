@@ -30,7 +30,11 @@ func (m *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 	return nil, args.Error(1)
 }
 
-func (m *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) error {
+func (m *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) (*domain.Subject, error) {
 	args := m.Called(ctx, subject)
-	return args.Error(0)
+	var res *domain.Subject
+	if args.Get(0) != nil {
+		res = args.Get(0).(*domain.Subject)
+	}
+	return res, args.Error(1)
 }

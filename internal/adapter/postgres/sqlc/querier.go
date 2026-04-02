@@ -30,11 +30,11 @@ type Querier interface {
 	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
 	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error
-	UpdateBranch(ctx context.Context, arg UpdateBranchParams) error
+	UpdateBranch(ctx context.Context, arg UpdateBranchParams) (Branch, error)
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
-	UpdateStudent(ctx context.Context, arg UpdateStudentParams) error
+	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error
-	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) error
+	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
 	UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error
 }
 

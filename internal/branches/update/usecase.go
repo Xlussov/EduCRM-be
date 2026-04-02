@@ -25,8 +25,17 @@ func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID, req Request)
 		City:    req.City,
 	}
 
-	if err := uc.branchRepo.Update(ctx, branch); err != nil {
+	updatedBranch, err := uc.branchRepo.Update(ctx, branch)
+	if err != nil {
 		return Response{}, err
 	}
-	return Response{Message: "success"}, nil
+	return Response{
+		ID:        updatedBranch.ID.String(),
+		Name:      updatedBranch.Name,
+		Address:   updatedBranch.Address,
+		City:      updatedBranch.City,
+		Status:    string(updatedBranch.Status),
+		CreatedAt: updatedBranch.CreatedAt,
+		UpdatedAt: updatedBranch.UpdatedAt,
+	}, nil
 }

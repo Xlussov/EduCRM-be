@@ -30,5 +30,5 @@ type BranchRepository interface {
 	GetAll(ctx context.Context) ([]*Branch, error)
 	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Branch, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Branch, error)
-	Update(ctx context.Context, branch *Branch) error
+	Update(ctx context.Context, branch *Branch) (*Branch, error)
 }

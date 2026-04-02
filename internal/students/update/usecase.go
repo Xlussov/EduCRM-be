@@ -68,9 +68,31 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, s
 		student.Dob = &parsed
 	}
 
-	if err := uc.studentRepo.Update(ctx, student); err != nil {
+	updatedStudent, err := uc.studentRepo.Update(ctx, student)
+	if err != nil {
 		return Response{}, err
 	}
 
-	return Response{Message: "success"}, nil
+	var dobStr *string
+	if updatedStudent.Dob != nil {
+		d := updatedStudent.Dob.Format("2006-01-02")
+		dobStr = &d
+	}
+
+	return Response{
+		ID:                 updatedStudent.ID.String(),
+		BranchID:           updatedStudent.BranchID.String(),
+		FirstName:          updatedStudent.FirstName,
+		LastName:           updatedStudent.LastName,
+		Dob:                dobStr,
+		Phone:              updatedStudent.Phone,
+		Email:              updatedStudent.Email,
+		Address:            updatedStudent.Address,
+		ParentName:         updatedStudent.ParentName,
+		ParentPhone:        updatedStudent.ParentPhone,
+		ParentEmail:        updatedStudent.ParentEmail,
+		ParentRelationship: updatedStudent.ParentRelationship,
+		Status:             string(updatedStudent.Status),
+		CreatedAt:          updatedStudent.CreatedAt,
+	}, nil
 }

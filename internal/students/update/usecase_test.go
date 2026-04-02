@@ -40,7 +40,12 @@ func TestUseCase_Execute(t *testing.T) {
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID && s.FirstName == "Jane" && s.LastName == "Smith"
-				})).Return(nil)
+				})).Return(&domain.Student{
+					ID:        studentID,
+					BranchID:  branchID,
+					FirstName: "Jane",
+					LastName:  "Smith",
+				}, nil)
 			},
 		},
 		{
@@ -52,7 +57,12 @@ func TestUseCase_Execute(t *testing.T) {
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID
-				})).Return(nil)
+				})).Return(&domain.Student{
+					ID:        studentID,
+					BranchID:  branchID,
+					FirstName: "Jane",
+					LastName:  "Smith",
+				}, nil)
 			},
 		},
 		{
@@ -90,7 +100,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("Update", mock.Anything, mock.Anything).Return(errors.New("db error"))
+				sr.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),
 		},
@@ -112,7 +122,9 @@ func TestUseCase_Execute(t *testing.T) {
 				assert.Equal(t, tt.wantErr.Error(), err.Error())
 			} else {
 				assert.NoError(t, err)
-				assert.Equal(t, "success", res.Message)
+				assert.Equal(t, studentID.String(), res.ID)
+				assert.Equal(t, "Jane", res.FirstName)
+				assert.Equal(t, "Smith", res.LastName)
 			}
 
 			sr.AssertExpectations(t)

@@ -67,10 +67,11 @@ func (r *StudentRepository) Create(ctx context.Context, student *domain.Student)
 
 func (r *StudentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateStudentStatus(ctx, sqlc.UpdateStudentStatusParams{
+	err := q.UpdateStudentStatus(ctx, sqlc.UpdateStudentStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
+	return err
 }
 
 func (r *StudentRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
@@ -91,7 +92,7 @@ func (r *StudentRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.
 	return r.toDomain(s), nil
 }
 
-func (r *StudentRepository) Update(ctx context.Context, student *domain.Student) error {
+func (r *StudentRepository) Update(ctx context.Context, student *domain.Student) (*domain.Student, error) {
 	params := sqlc.UpdateStudentParams{
 		FirstName:   student.FirstName,
 		LastName:    student.LastName,
@@ -118,7 +119,11 @@ func (r *StudentRepository) Update(ctx context.Context, student *domain.Student)
 		params.ParentRelationship = pgtype.Text{String: *student.ParentRelationship, Valid: true}
 	}
 	q := sqlc.New(r.db(ctx))
-	return q.UpdateStudent(ctx, params)
+	s, err := q.UpdateStudent(ctx, params)
+	if err != nil {
+		return nil, err
+	}
+	return r.toDomain(s), nil
 }
 
 func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.Student, error) {

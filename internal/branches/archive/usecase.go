@@ -18,7 +18,8 @@ func NewUseCase(br domain.BranchRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID) (Response, error) {
-	if err := uc.branchRepo.UpdateStatus(ctx, branchID, domain.StatusArchived); err != nil {
+	err := uc.branchRepo.UpdateStatus(ctx, branchID, domain.StatusArchived)
+	if err != nil {
 		return Response{}, err
 	}
 	return Response{Message: "success"}, nil

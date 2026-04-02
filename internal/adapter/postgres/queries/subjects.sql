@@ -13,7 +13,7 @@ SELECT id, name, description, status, created_at, updated_at
 FROM subjects
 ORDER BY name ASC;
 
--- name: UpdateSubject :exec
+-- name: UpdateSubject :one
 UPDATE subjects
 SET name = $1, description = $2, updated_at = NOW()
-WHERE id = $3;
+WHERE id = $3 RETURNING *;

@@ -19,12 +19,12 @@ SELECT id, branch_id, first_name, last_name, dob, phone, email, address, parent_
 FROM students 
 WHERE id = $1;
 
--- name: UpdateStudent :exec
+-- name: UpdateStudent :one
 UPDATE students
 SET first_name = $1, last_name = $2, dob = $3, phone = $4, email = $5,
     address = $6, parent_name = $7, parent_phone = $8, parent_email = $9,
     parent_relationship = $10
-WHERE id = $11;
+WHERE id = $11 RETURNING *;
 
 -- name: GetStudentsByBranchID :many
 SELECT id, branch_id, first_name, last_name, dob, phone, email, address, parent_name, parent_phone, parent_email, parent_relationship, status, created_at

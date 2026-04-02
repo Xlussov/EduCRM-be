@@ -1,9 +1,11 @@
 package teachers
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
@@ -69,6 +71,9 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), req)
 	if err != nil {
+		if errors.Is(err, domain.ErrPhoneAlreadyExists) {
+			return response.Error(c, http.StatusConflict, "PHONE_ALREADY_EXISTS", "User with this phone already exists", nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 

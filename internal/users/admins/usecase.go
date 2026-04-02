@@ -2,6 +2,7 @@ package admins
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"golang.org/x/crypto/bcrypt"
@@ -32,6 +33,9 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
 
 		if err := uc.userRepo.Create(txCtx, user); err != nil {
+			if errors.Is(err, domain.ErrAlreadyExists) {
+				return domain.ErrPhoneAlreadyExists
+			}
 			return err
 		}
 

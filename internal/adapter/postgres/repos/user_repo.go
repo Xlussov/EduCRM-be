@@ -2,11 +2,13 @@ package repos
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -38,11 +40,13 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 		Role:         sqlc.UserRole(user.Role),
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return domain.ErrAlreadyExists
+		}
 		return err
 	}
 	user.ID = row.ID.Bytes
-	// Assign generated values back to the user object
-	// Normally we'd do a returning * to populate dates, assuming sqlc returned it:
 	return nil
 }
 

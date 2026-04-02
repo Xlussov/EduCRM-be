@@ -2,6 +2,7 @@ package teachers
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -34,6 +35,9 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
 
 		if err := uc.userRepo.Create(ctx, user); err != nil {
+			if errors.Is(err, domain.ErrAlreadyExists) {
+				return domain.ErrPhoneAlreadyExists
+			}
 			return err
 		}
 

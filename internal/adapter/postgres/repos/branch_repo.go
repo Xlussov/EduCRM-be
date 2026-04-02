@@ -1,8 +1,9 @@
-package postgres
+package repos
 
 import (
 	"context"
 
+	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -11,17 +12,25 @@ import (
 )
 
 type BranchRepository struct {
-	q *sqlc.Queries
+	pool *pgxpool.Pool
 }
 
 func NewBranchRepository(pool *pgxpool.Pool) *BranchRepository {
 	return &BranchRepository{
-		q: sqlc.New(pool),
+		pool: pool,
 	}
 }
 
+func (r *BranchRepository) db(ctx context.Context) sqlc.DBTX {
+	if tx := postgres.ExtractTx(ctx); tx != nil {
+		return tx
+	}
+	return r.pool
+}
+
 func (r *BranchRepository) Create(ctx context.Context, branch *domain.Branch) error {
-	id, err := r.q.CreateBranch(ctx, sqlc.CreateBranchParams{
+	q := sqlc.New(r.db(ctx))
+	id, err := q.CreateBranch(ctx, sqlc.CreateBranchParams{
 		Name:    branch.Name,
 		Address: branch.Address,
 		City:    branch.City,
@@ -34,14 +43,16 @@ func (r *BranchRepository) Create(ctx context.Context, branch *domain.Branch) er
 }
 
 func (r *BranchRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
-	return r.q.UpdateBranchStatus(ctx, sqlc.UpdateBranchStatusParams{
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateBranchStatus(ctx, sqlc.UpdateBranchStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
 }
 
 func (r *BranchRepository) GetAll(ctx context.Context) ([]*domain.Branch, error) {
-	branches, err := r.q.GetAllBranches(ctx)
+	q := sqlc.New(r.db(ctx))
+	branches, err := q.GetAllBranches(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -61,7 +72,8 @@ func (r *BranchRepository) GetAll(ctx context.Context) ([]*domain.Branch, error)
 }
 
 func (r *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([]*domain.Branch, error) {
-	branches, err := r.q.GetBranchesByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	branches, err := q.GetBranchesByUserID(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 	if err != nil {
 		return nil, err
 	}
@@ -81,7 +93,8 @@ func (r *BranchRepository) GetByUserID(ctx context.Context, userID uuid.UUID) ([
 }
 
 func (r *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Branch, error) {
-	b, err := r.q.GetBranchByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	b, err := q.GetBranchByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
 	if err != nil {
 		return nil, err
 	}
@@ -97,7 +110,8 @@ func (r *BranchRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.B
 }
 
 func (r *BranchRepository) Update(ctx context.Context, branch *domain.Branch) error {
-	return r.q.UpdateBranch(ctx, sqlc.UpdateBranchParams{
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateBranch(ctx, sqlc.UpdateBranchParams{
 		Name:    branch.Name,
 		Address: branch.Address,
 		City:    branch.City,

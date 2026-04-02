@@ -1,8 +1,9 @@
-package postgres
+package repos
 
 import (
 	"context"
 
+	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -11,13 +12,20 @@ import (
 )
 
 type StudentRepository struct {
-	q *sqlc.Queries
+	pool *pgxpool.Pool
 }
 
 func NewStudentRepository(pool *pgxpool.Pool) *StudentRepository {
 	return &StudentRepository{
-		q: sqlc.New(pool),
+		pool: pool,
 	}
+}
+
+func (r *StudentRepository) db(ctx context.Context) sqlc.DBTX {
+	if tx := postgres.ExtractTx(ctx); tx != nil {
+		return tx
+	}
+	return r.pool
 }
 
 func (r *StudentRepository) Create(ctx context.Context, student *domain.Student) error {
@@ -48,7 +56,8 @@ func (r *StudentRepository) Create(ctx context.Context, student *domain.Student)
 		params.ParentRelationship = pgtype.Text{String: *student.ParentRelationship, Valid: true}
 	}
 
-	id, err := r.q.CreateStudent(ctx, params)
+	q := sqlc.New(r.db(ctx))
+	id, err := q.CreateStudent(ctx, params)
 	if err != nil {
 		return err
 	}
@@ -57,14 +66,16 @@ func (r *StudentRepository) Create(ctx context.Context, student *domain.Student)
 }
 
 func (r *StudentRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
-	return r.q.UpdateStudentStatus(ctx, sqlc.UpdateStudentStatusParams{
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateStudentStatus(ctx, sqlc.UpdateStudentStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
 }
 
 func (r *StudentRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {
-	branchID, err := r.q.GetStudentBranchID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	branchID, err := q.GetStudentBranchID(ctx, pgtype.UUID{Bytes: id, Valid: true})
 	if err != nil {
 		return uuid.UUID{}, err
 	}
@@ -72,7 +83,8 @@ func (r *StudentRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid
 }
 
 func (r *StudentRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Student, error) {
-	s, err := r.q.GetStudentByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	s, err := q.GetStudentByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
 	if err != nil {
 		return nil, err
 	}
@@ -105,11 +117,13 @@ func (r *StudentRepository) Update(ctx context.Context, student *domain.Student)
 	if student.ParentRelationship != nil {
 		params.ParentRelationship = pgtype.Text{String: *student.ParentRelationship, Valid: true}
 	}
-	return r.q.UpdateStudent(ctx, params)
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateStudent(ctx, params)
 }
 
 func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.Student, error) {
-	students, err := r.q.GetStudentsByBranchID(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	students, err := q.GetStudentsByBranchID(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
 	if err != nil {
 		return nil, err
 	}

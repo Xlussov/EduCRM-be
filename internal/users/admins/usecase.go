@@ -8,11 +8,12 @@ import (
 )
 
 type UseCase struct {
-	userRepo domain.UserRepository
+	userRepo  domain.UserRepository
+	txManager domain.TxManager
 }
 
-func NewUseCase(ur domain.UserRepository) *UseCase {
-	return &UseCase{userRepo: ur}
+func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
+	return &UseCase{userRepo: ur, txManager: tm}
 }
 
 func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
@@ -28,15 +29,23 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 		LastName:     req.LastName,
 		Role:         domain.RoleAdmin,
 	}
+	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
 
-	if err := uc.userRepo.Create(ctx, user); err != nil {
-		return Response{}, err
-	}
-
-	if len(req.BranchIDs) > 0 {
-		if err := uc.userRepo.AssignToBranches(ctx, user.ID, req.BranchIDs); err != nil {
-			return Response{}, err
+		if err := uc.userRepo.Create(txCtx, user); err != nil {
+			return err
 		}
+
+		if len(req.BranchIDs) > 0 {
+			if err := uc.userRepo.AssignToBranches(txCtx, user.ID, req.BranchIDs); err != nil {
+				return err
+			}
+		}
+
+		return nil
+	})
+
+	if err != nil {
+		return Response{}, err
 	}
 
 	return Response{ID: user.ID}, nil

@@ -1,8 +1,9 @@
-package postgres
+package repos
 
 import (
 	"context"
 
+	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -11,17 +12,25 @@ import (
 )
 
 type SubjectRepository struct {
-	q *sqlc.Queries
+	pool *pgxpool.Pool
 }
 
 func NewSubjectRepository(pool *pgxpool.Pool) *SubjectRepository {
 	return &SubjectRepository{
-		q: sqlc.New(pool),
+		pool: pool,
 	}
 }
 
+func (r *SubjectRepository) db(ctx context.Context) sqlc.DBTX {
+	if tx := postgres.ExtractTx(ctx); tx != nil {
+		return tx
+	}
+	return r.pool
+}
+
 func (r *SubjectRepository) Create(ctx context.Context, subject *domain.Subject) error {
-	id, err := r.q.CreateSubject(ctx, sqlc.CreateSubjectParams{
+	q := sqlc.New(r.db(ctx))
+	id, err := q.CreateSubject(ctx, sqlc.CreateSubjectParams{
 		Name:        subject.Name,
 		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
 	})
@@ -33,14 +42,16 @@ func (r *SubjectRepository) Create(ctx context.Context, subject *domain.Subject)
 }
 
 func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
-	return r.q.UpdateSubjectStatus(ctx, sqlc.UpdateSubjectStatusParams{
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateSubjectStatus(ctx, sqlc.UpdateSubjectStatusParams{
 		Status: sqlc.NullEntityStatus{EntityStatus: sqlc.EntityStatus(status), Valid: true},
 		ID:     pgtype.UUID{Bytes: id, Valid: true},
 	})
 }
 
 func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, error) {
-	rows, err := r.q.GetAllSubjects(ctx)
+	q := sqlc.New(r.db(ctx))
+	rows, err := q.GetAllSubjects(ctx)
 	if err != nil {
 		return nil, err
 	}
@@ -60,7 +71,8 @@ func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 }
 
 func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) error {
-	return r.q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
 		Name:        subject.Name,
 		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
 		ID:          pgtype.UUID{Bytes: subject.ID, Valid: true},

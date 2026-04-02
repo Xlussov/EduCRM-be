@@ -44,7 +44,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 		userRepo.On("AssignToBranches", mock.Anything, userId, []uuid.UUID{branchId}).Return(nil)
 
-		uc := NewUseCase(branchRepo, userRepo)
+		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
 		res, err := uc.Execute(context.Background(), userId, req)
 
 		assert.NoError(t, err)
@@ -60,7 +60,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 		branchRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Branch")).Return(errors.New("db error"))
 
-		uc := NewUseCase(branchRepo, userRepo)
+		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
 		_, err := uc.Execute(context.Background(), userId, req)
 
 		assert.Error(t, err)
@@ -81,7 +81,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 		userRepo.On("AssignToBranches", mock.Anything, userId, []uuid.UUID{branchId}).Return(errors.New("db user error"))
 
-		uc := NewUseCase(branchRepo, userRepo)
+		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
 		_, err := uc.Execute(context.Background(), userId, req)
 
 		assert.Error(t, err)

@@ -59,7 +59,7 @@ func TestUseCase_Execute(t *testing.T) {
 			userRepo := new(mocks.UserRepository)
 			tt.mockSetup(userRepo)
 
-			uc := NewUseCase(userRepo)
+			uc := NewUseCase(userRepo, &mocks.MockTxManager{})
 			res, err := uc.Execute(context.Background(), tt.req)
 
 			if tt.expectedError != "" {

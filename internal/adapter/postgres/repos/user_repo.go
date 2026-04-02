@@ -1,8 +1,9 @@
-package postgres
+package repos
 
 import (
 	"context"
 
+	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -11,17 +12,25 @@ import (
 )
 
 type UserRepository struct {
-	q *sqlc.Queries
+	pool *pgxpool.Pool
 }
 
 func NewUserRepository(pool *pgxpool.Pool) *UserRepository {
 	return &UserRepository{
-		q: sqlc.New(pool),
+		pool: pool,
 	}
 }
 
+func (r *UserRepository) db(ctx context.Context) sqlc.DBTX {
+	if tx := postgres.ExtractTx(ctx); tx != nil {
+		return tx
+	}
+	return r.pool
+}
+
 func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
-	row, err := r.q.CreateUser(ctx, sqlc.CreateUserParams{
+	q := sqlc.New(r.db(ctx))
+	row, err := q.CreateUser(ctx, sqlc.CreateUserParams{
 		Phone:        user.Phone,
 		PasswordHash: user.PasswordHash,
 		FirstName:    user.FirstName,
@@ -38,7 +47,8 @@ func (r *UserRepository) Create(ctx context.Context, user *domain.User) error {
 }
 
 func (r *UserRepository) GetByPhone(ctx context.Context, phone string) (*domain.User, error) {
-	row, err := r.q.GetUserByPhone(ctx, phone)
+	q := sqlc.New(r.db(ctx))
+	row, err := q.GetUserByPhone(ctx, phone)
 	if err != nil {
 		return nil, err
 	}
@@ -56,7 +66,8 @@ func (r *UserRepository) GetByPhone(ctx context.Context, phone string) (*domain.
 }
 
 func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.User, error) {
-	row, err := r.q.GetUserByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	row, err := q.GetUserByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
 	if err != nil {
 		return nil, err
 	}
@@ -74,8 +85,9 @@ func (r *UserRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Use
 }
 
 func (r *UserRepository) AssignToBranches(ctx context.Context, userID uuid.UUID, branchIDs []uuid.UUID) error {
+	q := sqlc.New(r.db(ctx))
 	for _, bID := range branchIDs {
-		err := r.q.AssignUserToBranch(ctx, sqlc.AssignUserToBranchParams{
+		err := q.AssignUserToBranch(ctx, sqlc.AssignUserToBranchParams{
 			UserID:   pgtype.UUID{Bytes: userID, Valid: true},
 			BranchID: pgtype.UUID{Bytes: bID, Valid: true},
 		})
@@ -87,7 +99,8 @@ func (r *UserRepository) AssignToBranches(ctx context.Context, userID uuid.UUID,
 }
 
 func (r *UserRepository) GetUserBranchIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error) {
-	rows, err := r.q.GetUserBranchIDs(ctx, pgtype.UUID{Bytes: userID, Valid: true})
+	q := sqlc.New(r.db(ctx))
+	rows, err := q.GetUserBranchIDs(ctx, pgtype.UUID{Bytes: userID, Valid: true})
 	if err != nil {
 		return nil, err
 	}

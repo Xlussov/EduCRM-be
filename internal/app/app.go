@@ -5,8 +5,8 @@ import (
 	"net/http"
 	"sync"
 
-	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres"
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
+	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/repos"
 	"github.com/Xlussov/EduCRM-be/internal/auth/login"
 	"github.com/Xlussov/EduCRM-be/internal/auth/refresh"
 	branchesarchive "github.com/Xlussov/EduCRM-be/internal/branches/archive"
@@ -72,11 +72,13 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subjectRepo := repo.NewSubjectRepository(dbPool.Conn())
 	studentRepo := repo.NewStudentRepository(dbPool.Conn())
 
+	txManager := postgres.NewTxManager(dbPool.Conn())
+
 	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
-	adminsUC := admins.NewUseCase(userRepo)
-	teachersUC := teachers.NewUseCase(userRepo)
-	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo)
+	adminsUC := admins.NewUseCase(userRepo, txManager)
+	teachersUC := teachers.NewUseCase(userRepo, txManager)
+	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)
 	branchesArchiveUC := branchesarchive.NewUseCase(branchRepo)
 	branchesListUC := brancheslist.NewUseCase(branchRepo)
 	branchesGetUC := branchesget.NewUseCase(branchRepo)

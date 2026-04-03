@@ -11,8 +11,10 @@ import (
 )
 
 type Querier interface {
+	AddStudentToGroup(ctx context.Context, arg AddStudentToGroupParams) error
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
+	CreateGroup(ctx context.Context, arg CreateGroupParams) (pgtype.UUID, error)
 	CreateStudent(ctx context.Context, arg CreateStudentParams) (pgtype.UUID, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (pgtype.UUID, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
@@ -20,6 +22,11 @@ type Querier interface {
 	GetAllSubjects(ctx context.Context) ([]Subject, error)
 	GetBranchByID(ctx context.Context, id pgtype.UUID) (Branch, error)
 	GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) ([]Branch, error)
+	GetGroupActiveStudentIDs(ctx context.Context, groupID pgtype.UUID) ([]pgtype.UUID, error)
+	GetGroupBranchID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
+	GetGroupByID(ctx context.Context, id pgtype.UUID) (Group, error)
+	GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error)
+	GetGroupsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]GetGroupsByBranchIDRow, error)
 	GetRefreshToken(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetStudentBranchID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error)
@@ -27,11 +34,13 @@ type Querier interface {
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByPhone(ctx context.Context, phone string) (User, error)
+	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
 	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
 	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error
 	UpdateBranch(ctx context.Context, arg UpdateBranchParams) (Branch, error)
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
+	UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) (Group, error)
 	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)

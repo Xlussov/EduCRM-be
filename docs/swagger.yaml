@@ -118,6 +118,23 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_groups_create.Request:
+    properties:
+      branch_id:
+        type: string
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - branch_id
+    - name
+    type: object
+  internal_groups_create.Response:
+    properties:
+      id:
+        type: string
+    type: object
   internal_students_archive.Response:
     properties:
       message:
@@ -721,6 +738,45 @@ paths:
       summary: Archive Branch
       tags:
       - branches
+  /api/v1/groups:
+    post:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_groups_create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_groups_create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create Group
+      tags:
+      - groups
   /api/v1/students:
     get:
       parameters:

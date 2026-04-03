@@ -40,6 +40,15 @@ definitions:
     x-enum-varnames:
     - StatusActive
     - StatusArchived
+  get.StudentResponse:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+    type: object
   internal_branches_archive.Response:
     properties:
       message:
@@ -135,12 +144,43 @@ definitions:
       id:
         type: string
     type: object
+  internal_groups_get.Response:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      students:
+        items:
+          $ref: '#/definitions/get.StudentResponse'
+        type: array
+    type: object
   internal_groups_list.Response:
     properties:
       groups:
         items:
           $ref: '#/definitions/list.GroupResponse'
         type: array
+    type: object
+  internal_groups_update.Request:
+    properties:
+      name:
+        maxLength: 255
+        minLength: 1
+        type: string
+    required:
+    - name
+    type: object
+  internal_groups_update.Response:
+    properties:
+      branch_id:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
     type: object
   internal_students_archive.Response:
     properties:
@@ -829,6 +869,95 @@ paths:
       security:
       - BearerAuth: []
       summary: Create Group
+      tags:
+      - groups
+  /api/v1/groups/{id}:
+    get:
+      parameters:
+      - description: Group ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Group details
+          schema:
+            $ref: '#/definitions/internal_groups_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Group
+      tags:
+      - groups
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Group ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Group full details
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_groups_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated group details
+          schema:
+            $ref: '#/definitions/internal_groups_update.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Group
       tags:
       - groups
   /api/v1/students:

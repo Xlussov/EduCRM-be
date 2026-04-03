@@ -16,6 +16,7 @@ import (
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	groupscreate "github.com/Xlussov/EduCRM-be/internal/groups/create"
+	groupslist "github.com/Xlussov/EduCRM-be/internal/groups/list"
 	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
@@ -96,6 +97,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	studentsGetUC := studentsget.NewUseCase(studentRepo)
 	studentsUpdateUC := studentsupdate.NewUseCase(studentRepo, userRepo)
 	groupsCreateUC := groupscreate.NewUseCase(groupRepo, userRepo)
+	groupsListUC := groupslist.NewUseCase(groupRepo, userRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:       login.NewHandler(loginUC).Handle,
@@ -117,6 +119,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		StudentsGet:     studentsget.NewHandler(studentsGetUC).Handle,
 		StudentsUpdate:  studentsupdate.NewHandler(studentsUpdateUC).Handle,
 		GroupsCreate:    groupscreate.NewHandler(groupsCreateUC).Handle,
+		GroupsList:      groupslist.NewHandler(groupsListUC).Handle,
 	}
 
 	e.Validator = validator.New()

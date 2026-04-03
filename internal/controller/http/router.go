@@ -30,6 +30,7 @@ type Handlers struct {
 	StudentsGet     echo.HandlerFunc
 	StudentsUpdate  echo.HandlerFunc
 	GroupsCreate    echo.HandlerFunc
+	GroupsList      echo.HandlerFunc
 }
 
 type Logger interface {
@@ -89,5 +90,6 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 
 		groupsGroup := protected.Group("/groups")
 		groupsGroup.POST("", h.GroupsCreate)
+		groupsGroup.GET("", h.GroupsList)
 	}
 }

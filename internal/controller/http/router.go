@@ -11,28 +11,30 @@ import (
 )
 
 type Handlers struct {
-	AuthLogin       echo.HandlerFunc
-	AuthRefresh     echo.HandlerFunc
-	UsersAdmins     echo.HandlerFunc
-	UsersTeachers   echo.HandlerFunc
-	BranchesCreate  echo.HandlerFunc
-	BranchesArchive echo.HandlerFunc
-	BranchesList    echo.HandlerFunc
-	BranchesGet     echo.HandlerFunc
-	BranchesUpdate  echo.HandlerFunc
-	SubjectsCreate  echo.HandlerFunc
-	SubjectsArchive echo.HandlerFunc
-	SubjectsList    echo.HandlerFunc
-	SubjectsUpdate  echo.HandlerFunc
-	StudentsCreate  echo.HandlerFunc
-	StudentsArchive echo.HandlerFunc
-	StudentsList    echo.HandlerFunc
-	StudentsGet     echo.HandlerFunc
-	StudentsUpdate  echo.HandlerFunc
-	GroupsCreate    echo.HandlerFunc
-	GroupsList      echo.HandlerFunc
-	GroupsGet       echo.HandlerFunc
-	GroupsUpdate    echo.HandlerFunc
+	AuthLogin           echo.HandlerFunc
+	AuthRefresh         echo.HandlerFunc
+	UsersAdmins         echo.HandlerFunc
+	UsersTeachers       echo.HandlerFunc
+	BranchesCreate      echo.HandlerFunc
+	BranchesArchive     echo.HandlerFunc
+	BranchesList        echo.HandlerFunc
+	BranchesGet         echo.HandlerFunc
+	BranchesUpdate      echo.HandlerFunc
+	SubjectsCreate      echo.HandlerFunc
+	SubjectsArchive     echo.HandlerFunc
+	SubjectsList        echo.HandlerFunc
+	SubjectsUpdate      echo.HandlerFunc
+	StudentsCreate      echo.HandlerFunc
+	StudentsArchive     echo.HandlerFunc
+	StudentsList        echo.HandlerFunc
+	StudentsGet         echo.HandlerFunc
+	StudentsUpdate      echo.HandlerFunc
+	GroupsCreate        echo.HandlerFunc
+	GroupsList          echo.HandlerFunc
+	GroupsGet           echo.HandlerFunc
+	GroupsUpdate        echo.HandlerFunc
+	GroupsAddStudents   echo.HandlerFunc
+	GroupsRemoveStudent echo.HandlerFunc
 }
 
 type Logger interface {
@@ -95,5 +97,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		groupsGroup.GET("", h.GroupsList)
 		groupsGroup.GET("/:id", h.GroupsGet)
 		groupsGroup.PUT("/:id", h.GroupsUpdate)
+		groupsGroup.POST("/:id/students", h.GroupsAddStudents)
+		groupsGroup.DELETE("/:id/students/:student_id", h.GroupsRemoveStudent)
 	}
 }

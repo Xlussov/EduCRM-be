@@ -15,9 +15,11 @@ import (
 	brancheslist "github.com/Xlussov/EduCRM-be/internal/branches/list"
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
+	groupsaddstudents "github.com/Xlussov/EduCRM-be/internal/groups/add_students"
 	groupscreate "github.com/Xlussov/EduCRM-be/internal/groups/create"
 	groupsget "github.com/Xlussov/EduCRM-be/internal/groups/get"
 	groupslist "github.com/Xlussov/EduCRM-be/internal/groups/list"
+	groupsremovestudent "github.com/Xlussov/EduCRM-be/internal/groups/remove_student"
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
 	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
@@ -102,30 +104,34 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupsListUC := groupslist.NewUseCase(groupRepo, userRepo)
 	groupsGetUC := groupsget.NewUseCase(groupRepo, userRepo)
 	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
+	groupsAddStudentsUC := groupsaddstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
+	groupsRemoveStudentUC := groupsremovestudent.NewUseCase(groupRepo, userRepo, studentRepo)
 
 	h := httprouter.Handlers{
-		AuthLogin:       login.NewHandler(loginUC).Handle,
-		AuthRefresh:     refresh.NewHandler(refreshUC).Handle,
-		UsersAdmins:     admins.NewHandler(adminsUC).Handle,
-		UsersTeachers:   teachers.NewHandler(teachersUC).Handle,
-		BranchesCreate:  branchescreate.NewHandler(branchesCreateUC).Handle,
-		BranchesArchive: branchesarchive.NewHandler(branchesArchiveUC).Handle,
-		BranchesList:    brancheslist.NewHandler(branchesListUC).Handle,
-		BranchesGet:     branchesget.NewHandler(branchesGetUC).Handle,
-		BranchesUpdate:  branchesupdate.NewHandler(branchesUpdateUC).Handle,
-		SubjectsCreate:  subjectscreate.NewHandler(subjectsCreateUC).Handle,
-		SubjectsArchive: subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
-		SubjectsList:    subjectslist.NewHandler(subjectsListUC).Handle,
-		SubjectsUpdate:  subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
-		StudentsCreate:  studentscreate.NewHandler(studentsCreateUC).Handle,
-		StudentsArchive: studentsarchive.NewHandler(studentsArchiveUC).Handle,
-		StudentsList:    studentslist.NewHandler(studentsListUC).Handle,
-		StudentsGet:     studentsget.NewHandler(studentsGetUC).Handle,
-		StudentsUpdate:  studentsupdate.NewHandler(studentsUpdateUC).Handle,
-		GroupsCreate:    groupscreate.NewHandler(groupsCreateUC).Handle,
-		GroupsList:      groupslist.NewHandler(groupsListUC).Handle,
-		GroupsGet:       groupsget.NewHandler(groupsGetUC).Handle,
-		GroupsUpdate:    groupsupdate.NewHandler(groupsUpdateUC).Handle,
+		AuthLogin:           login.NewHandler(loginUC).Handle,
+		AuthRefresh:         refresh.NewHandler(refreshUC).Handle,
+		UsersAdmins:         admins.NewHandler(adminsUC).Handle,
+		UsersTeachers:       teachers.NewHandler(teachersUC).Handle,
+		BranchesCreate:      branchescreate.NewHandler(branchesCreateUC).Handle,
+		BranchesArchive:     branchesarchive.NewHandler(branchesArchiveUC).Handle,
+		BranchesList:        brancheslist.NewHandler(branchesListUC).Handle,
+		BranchesGet:         branchesget.NewHandler(branchesGetUC).Handle,
+		BranchesUpdate:      branchesupdate.NewHandler(branchesUpdateUC).Handle,
+		SubjectsCreate:      subjectscreate.NewHandler(subjectsCreateUC).Handle,
+		SubjectsArchive:     subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
+		SubjectsList:        subjectslist.NewHandler(subjectsListUC).Handle,
+		SubjectsUpdate:      subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
+		StudentsCreate:      studentscreate.NewHandler(studentsCreateUC).Handle,
+		StudentsArchive:     studentsarchive.NewHandler(studentsArchiveUC).Handle,
+		StudentsList:        studentslist.NewHandler(studentsListUC).Handle,
+		StudentsGet:         studentsget.NewHandler(studentsGetUC).Handle,
+		StudentsUpdate:      studentsupdate.NewHandler(studentsUpdateUC).Handle,
+		GroupsCreate:        groupscreate.NewHandler(groupsCreateUC).Handle,
+		GroupsList:          groupslist.NewHandler(groupsListUC).Handle,
+		GroupsGet:           groupsget.NewHandler(groupsGetUC).Handle,
+		GroupsUpdate:        groupsupdate.NewHandler(groupsUpdateUC).Handle,
+		GroupsAddStudents:   groupsaddstudents.NewHandler(groupsAddStudentsUC).Handle,
+		GroupsRemoveStudent: groupsremovestudent.NewHandler(groupsRemoveStudentUC).Handle,
 	}
 
 	e.Validator = validator.New()

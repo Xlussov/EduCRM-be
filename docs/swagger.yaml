@@ -47,6 +47,28 @@ definitions:
       id:
         type: string
     type: object
+  archive.Request:
+    properties:
+      status:
+        enum:
+        - ACTIVE
+        - ARCHIVED
+        type: string
+    required:
+    - status
+    type: object
+  create.PricingGridItem:
+    properties:
+      lessons:
+        minimum: 1
+        type: integer
+      price:
+        minimum: 0
+        type: number
+    required:
+    - lessons
+    - price
+    type: object
   domain.EntityStatus:
     enum:
     - ACTIVE
@@ -196,6 +218,44 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  internal_plans_archive.Response:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_plans_create.Request:
+    properties:
+      branch_id:
+        type: string
+      name:
+        type: string
+      pricing_grid:
+        items:
+          $ref: '#/definitions/create.PricingGridItem'
+        minItems: 1
+        type: array
+      subject_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+      type:
+        enum:
+        - INDIVIDUAL
+        - GROUP
+        type: string
+    required:
+    - branch_id
+    - name
+    - pricing_grid
+    - subject_ids
+    - type
+    type: object
+  internal_plans_create.Response:
+    properties:
+      id:
+        type: string
     type: object
   internal_students_archive.Response:
     properties:
@@ -412,6 +472,24 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_subscriptions_create.Request:
+    properties:
+      plan_id:
+        type: string
+      start_date:
+        type: string
+      subject_id:
+        type: string
+    required:
+    - plan_id
+    - start_date
+    - subject_id
+    type: object
+  internal_subscriptions_create.Response:
+    properties:
+      id:
+        type: string
+    type: object
   list.BranchResponse:
     properties:
       address:
@@ -436,6 +514,37 @@ definitions:
       students_count:
         type: integer
     type: object
+  list.PlanRef:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  list.PlanResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      pricing_grid:
+        items:
+          $ref: '#/definitions/list.PricingGrid'
+        type: array
+      subjects:
+        items:
+          $ref: '#/definitions/list.Subject'
+        type: array
+      type:
+        type: string
+    type: object
+  list.PricingGrid:
+    properties:
+      lessons:
+        type: integer
+      price:
+        type: number
+    type: object
   list.StudentResponse:
     properties:
       first_name:
@@ -446,6 +555,20 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  list.Subject:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  list.SubjectRef:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
     type: object
   list.SubjectResponse:
     properties:
@@ -461,6 +584,19 @@ definitions:
         $ref: '#/definitions/domain.EntityStatus'
       updated_at:
         type: string
+    type: object
+  list.SubscriptionResponse:
+    properties:
+      created_at:
+        type: string
+      id:
+        type: string
+      plan:
+        $ref: '#/definitions/list.PlanRef'
+      start_date:
+        type: string
+      subject:
+        $ref: '#/definitions/list.SubjectRef'
     type: object
   login.Request:
     properties:
@@ -1072,6 +1208,137 @@ paths:
       summary: Remove Student from Group
       tags:
       - groups
+  /api/v1/plans:
+    get:
+      description: Returns list of subscription plans (with linked subjects and pricing
+        grid) for the branch
+      parameters:
+      - description: Branch ID
+        format: uuid
+        in: query
+        name: branch_id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of plans
+          schema:
+            $ref: '#/definitions/list.PlanResponse'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List plans
+      tags:
+      - plans
+    post:
+      consumes:
+      - application/json
+      description: Creates a new subscription plan with pricing grid and linked subjects
+      parameters:
+      - description: Plan configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_plans_create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/internal_plans_create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            additionalProperties: true
+            type: object
+        "401":
+          description: Unauthorized
+          schema:
+            additionalProperties: true
+            type: object
+        "403":
+          description: Forbidden
+          schema:
+            additionalProperties: true
+            type: object
+        "500":
+          description: Internal Server Error
+          schema:
+            additionalProperties: true
+            type: object
+      security:
+      - BearerAuth: []
+      summary: Create plan
+      tags:
+      - plans
+  /api/v1/plans/{id}/archive:
+    patch:
+      consumes:
+      - application/json
+      parameters:
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Archived
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/archive.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_plans_archive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update plan status
+      tags:
+      - plans
   /api/v1/students:
     get:
       parameters:
@@ -1277,6 +1544,87 @@ paths:
       summary: Archive Student
       tags:
       - students
+  /api/v1/students/{id}/subscriptions:
+    get:
+      description: Returns all active subscriptions for a student
+      parameters:
+      - description: Student ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of student subscriptions
+          schema:
+            items:
+              $ref: '#/definitions/list.SubscriptionResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Student Subscriptions
+      tags:
+      - subscriptions
+    post:
+      consumes:
+      - application/json
+      description: Assigns a subscription plan to a student
+      parameters:
+      - description: Student ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Subscription configuration
+        in: body
+        name: body
+        required: true
+        schema:
+          $ref: '#/definitions/internal_subscriptions_create.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created subscription
+          schema:
+            $ref: '#/definitions/internal_subscriptions_create.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Assign Subscription
+      tags:
+      - subscriptions
   /api/v1/subjects:
     get:
       produces:

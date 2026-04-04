@@ -21,6 +21,9 @@ import (
 	groupslist "github.com/Xlussov/EduCRM-be/internal/groups/list"
 	groupsremovestudent "github.com/Xlussov/EduCRM-be/internal/groups/remove_student"
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
+	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
+	planscreate "github.com/Xlussov/EduCRM-be/internal/plans/create"
+	planslist "github.com/Xlussov/EduCRM-be/internal/plans/list"
 	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
@@ -30,6 +33,8 @@ import (
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
 	subjectsupdate "github.com/Xlussov/EduCRM-be/internal/subjects/update"
+	subscriptionscreate "github.com/Xlussov/EduCRM-be/internal/subscriptions/create"
+	subscriptionslist "github.com/Xlussov/EduCRM-be/internal/subscriptions/list"
 	"github.com/Xlussov/EduCRM-be/internal/users/admins"
 	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
@@ -79,6 +84,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subjectRepo := repo.NewSubjectRepository(dbPool.Conn())
 	studentRepo := repo.NewStudentRepository(dbPool.Conn())
 	groupRepo := repo.NewGroupRepository(dbPool.Conn())
+	planRepo := repo.NewSubscriptionRepository(dbPool.Conn())
 
 	txManager := postgres.NewTxManager(dbPool.Conn())
 
@@ -106,6 +112,11 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
 	groupsAddStudentsUC := groupsaddstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
 	groupsRemoveStudentUC := groupsremovestudent.NewUseCase(groupRepo, userRepo, studentRepo)
+	plansCreateUC := planscreate.NewUseCase(txManager, planRepo, userRepo)
+	plansListUC := planslist.NewUseCase(planRepo, userRepo)
+	plansArchiveUC := plansarchive.NewUseCase(planRepo, userRepo)
+	subscriptionsCreateUC := subscriptionscreate.NewUseCase(planRepo, userRepo, studentRepo)
+	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, userRepo, studentRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:           login.NewHandler(loginUC).Handle,
@@ -132,6 +143,11 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		GroupsUpdate:        groupsupdate.NewHandler(groupsUpdateUC).Handle,
 		GroupsAddStudents:   groupsaddstudents.NewHandler(groupsAddStudentsUC).Handle,
 		GroupsRemoveStudent: groupsremovestudent.NewHandler(groupsRemoveStudentUC).Handle,
+		PlansCreate:         planscreate.NewHandler(plansCreateUC).Handle,
+		PlansList:           planslist.NewHandler(plansListUC).Handle,
+		SubscriptionsCreate: subscriptionscreate.NewHandler(subscriptionsCreateUC).Handle,
+		SubscriptionsList:   subscriptionslist.NewHandler(subscriptionsListUC).Handle,
+		PlansArchive:        plansarchive.NewHandler(plansArchiveUC).Handle,
 	}
 
 	e.Validator = validator.New()

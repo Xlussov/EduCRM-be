@@ -35,6 +35,11 @@ type Handlers struct {
 	GroupsUpdate        echo.HandlerFunc
 	GroupsAddStudents   echo.HandlerFunc
 	GroupsRemoveStudent echo.HandlerFunc
+	PlansCreate         echo.HandlerFunc
+	PlansList           echo.HandlerFunc
+	SubscriptionsCreate echo.HandlerFunc
+	SubscriptionsList   echo.HandlerFunc
+	PlansArchive        echo.HandlerFunc
 }
 
 type Logger interface {
@@ -91,6 +96,8 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		studentsGroup.GET("/:id", h.StudentsGet)
 		studentsGroup.PUT("/:id", h.StudentsUpdate)
 		studentsGroup.PATCH("/:id/archive", h.StudentsArchive)
+		studentsGroup.POST("/:id/subscriptions", h.SubscriptionsCreate)
+		studentsGroup.GET("/:id/subscriptions", h.SubscriptionsList)
 
 		groupsGroup := protected.Group("/groups")
 		groupsGroup.POST("", h.GroupsCreate)
@@ -99,5 +106,10 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		groupsGroup.PUT("/:id", h.GroupsUpdate)
 		groupsGroup.POST("/:id/students", h.GroupsAddStudents)
 		groupsGroup.DELETE("/:id/students/:student_id", h.GroupsRemoveStudent)
+
+		plansGroup := protected.Group("/plans")
+		plansGroup.POST("", h.PlansCreate)
+		plansGroup.GET("", h.PlansList)
+		plansGroup.PATCH("/:id/archive", h.PlansArchive)
 	}
 }

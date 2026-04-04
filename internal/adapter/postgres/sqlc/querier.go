@@ -15,8 +15,12 @@ type Querier interface {
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (pgtype.UUID, error)
+	CreatePlanPricingGrid(ctx context.Context, arg CreatePlanPricingGridParams) error
+	CreatePlanSubject(ctx context.Context, arg CreatePlanSubjectParams) error
 	CreateStudent(ctx context.Context, arg CreateStudentParams) (pgtype.UUID, error)
+	CreateStudentSubscription(ctx context.Context, arg CreateStudentSubscriptionParams) (StudentSubscription, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (pgtype.UUID, error)
+	CreateSubscriptionPlan(ctx context.Context, arg CreateSubscriptionPlanParams) (SubscriptionPlan, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	GetAllBranches(ctx context.Context) ([]Branch, error)
 	GetAllSubjects(ctx context.Context) ([]Subject, error)
@@ -27,9 +31,14 @@ type Querier interface {
 	GetGroupByID(ctx context.Context, id pgtype.UUID) (Group, error)
 	GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error)
 	GetGroupsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]GetGroupsByBranchIDRow, error)
+	GetPlanByID(ctx context.Context, id pgtype.UUID) (SubscriptionPlan, error)
+	GetPlanPricingGrids(ctx context.Context, planID pgtype.UUID) ([]PlanPricingGrid, error)
+	GetPlanSubjects(ctx context.Context, planID pgtype.UUID) ([]Subject, error)
+	GetPlansByBranchID(ctx context.Context, branchID pgtype.UUID) ([]SubscriptionPlan, error)
 	GetRefreshToken(ctx context.Context, tokenHash string) (RefreshToken, error)
 	GetStudentBranchID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error)
+	GetStudentSubscriptions(ctx context.Context, studentID pgtype.UUID) ([]GetStudentSubscriptionsRow, error)
 	GetStudentsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]Student, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
@@ -41,10 +50,12 @@ type Querier interface {
 	UpdateBranch(ctx context.Context, arg UpdateBranchParams) (Branch, error)
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
 	UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) (Group, error)
+	UpdatePlanStatus(ctx context.Context, arg UpdatePlanStatusParams) error
 	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
 	UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error
+	ValidatePlanSubject(ctx context.Context, arg ValidatePlanSubjectParams) (bool, error)
 }
 
 var _ Querier = (*Queries)(nil)

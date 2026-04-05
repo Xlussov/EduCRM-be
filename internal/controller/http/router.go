@@ -13,6 +13,7 @@ import (
 type Handlers struct {
 	AuthLogin           echo.HandlerFunc
 	AuthRefresh         echo.HandlerFunc
+	AuthMe              echo.HandlerFunc
 	UsersAdmins         echo.HandlerFunc
 	UsersTeachers       echo.HandlerFunc
 	BranchesCreate      echo.HandlerFunc
@@ -73,6 +74,9 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		// Protected routes
 		protected := v1.Group("")
 		protected.Use(mw.JWT(cfg.JWTSecret))
+
+		protectedAuthGroup := protected.Group("/auth")
+		protectedAuthGroup.GET("/me", h.AuthMe)
 
 		usersGroup := protected.Group("/users")
 		usersGroup.POST("/admins", h.UsersAdmins)

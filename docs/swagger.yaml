@@ -77,6 +77,16 @@ definitions:
     x-enum-varnames:
     - StatusActive
     - StatusArchived
+  domain.Role:
+    enum:
+    - SUPERADMIN
+    - ADMIN
+    - TEACHER
+    type: string
+    x-enum-varnames:
+    - RoleSuperadmin
+    - RoleAdmin
+    - RoleTeacher
   get.StudentResponse:
     properties:
       first_name:
@@ -628,6 +638,19 @@ definitions:
       role:
         type: string
     type: object
+  me.Response:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      role:
+        $ref: '#/definitions/domain.Role'
+    type: object
   refresh.Request:
     properties:
       refresh_token:
@@ -733,6 +756,32 @@ paths:
           schema:
             $ref: '#/definitions/response.ErrorResponse'
       summary: Login
+      tags:
+      - auth
+  /api/v1/auth/me:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/me.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get current user profile
       tags:
       - auth
   /api/v1/auth/refresh:

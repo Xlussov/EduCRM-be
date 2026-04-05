@@ -8,6 +8,7 @@ import (
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/repos"
 	"github.com/Xlussov/EduCRM-be/internal/auth/login"
+	"github.com/Xlussov/EduCRM-be/internal/auth/me"
 	"github.com/Xlussov/EduCRM-be/internal/auth/refresh"
 	branchesarchive "github.com/Xlussov/EduCRM-be/internal/branches/archive"
 	branchescreate "github.com/Xlussov/EduCRM-be/internal/branches/create"
@@ -92,6 +93,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	adminsUC := admins.NewUseCase(userRepo, txManager)
 	teachersUC := teachers.NewUseCase(userRepo, txManager)
+	meUC := me.NewUseCase(userRepo)
 	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)
 	branchesArchiveUC := branchesarchive.NewUseCase(branchRepo)
 	branchesListUC := brancheslist.NewUseCase(branchRepo)
@@ -123,6 +125,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		AuthRefresh:         refresh.NewHandler(refreshUC).Handle,
 		UsersAdmins:         admins.NewHandler(adminsUC).Handle,
 		UsersTeachers:       teachers.NewHandler(teachersUC).Handle,
+		AuthMe:              me.NewHandler(meUC).Handle,
 		BranchesCreate:      branchescreate.NewHandler(branchesCreateUC).Handle,
 		BranchesArchive:     branchesarchive.NewHandler(branchesArchiveUC).Handle,
 		BranchesList:        brancheslist.NewHandler(branchesListUC).Handle,

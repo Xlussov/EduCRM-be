@@ -72,6 +72,48 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/auth/me": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "auth"
+                ],
+                "summary": "Get current user profile",
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/me.Response"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/auth/refresh": {
             "post": {
                 "consumes": [
@@ -1928,6 +1970,19 @@ const docTemplate = `{
                 "StatusArchived"
             ]
         },
+        "domain.Role": {
+            "type": "string",
+            "enum": [
+                "SUPERADMIN",
+                "ADMIN",
+                "TEACHER"
+            ],
+            "x-enum-varnames": [
+                "RoleSuperadmin",
+                "RoleAdmin",
+                "RoleTeacher"
+            ]
+        },
         "get.StudentResponse": {
             "type": "object",
             "properties": {
@@ -2740,6 +2795,26 @@ const docTemplate = `{
                 },
                 "role": {
                     "type": "string"
+                }
+            }
+        },
+        "me.Response": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "role": {
+                    "$ref": "#/definitions/domain.Role"
                 }
             }
         },

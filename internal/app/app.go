@@ -8,6 +8,7 @@ import (
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/repos"
 	"github.com/Xlussov/EduCRM-be/internal/auth/login"
+	logout "github.com/Xlussov/EduCRM-be/internal/auth/logut"
 	"github.com/Xlussov/EduCRM-be/internal/auth/me"
 	"github.com/Xlussov/EduCRM-be/internal/auth/refresh"
 	branchesarchive "github.com/Xlussov/EduCRM-be/internal/branches/archive"
@@ -91,6 +92,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 
 	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
+	logoutUC := logout.NewUseCase(authRepo)
 	adminsUC := admins.NewUseCase(userRepo, txManager)
 	teachersUC := teachers.NewUseCase(userRepo, txManager)
 	meUC := me.NewUseCase(userRepo)
@@ -123,6 +125,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	h := httprouter.Handlers{
 		AuthLogin:           login.NewHandler(loginUC).Handle,
 		AuthRefresh:         refresh.NewHandler(refreshUC).Handle,
+		AuthLogout:          logout.NewHandler(logoutUC).Handle,
 		UsersAdmins:         admins.NewHandler(adminsUC).Handle,
 		UsersTeachers:       teachers.NewHandler(teachersUC).Handle,
 		AuthMe:              me.NewHandler(meUC).Handle,

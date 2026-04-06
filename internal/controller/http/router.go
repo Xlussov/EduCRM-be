@@ -13,6 +13,7 @@ import (
 type Handlers struct {
 	AuthLogin           echo.HandlerFunc
 	AuthRefresh         echo.HandlerFunc
+	AuthLogout          echo.HandlerFunc
 	AuthMe              echo.HandlerFunc
 	UsersAdmins         echo.HandlerFunc
 	UsersTeachers       echo.HandlerFunc
@@ -77,6 +78,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 
 		protectedAuthGroup := protected.Group("/auth")
 		protectedAuthGroup.GET("/me", h.AuthMe)
+		protectedAuthGroup.POST("/logout", h.AuthLogout)
 
 		usersGroup := protected.Group("/users")
 		usersGroup.POST("/admins", h.UsersAdmins)

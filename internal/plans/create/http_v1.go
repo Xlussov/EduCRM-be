@@ -63,6 +63,9 @@ func (h *Handler) Handle(c echo.Context) error {
 		if errors.Is(err, ErrBranchAccessDenied) {
 			return echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
+		if errors.Is(err, ErrSubjectBranchMismatch) {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 		return echo.NewHTTPError(http.StatusInternalServerError, "internal server error")
 	}
 

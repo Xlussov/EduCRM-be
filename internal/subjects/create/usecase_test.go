@@ -13,7 +13,9 @@ import (
 )
 
 func TestUseCase_Execute(t *testing.T) {
+	branchID := uuid.New()
 	req := Request{
+		BranchID:    branchID,
 		Name:        "Mathematics",
 		Description: "Advanced Math",
 	}
@@ -23,7 +25,7 @@ func TestUseCase_Execute(t *testing.T) {
 		expectedID := uuid.New()
 
 		repo.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Subject) bool {
-			if s.Name == req.Name {
+			if s.Name == req.Name && s.BranchID == branchID {
 				s.ID = expectedID
 				return true
 			}
@@ -36,6 +38,7 @@ func TestUseCase_Execute(t *testing.T) {
 		assert.NoError(t, err)
 		assert.NotNil(t, res)
 		assert.Equal(t, expectedID.String(), res.ID)
+		assert.Equal(t, branchID.String(), res.BranchID)
 		repo.AssertExpectations(t)
 	})
 

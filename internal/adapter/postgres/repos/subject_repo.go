@@ -2,11 +2,13 @@ package repos
 
 import (
 	"context"
+	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	sqlc "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/sqlc"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5/pgconn"
 	"github.com/jackc/pgx/v5/pgtype"
 	"github.com/jackc/pgx/v5/pgxpool"
 )
@@ -30,14 +32,20 @@ func (r *SubjectRepository) db(ctx context.Context) sqlc.DBTX {
 
 func (r *SubjectRepository) Create(ctx context.Context, subject *domain.Subject) error {
 	q := sqlc.New(r.db(ctx))
-	id, err := q.CreateSubject(ctx, sqlc.CreateSubjectParams{
+	created, err := q.CreateSubject(ctx, sqlc.CreateSubjectParams{
+		BranchID:    pgtype.UUID{Bytes: subject.BranchID, Valid: true},
 		Name:        subject.Name,
 		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return domain.ErrAlreadyExists
+		}
 		return err
 	}
-	subject.ID = id.Bytes
+	subject.ID = created.ID.Bytes
+	subject.BranchID = created.BranchID.Bytes
 	return nil
 }
 
@@ -50,9 +58,9 @@ func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	return err
 }
 
-func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, error) {
+func (r *SubjectRepository) GetAll(ctx context.Context, branchID uuid.UUID) ([]*domain.Subject, error) {
 	q := sqlc.New(r.db(ctx))
-	rows, err := q.GetAllSubjects(ctx)
+	rows, err := q.ListSubjects(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
 	if err != nil {
 		return nil, err
 	}
@@ -61,6 +69,7 @@ func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 	for _, row := range rows {
 		subjects = append(subjects, &domain.Subject{
 			ID:          row.ID.Bytes,
+			BranchID:    row.BranchID.Bytes,
 			Name:        row.Name,
 			Description: row.Description.String,
 			Status:      domain.EntityStatus(row.Status.EntityStatus),
@@ -74,15 +83,21 @@ func (r *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, erro
 func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) (*domain.Subject, error) {
 	q := sqlc.New(r.db(ctx))
 	s, err := q.UpdateSubject(ctx, sqlc.UpdateSubjectParams{
+		BranchID:    pgtype.UUID{Bytes: subject.BranchID, Valid: true},
 		Name:        subject.Name,
 		Description: pgtype.Text{String: subject.Description, Valid: subject.Description != ""},
 		ID:          pgtype.UUID{Bytes: subject.ID, Valid: true},
 	})
 	if err != nil {
+		var pgErr *pgconn.PgError
+		if errors.As(err, &pgErr) && pgErr.Code == "23505" {
+			return nil, domain.ErrAlreadyExists
+		}
 		return nil, err
 	}
 	return &domain.Subject{
 		ID:          s.ID.Bytes,
+		BranchID:    s.BranchID.Bytes,
 		Name:        s.Name,
 		Description: s.Description.String,
 		Status:      domain.EntityStatus(s.Status.EntityStatus),

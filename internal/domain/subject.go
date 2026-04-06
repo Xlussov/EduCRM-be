@@ -9,6 +9,7 @@ import (
 
 type Subject struct {
 	ID          uuid.UUID
+	BranchID    uuid.UUID
 	Name        string
 	Description string
 	Status      EntityStatus
@@ -19,6 +20,6 @@ type Subject struct {
 type SubjectRepository interface {
 	Create(ctx context.Context, subject *Subject) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
-	GetAll(ctx context.Context) ([]*Subject, error)
+	GetAll(ctx context.Context, branchID uuid.UUID) ([]*Subject, error)
 	Update(ctx context.Context, subject *Subject) (*Subject, error)
 }

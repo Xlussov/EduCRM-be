@@ -47,6 +47,19 @@ func (m *SubscriptionRepository) ValidatePlanSubject(ctx context.Context, planID
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *SubscriptionRepository) CountSubjectsInBranch(ctx context.Context, branchID uuid.UUID, subjectIDs []uuid.UUID) (int, error) {
+	args := m.Called(ctx, branchID, subjectIDs)
+	return args.Int(0), args.Error(1)
+}
+
+func (m *SubscriptionRepository) GetSubscriptionBranchIDs(ctx context.Context, studentID, planID, subjectID uuid.UUID) (*domain.SubscriptionBranchIDs, error) {
+	args := m.Called(ctx, studentID, planID, subjectID)
+	if args.Get(0) != nil {
+		return args.Get(0).(*domain.SubscriptionBranchIDs), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *SubscriptionRepository) UpdatePlanStatus(ctx context.Context, planID uuid.UUID, status domain.EntityStatus) error {
 	args := m.Called(ctx, planID, status)
 	return args.Error(0)

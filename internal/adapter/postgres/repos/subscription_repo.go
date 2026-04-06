@@ -197,6 +197,44 @@ func (r *SubscriptionRepository) ValidatePlanSubject(ctx context.Context, planID
 	return res, nil
 }
 
+func (r *SubscriptionRepository) CountSubjectsInBranch(ctx context.Context, branchID uuid.UUID, subjectIDs []uuid.UUID) (int, error) {
+	q := sqlc.New(r.db(ctx))
+
+	uuidArray := make([]pgtype.UUID, 0, len(subjectIDs))
+	for _, subjectID := range subjectIDs {
+		uuidArray = append(uuidArray, pgtype.UUID{Bytes: subjectID, Valid: true})
+	}
+
+	count, err := q.CountSubjectsInBranch(ctx, sqlc.CountSubjectsInBranchParams{
+		BranchID: pgtype.UUID{Bytes: branchID, Valid: true},
+		Column2:  uuidArray,
+	})
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}
+
+func (r *SubscriptionRepository) GetSubscriptionBranchIDs(ctx context.Context, studentID, planID, subjectID uuid.UUID) (*domain.SubscriptionBranchIDs, error) {
+	q := sqlc.New(r.db(ctx))
+
+	row, err := q.GetSubscriptionBranchIDs(ctx, sqlc.GetSubscriptionBranchIDsParams{
+		ID:   pgtype.UUID{Bytes: studentID, Valid: true},
+		ID_2: pgtype.UUID{Bytes: planID, Valid: true},
+		ID_3: pgtype.UUID{Bytes: subjectID, Valid: true},
+	})
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.SubscriptionBranchIDs{
+		StudentBranchID: row.StudentBranchID.Bytes,
+		PlanBranchID:    row.PlanBranchID.Bytes,
+		SubjectBranchID: row.SubjectBranchID.Bytes,
+	}, nil
+}
+
 func (r *SubscriptionRepository) UpdatePlanStatus(ctx context.Context, planID uuid.UUID, status domain.EntityStatus) error {
 	q := sqlc.New(r.db(ctx))
 	return q.UpdatePlanStatus(ctx, sqlc.UpdatePlanStatusParams{

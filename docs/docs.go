@@ -1562,11 +1562,27 @@ const docTemplate = `{
                     "subjects"
                 ],
                 "summary": "List Subjects",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Branch ID",
+                        "name": "branch_id",
+                        "in": "query",
+                        "required": true
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of subjects",
                         "schema": {
                             "$ref": "#/definitions/internal_subjects_list.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -2528,9 +2544,13 @@ const docTemplate = `{
         "internal_subjects_create.Request": {
             "type": "object",
             "required": [
+                "branch_id",
                 "name"
             ],
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 500,
@@ -2546,6 +2566,9 @@ const docTemplate = `{
         "internal_subjects_create.Response": {
             "type": "object",
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string"
                 },
@@ -2571,9 +2594,13 @@ const docTemplate = `{
         "internal_subjects_update.Request": {
             "type": "object",
             "required": [
+                "branch_id",
                 "name"
             ],
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "description": {
                     "type": "string",
                     "maxLength": 500,
@@ -2589,6 +2616,9 @@ const docTemplate = `{
         "internal_subjects_update.Response": {
             "type": "object",
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },
@@ -2763,6 +2793,9 @@ const docTemplate = `{
         "list.SubjectResponse": {
             "type": "object",
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "created_at": {
                     "type": "string"
                 },

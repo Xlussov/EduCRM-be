@@ -69,6 +69,12 @@ type StudentSubscriptionDetails struct {
 	CreatedAt time.Time
 }
 
+type SubscriptionBranchIDs struct {
+	StudentBranchID uuid.UUID
+	PlanBranchID    uuid.UUID
+	SubjectBranchID uuid.UUID
+}
+
 type SubscriptionRepository interface {
 	CreatePlan(ctx context.Context, plan *Plan, subjectIDs []uuid.UUID, grids []*PricingGrid) error
 	GetPlansByBranchID(ctx context.Context, branchID uuid.UUID) ([]*PlanDetails, error)
@@ -76,5 +82,7 @@ type SubscriptionRepository interface {
 	AssignToStudent(ctx context.Context, sub *StudentSubscription) error
 	GetStudentSubscriptions(ctx context.Context, studentID uuid.UUID) ([]*StudentSubscriptionDetails, error)
 	ValidatePlanSubject(ctx context.Context, planID, subjectID uuid.UUID) (bool, error)
+	CountSubjectsInBranch(ctx context.Context, branchID uuid.UUID, subjectIDs []uuid.UUID) (int, error)
+	GetSubscriptionBranchIDs(ctx context.Context, studentID, planID, subjectID uuid.UUID) (*SubscriptionBranchIDs, error)
 	GetPlanByID(ctx context.Context, id uuid.UUID) (*Plan, error)
 }

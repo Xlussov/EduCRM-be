@@ -37,6 +37,11 @@ func TestUseCase_Execute(t *testing.T) {
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockSR *mocks.SubscriptionRepository, mockStdR *mocks.StudentRepository) {
 				mockSR.On("ValidatePlanSubject", mock.Anything, req.PlanID, req.SubjectID).Return(true, nil).Once()
+				mockSR.On("GetSubscriptionBranchIDs", mock.Anything, studentID, req.PlanID, req.SubjectID).Return(&domain.SubscriptionBranchIDs{
+					StudentBranchID: branch1,
+					PlanBranchID:    branch1,
+					SubjectBranchID: branch1,
+				}, nil).Once()
 				mockSR.On("AssignToStudent", mock.Anything, mock.AnythingOfType("*domain.StudentSubscription")).Run(func(args mock.Arguments) {
 					sub := args.Get(1).(*domain.StudentSubscription)
 					sub.ID = uuid.New()
@@ -52,6 +57,11 @@ func TestUseCase_Execute(t *testing.T) {
 				mockStdR.On("GetBranchID", mock.Anything, studentID).Return(branch1, nil).Once()
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
 				mockSR.On("ValidatePlanSubject", mock.Anything, req.PlanID, req.SubjectID).Return(true, nil).Once()
+				mockSR.On("GetSubscriptionBranchIDs", mock.Anything, studentID, req.PlanID, req.SubjectID).Return(&domain.SubscriptionBranchIDs{
+					StudentBranchID: branch1,
+					PlanBranchID:    branch1,
+					SubjectBranchID: branch1,
+				}, nil).Once()
 				mockSR.On("AssignToStudent", mock.Anything, mock.AnythingOfType("*domain.StudentSubscription")).Run(func(args mock.Arguments) {
 					sub := args.Get(1).(*domain.StudentSubscription)
 					sub.ID = uuid.New()
@@ -77,6 +87,20 @@ func TestUseCase_Execute(t *testing.T) {
 				mockSR.On("ValidatePlanSubject", mock.Anything, req.PlanID, req.SubjectID).Return(false, nil).Once()
 			},
 			expectedErr: ErrInvalidSubject,
+		},
+		{
+			name: "Error_CrossBranchData",
+			role: "SUPERADMIN",
+			req:  req,
+			setupMocks: func(mockUR *mocks.UserRepository, mockSR *mocks.SubscriptionRepository, mockStdR *mocks.StudentRepository) {
+				mockSR.On("ValidatePlanSubject", mock.Anything, req.PlanID, req.SubjectID).Return(true, nil).Once()
+				mockSR.On("GetSubscriptionBranchIDs", mock.Anything, studentID, req.PlanID, req.SubjectID).Return(&domain.SubscriptionBranchIDs{
+					StudentBranchID: branch1,
+					PlanBranchID:    branch1,
+					SubjectBranchID: branch2,
+				}, nil).Once()
+			},
+			expectedErr: ErrCrossBranchData,
 		},
 	}
 

@@ -75,6 +75,8 @@ func (h *Handler) Handle(c echo.Context) error {
 			return response.Error(c, http.StatusForbidden, "BRANCH_ACCESS_DENIED", err.Error(), nil)
 		case errors.Is(err, ErrInvalidSubject):
 			return response.Error(c, http.StatusBadRequest, "INVALID_SUBJECT", err.Error(), nil)
+		case errors.Is(err, ErrCrossBranchData):
+			return response.Error(c, http.StatusBadRequest, "BRANCH_MISMATCH", err.Error(), nil)
 		default:
 			return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 		}

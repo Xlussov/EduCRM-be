@@ -22,8 +22,8 @@ func (m *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	return args.Error(0)
 }
 
-func (m *SubjectRepository) GetAll(ctx context.Context) ([]*domain.Subject, error) {
-	args := m.Called(ctx)
+func (m *SubjectRepository) GetAll(ctx context.Context, branchID uuid.UUID) ([]*domain.Subject, error) {
+	args := m.Called(ctx, branchID)
 	if args.Get(0) != nil {
 		return args.Get(0).([]*domain.Subject), args.Error(1)
 	}

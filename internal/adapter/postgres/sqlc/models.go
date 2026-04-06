@@ -294,6 +294,7 @@ type StudentSubscription struct {
 
 type Subject struct {
 	ID          pgtype.UUID        `json:"id"`
+	BranchID    pgtype.UUID        `json:"branch_id"`
 	Name        string             `json:"name"`
 	Description pgtype.Text        `json:"description"`
 	Status      NullEntityStatus   `json:"status"`

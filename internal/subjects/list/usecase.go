@@ -14,8 +14,8 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 	return &UseCase{subjectRepo: repo}
 }
 
-func (uc *UseCase) Execute(ctx context.Context) (*Response, error) {
-	subjects, err := uc.subjectRepo.GetAll(ctx)
+func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
+	subjects, err := uc.subjectRepo.GetAll(ctx, req.BranchID)
 	if err != nil {
 		return nil, err
 	}
@@ -27,6 +27,7 @@ func (uc *UseCase) Execute(ctx context.Context) (*Response, error) {
 	for _, s := range subjects {
 		res.Subjects = append(res.Subjects, SubjectResponse{
 			ID:          s.ID.String(),
+			BranchID:    s.BranchID.String(),
 			Name:        s.Name,
 			Description: s.Description,
 			Status:      s.Status,

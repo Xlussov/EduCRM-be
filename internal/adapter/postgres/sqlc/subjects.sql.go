@@ -12,31 +12,68 @@ import (
 )
 
 const createSubject = `-- name: CreateSubject :one
-INSERT INTO subjects (name, description)
-VALUES ($1, $2)
-RETURNING id
+INSERT INTO subjects (branch_id, name, description)
+VALUES ($1, $2, $3)
+RETURNING id, branch_id, name, description, status, created_at, updated_at
 `
 
 type CreateSubjectParams struct {
+	BranchID    pgtype.UUID `json:"branch_id"`
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 }
 
-func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (pgtype.UUID, error) {
-	row := q.db.QueryRow(ctx, createSubject, arg.Name, arg.Description)
-	var id pgtype.UUID
-	err := row.Scan(&id)
-	return id, err
+func (q *Queries) CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error) {
+	row := q.db.QueryRow(ctx, createSubject, arg.BranchID, arg.Name, arg.Description)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
 }
 
-const getAllSubjects = `-- name: GetAllSubjects :many
-SELECT id, name, description, status, created_at, updated_at
+const getSubject = `-- name: GetSubject :one
+SELECT id, branch_id, name, description, status, created_at, updated_at
 FROM subjects
+WHERE id = $1 AND branch_id = $2
+LIMIT 1
+`
+
+type GetSubjectParams struct {
+	ID       pgtype.UUID `json:"id"`
+	BranchID pgtype.UUID `json:"branch_id"`
+}
+
+func (q *Queries) GetSubject(ctx context.Context, arg GetSubjectParams) (Subject, error) {
+	row := q.db.QueryRow(ctx, getSubject, arg.ID, arg.BranchID)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
+const listSubjects = `-- name: ListSubjects :many
+SELECT id, branch_id, name, description, status, created_at, updated_at
+FROM subjects
+WHERE branch_id = $1
 ORDER BY name ASC
 `
 
-func (q *Queries) GetAllSubjects(ctx context.Context) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, getAllSubjects)
+func (q *Queries) ListSubjects(ctx context.Context, branchID pgtype.UUID) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listSubjects, branchID)
 	if err != nil {
 		return nil, err
 	}
@@ -46,6 +83,7 @@ func (q *Queries) GetAllSubjects(ctx context.Context) ([]Subject, error) {
 		var i Subject
 		if err := rows.Scan(
 			&i.ID,
+			&i.BranchID,
 			&i.Name,
 			&i.Description,
 			&i.Status,
@@ -64,21 +102,28 @@ func (q *Queries) GetAllSubjects(ctx context.Context) ([]Subject, error) {
 
 const updateSubject = `-- name: UpdateSubject :one
 UPDATE subjects
-SET name = $1, description = $2, updated_at = NOW()
-WHERE id = $3 RETURNING id, name, description, status, created_at, updated_at
+SET branch_id = $1, name = $2, description = $3, updated_at = NOW()
+WHERE id = $4 RETURNING id, branch_id, name, description, status, created_at, updated_at
 `
 
 type UpdateSubjectParams struct {
+	BranchID    pgtype.UUID `json:"branch_id"`
 	Name        string      `json:"name"`
 	Description pgtype.Text `json:"description"`
 	ID          pgtype.UUID `json:"id"`
 }
 
 func (q *Queries) UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error) {
-	row := q.db.QueryRow(ctx, updateSubject, arg.Name, arg.Description, arg.ID)
+	row := q.db.QueryRow(ctx, updateSubject,
+		arg.BranchID,
+		arg.Name,
+		arg.Description,
+		arg.ID,
+	)
 	var i Subject
 	err := row.Scan(
 		&i.ID,
+		&i.BranchID,
 		&i.Name,
 		&i.Description,
 		&i.Status,

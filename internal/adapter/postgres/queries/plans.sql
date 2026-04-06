@@ -45,3 +45,9 @@ WHERE id = $1;
 SELECT id, branch_id, name, type, status, created_at
 FROM subscription_plans
 WHERE id = $1 LIMIT 1;
+
+-- name: CountSubjectsInBranch :one
+SELECT COUNT(*)::int
+FROM unnest($2::uuid[]) AS subject_ids(id)
+JOIN subjects s ON s.id = subject_ids.id
+WHERE s.branch_id = $1;

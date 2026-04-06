@@ -4,6 +4,7 @@ DROP INDEX IF EXISTS idx_lessons_group_date;
 DROP INDEX IF EXISTS idx_lessons_student_date;
 DROP INDEX IF EXISTS idx_lessons_teacher_date;
 DROP INDEX IF EXISTS idx_users_phone;
+DROP INDEX IF EXISTS idx_subjects_branch_id;
 
 DROP TABLE IF EXISTS attendance;
 DROP TABLE IF EXISTS lessons;

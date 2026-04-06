@@ -99,3 +99,33 @@ func (q *Queries) GetStudentSubscriptions(ctx context.Context, studentID pgtype.
 	}
 	return items, nil
 }
+
+const getSubscriptionBranchIDs = `-- name: GetSubscriptionBranchIDs :one
+SELECT st.branch_id AS student_branch_id,
+       p.branch_id AS plan_branch_id,
+       s.branch_id AS subject_branch_id
+FROM students st
+JOIN subscription_plans p ON p.id = $2
+JOIN subjects s ON s.id = $3
+WHERE st.id = $1
+LIMIT 1
+`
+
+type GetSubscriptionBranchIDsParams struct {
+	ID   pgtype.UUID `json:"id"`
+	ID_2 pgtype.UUID `json:"id_2"`
+	ID_3 pgtype.UUID `json:"id_3"`
+}
+
+type GetSubscriptionBranchIDsRow struct {
+	StudentBranchID pgtype.UUID `json:"student_branch_id"`
+	PlanBranchID    pgtype.UUID `json:"plan_branch_id"`
+	SubjectBranchID pgtype.UUID `json:"subject_branch_id"`
+}
+
+func (q *Queries) GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error) {
+	row := q.db.QueryRow(ctx, getSubscriptionBranchIDs, arg.ID, arg.ID_2, arg.ID_3)
+	var i GetSubscriptionBranchIDsRow
+	err := row.Scan(&i.StudentBranchID, &i.PlanBranchID, &i.SubjectBranchID)
+	return i, err
+}

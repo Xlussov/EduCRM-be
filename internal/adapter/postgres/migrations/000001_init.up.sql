@@ -52,11 +52,13 @@ CREATE TABLE user_branches (
 -- SUBJECTS
 CREATE TABLE subjects (
     id UUID PRIMARY KEY DEFAULT uuid_generate_v4(),
-    name VARCHAR(255) UNIQUE NOT NULL,
+    branch_id UUID NOT NULL REFERENCES branches(id) ON DELETE CASCADE,
+    name VARCHAR(255) NOT NULL,
     description TEXT,
     status entity_status DEFAULT 'ACTIVE',
     created_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
-    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW()
+    updated_at TIMESTAMP WITH TIME ZONE DEFAULT NOW(),
+    CONSTRAINT subjects_branch_id_name_key UNIQUE (branch_id, name)
 );
 
 -- STUDENTS
@@ -180,6 +182,7 @@ CREATE TABLE attendance (
 
 -- INDEXES
 CREATE INDEX idx_users_phone ON users(phone);
+CREATE INDEX idx_subjects_branch_id ON subjects(branch_id);
 CREATE INDEX idx_lessons_teacher_date ON lessons(teacher_id, date) WHERE status != 'CANCELLED';
 CREATE INDEX idx_lessons_student_date ON lessons(student_id, date) WHERE status != 'CANCELLED';
 CREATE INDEX idx_lessons_group_date ON lessons(group_id, date) WHERE status != 'CANCELLED';

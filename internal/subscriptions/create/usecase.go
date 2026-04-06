@@ -11,6 +11,7 @@ import (
 var (
 	ErrBranchAccessDenied = errors.New("branch access denied")
 	ErrInvalidSubject     = errors.New("subject is not allowed for this plan")
+	ErrCrossBranchData    = errors.New("student, plan and subject must belong to the same branch")
 )
 
 type UseCase struct {
@@ -57,6 +58,15 @@ func (uc *UseCase) Execute(ctx context.Context, userID, studentID uuid.UUID, rol
 	}
 	if !isValid {
 		return Response{}, ErrInvalidSubject
+	}
+
+	branchIDs, err := uc.subRepo.GetSubscriptionBranchIDs(ctx, studentID, req.PlanID, req.SubjectID)
+	if err != nil {
+		return Response{}, err
+	}
+
+	if branchIDs.StudentBranchID != branchIDs.PlanBranchID || branchIDs.PlanBranchID != branchIDs.SubjectBranchID {
+		return Response{}, ErrCrossBranchData
 	}
 
 	sub := &domain.StudentSubscription{

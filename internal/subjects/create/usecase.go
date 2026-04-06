@@ -16,6 +16,7 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 
 func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
 	subject := &domain.Subject{
+		BranchID:    req.BranchID,
 		Name:        req.Name,
 		Description: req.Description,
 	}
@@ -26,6 +27,7 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) 
 
 	return &Response{
 		ID:          subject.ID.String(),
+		BranchID:    subject.BranchID.String(),
 		Name:        subject.Name,
 		Description: subject.Description,
 	}, nil

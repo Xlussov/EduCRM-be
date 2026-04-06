@@ -10,7 +10,8 @@ import (
 )
 
 var (
-	ErrBranchAccessDenied = errors.New("branch access denied")
+	ErrBranchAccessDenied    = errors.New("branch access denied")
+	ErrSubjectBranchMismatch = errors.New("all subjects must belong to the plan branch")
 )
 
 type UseCase struct {
@@ -45,6 +46,14 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 		}
 	}
 
+	matchedSubjectsCount, err := uc.planRepo.CountSubjectsInBranch(ctx, req.BranchID, req.SubjectIDs)
+	if err != nil {
+		return Response{}, err
+	}
+	if matchedSubjectsCount != len(req.SubjectIDs) {
+		return Response{}, ErrSubjectBranchMismatch
+	}
+
 	plan := &domain.Plan{
 		BranchID: req.BranchID,
 		Name:     req.Name,
@@ -60,7 +69,7 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 		})
 	}
 
-	err := uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
+	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
 		if err := uc.planRepo.CreatePlan(txCtx, plan, req.SubjectIDs, grids); err != nil {
 			return fmt.Errorf("failed to create plan: %w", err)
 		}

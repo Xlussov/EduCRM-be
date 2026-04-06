@@ -11,6 +11,25 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countSubjectsInBranch = `-- name: CountSubjectsInBranch :one
+SELECT COUNT(*)::int
+FROM unnest($2::uuid[]) AS subject_ids(id)
+JOIN subjects s ON s.id = subject_ids.id
+WHERE s.branch_id = $1
+`
+
+type CountSubjectsInBranchParams struct {
+	BranchID pgtype.UUID   `json:"branch_id"`
+	Column2  []pgtype.UUID `json:"column_2"`
+}
+
+func (q *Queries) CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error) {
+	row := q.db.QueryRow(ctx, countSubjectsInBranch, arg.BranchID, arg.Column2)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createPlanPricingGrid = `-- name: CreatePlanPricingGrid :exec
 INSERT INTO plan_pricing_grid (plan_id, lessons_per_month, price_per_lesson)
 VALUES ($1, $2, $3)
@@ -133,15 +152,24 @@ JOIN plan_subjects ps ON s.id = ps.subject_id
 WHERE ps.plan_id = $1
 `
 
-func (q *Queries) GetPlanSubjects(ctx context.Context, planID pgtype.UUID) ([]Subject, error) {
+type GetPlanSubjectsRow struct {
+	ID          pgtype.UUID        `json:"id"`
+	Name        string             `json:"name"`
+	Description pgtype.Text        `json:"description"`
+	Status      NullEntityStatus   `json:"status"`
+	CreatedAt   pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt   pgtype.Timestamptz `json:"updated_at"`
+}
+
+func (q *Queries) GetPlanSubjects(ctx context.Context, planID pgtype.UUID) ([]GetPlanSubjectsRow, error) {
 	rows, err := q.db.Query(ctx, getPlanSubjects, planID)
 	if err != nil {
 		return nil, err
 	}
 	defer rows.Close()
-	var items []Subject
+	var items []GetPlanSubjectsRow
 	for rows.Next() {
-		var i Subject
+		var i GetPlanSubjectsRow
 		if err := rows.Scan(
 			&i.ID,
 			&i.Name,

@@ -18,3 +18,13 @@ JOIN subscription_plans p ON ss.plan_id = p.id
 JOIN subjects s ON ss.subject_id = s.id
 WHERE ss.student_id = $1
 ORDER BY ss.start_date DESC;
+
+-- name: GetSubscriptionBranchIDs :one
+SELECT st.branch_id AS student_branch_id,
+       p.branch_id AS plan_branch_id,
+       s.branch_id AS subject_branch_id
+FROM students st
+JOIN subscription_plans p ON p.id = $2
+JOIN subjects s ON s.id = $3
+WHERE st.id = $1
+LIMIT 1;

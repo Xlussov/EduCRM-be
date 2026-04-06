@@ -1,9 +1,11 @@
 package update
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
@@ -64,6 +66,9 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), subjectID, req)
 	if err != nil {
+		if errors.Is(err, domain.ErrAlreadyExists) {
+			return response.Error(c, http.StatusConflict, "SUBJECT_ALREADY_EXISTS", "Subject name already exists in this branch", nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to update subject", nil)
 	}
 

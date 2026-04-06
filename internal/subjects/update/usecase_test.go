@@ -13,7 +13,9 @@ import (
 )
 
 func TestUseCase_Execute(t *testing.T) {
+	branchID := uuid.New()
 	req := Request{
+		BranchID:    branchID,
 		Name:        "New Math",
 		Description: "New Desc",
 	}
@@ -23,18 +25,20 @@ func TestUseCase_Execute(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
 		updatedDomain := &domain.Subject{
 			ID:          subjectID,
+			BranchID:    branchID,
 			Name:        req.Name,
 			Description: req.Description,
 			Status:      domain.StatusActive,
 		}
 		repo.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Subject) bool {
-			return s.Name == req.Name && s.Description == req.Description && s.ID == subjectID
+			return s.Name == req.Name && s.Description == req.Description && s.ID == subjectID && s.BranchID == req.BranchID
 		})).Return(updatedDomain, nil)
 
 		uc := NewUseCase(repo)
 		res, err := uc.Execute(context.Background(), subjectID, req)
 
 		assert.Equal(t, subjectID.String(), res.ID)
+		assert.Equal(t, branchID.String(), res.BranchID)
 		assert.Equal(t, req.Name, res.Name)
 		assert.Equal(t, req.Description, res.Description)
 		assert.Equal(t, string(domain.StatusActive), res.Status)

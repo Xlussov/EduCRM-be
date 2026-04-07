@@ -108,6 +108,8 @@ FROM students st
 JOIN subscription_plans p ON p.id = $2
 JOIN subjects s ON s.id = $3
 WHERE st.id = $1
+    AND p.status = 'ACTIVE'
+    AND s.status = 'ACTIVE'
 LIMIT 1
 `
 

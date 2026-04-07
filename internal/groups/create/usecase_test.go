@@ -28,6 +28,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branch1, Name: "A1"},
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+				mockUR.On("IsBranchActive", mock.Anything, branch1).Return(true, nil).Once()
 				mockGR.On("Create", mock.Anything, mock.AnythingOfType("*domain.Group")).Run(func(args mock.Arguments) {
 					group := args.Get(1).(*domain.Group)
 					group.ID = uuid.New()
@@ -40,6 +41,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  Request{BranchID: branch1, Name: "A1"},
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+				mockUR.On("IsBranchActive", mock.Anything, branch1).Return(true, nil).Once()
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
 				mockGR.On("Create", mock.Anything, mock.AnythingOfType("*domain.Group")).Run(func(args mock.Arguments) {
 					group := args.Get(1).(*domain.Group)
@@ -53,6 +55,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  Request{BranchID: branch1, Name: "A1"},
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+				mockUR.On("IsBranchActive", mock.Anything, branch1).Return(true, nil).Once()
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch2}, nil).Once()
 			},
 			expectedErr: ErrBranchAccessDenied,

@@ -114,3 +114,24 @@ func (r *UserRepository) GetUserBranchIDs(ctx context.Context, userID uuid.UUID)
 	}
 	return res, nil
 }
+
+func (r *UserRepository) IsBranchActive(ctx context.Context, branchID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	return q.IsBranchActive(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
+}
+
+func (r *UserRepository) CountActiveBranchesByIDs(ctx context.Context, branchIDs []uuid.UUID) (int, error) {
+	q := sqlc.New(r.db(ctx))
+
+	idList := make([]pgtype.UUID, 0, len(branchIDs))
+	for _, id := range branchIDs {
+		idList = append(idList, pgtype.UUID{Bytes: id, Valid: true})
+	}
+
+	count, err := q.CountActiveBranchesByIDs(ctx, idList)
+	if err != nil {
+		return 0, err
+	}
+
+	return int(count), nil
+}

@@ -33,4 +33,6 @@ type UserRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*User, error)
 	AssignToBranches(ctx context.Context, userID uuid.UUID, branchIDs []uuid.UUID) error
 	GetUserBranchIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
+	IsBranchActive(ctx context.Context, branchID uuid.UUID) (bool, error)
+	CountActiveBranchesByIDs(ctx context.Context, branchIDs []uuid.UUID) (int, error)
 }

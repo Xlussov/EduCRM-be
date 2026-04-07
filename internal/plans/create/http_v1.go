@@ -4,6 +4,7 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -60,6 +61,9 @@ func (h *Handler) Handle(c echo.Context) error {
 	ctx := c.Request().Context()
 	res, err := h.usecase.Execute(ctx, userID, role, req)
 	if err != nil {
+		if errors.Is(err, domain.ErrArchivedReference) {
+			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
+		}
 		if errors.Is(err, ErrBranchAccessDenied) {
 			return echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}

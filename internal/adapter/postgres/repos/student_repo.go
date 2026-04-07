@@ -126,9 +126,12 @@ func (r *StudentRepository) Update(ctx context.Context, student *domain.Student)
 	return r.toDomain(s), nil
 }
 
-func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.Student, error) {
+func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID, status *domain.EntityStatus) ([]*domain.Student, error) {
 	q := sqlc.New(r.db(ctx))
-	students, err := q.GetStudentsByBranchID(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
+	students, err := q.GetStudentsByBranchID(ctx, sqlc.GetStudentsByBranchIDParams{
+		BranchID: pgtype.UUID{Bytes: branchID, Valid: true},
+		Status:   toStudentNullEntityStatus(status),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -137,6 +140,17 @@ func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUI
 		res = append(res, r.toDomain(s))
 	}
 	return res, nil
+}
+
+func toStudentNullEntityStatus(status *domain.EntityStatus) sqlc.NullEntityStatus {
+	if status == nil {
+		return sqlc.NullEntityStatus{}
+	}
+
+	return sqlc.NullEntityStatus{
+		EntityStatus: sqlc.EntityStatus(*status),
+		Valid:        true,
+	}
 }
 
 func (r *StudentRepository) toDomain(s sqlc.Student) *domain.Student {

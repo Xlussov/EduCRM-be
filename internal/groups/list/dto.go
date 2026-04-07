@@ -7,6 +7,7 @@ import (
 
 type Request struct {
 	BranchID uuid.UUID `query:"branch_id"`
+	Status   string    `query:"status"`
 }
 
 type GroupResponse struct {

@@ -2,6 +2,8 @@ package list
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -17,15 +19,19 @@ func NewUseCase(br domain.BranchRepository) *UseCase {
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string) ([]BranchResponse, error) {
+func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) ([]BranchResponse, error) {
+	status, err := parseEntityStatus(req.Status)
+	if err != nil {
+		return nil, err
+	}
+
 	var branches []*domain.Branch
-	var err error
 
 	if role == "SUPERADMIN" {
-		branches, err = uc.branchRepo.GetAll(ctx)
+		branches, err = uc.branchRepo.GetAll(ctx, status)
 	} else {
 		// ADMIN
-		branches, err = uc.branchRepo.GetByUserID(ctx, userID)
+		branches, err = uc.branchRepo.GetByUserID(ctx, userID, status)
 	}
 
 	if err != nil {
@@ -44,4 +50,17 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string) (
 	}
 
 	return res, nil
+}
+
+func parseEntityStatus(raw string) (*domain.EntityStatus, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	status := domain.EntityStatus(strings.ToUpper(raw))
+	if status != domain.StatusActive && status != domain.StatusArchived {
+		return nil, fmt.Errorf("%w: status must be ACTIVE or ARCHIVED", domain.ErrInvalidInput)
+	}
+
+	return &status, nil
 }

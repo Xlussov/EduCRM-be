@@ -18,8 +18,8 @@ func (m *GroupRepository) Create(ctx context.Context, group *domain.Group) error
 	return args.Error(0)
 }
 
-func (m *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.GroupWithCount, error) {
-	args := m.Called(ctx, branchID)
+func (m *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID, status *domain.EntityStatus) ([]*domain.GroupWithCount, error) {
+	args := m.Called(ctx, branchID, status)
 	var r0 []*domain.GroupWithCount
 	if args.Get(0) != nil {
 		r0 = args.Get(0).([]*domain.GroupWithCount)

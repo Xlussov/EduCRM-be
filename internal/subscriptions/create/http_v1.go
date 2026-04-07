@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -71,10 +72,10 @@ func (h *Handler) Handle(c echo.Context) error {
 	res, err := h.usecase.Execute(c.Request().Context(), userID, studentID, userClaims.Role, req)
 	if err != nil {
 		switch {
+		case errors.Is(err, domain.ErrArchivedReference):
+			return response.Error(c, http.StatusBadRequest, "ARCHIVED_REFERENCE", err.Error(), nil)
 		case errors.Is(err, ErrBranchAccessDenied):
 			return response.Error(c, http.StatusForbidden, "BRANCH_ACCESS_DENIED", err.Error(), nil)
-		case errors.Is(err, ErrInvalidSubject):
-			return response.Error(c, http.StatusBadRequest, "INVALID_SUBJECT", err.Error(), nil)
 		case errors.Is(err, ErrCrossBranchData):
 			return response.Error(c, http.StatusBadRequest, "BRANCH_MISMATCH", err.Error(), nil)
 		default:

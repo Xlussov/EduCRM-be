@@ -23,6 +23,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
+		repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, Status: domain.StatusActive}, nil)
 		updatedDomain := &domain.Subject{
 			ID:          subjectID,
 			BranchID:    branchID,
@@ -48,6 +49,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("db error", func(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
+		repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, Status: domain.StatusActive}, nil)
 		repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 
 		uc := NewUseCase(repo)

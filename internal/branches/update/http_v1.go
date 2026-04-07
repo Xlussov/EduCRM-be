@@ -1,9 +1,11 @@
 package update
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
@@ -79,6 +81,9 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), branchID, req)
 	if err != nil {
+		if errors.Is(err, domain.ErrCannotEditArchived) {
+			return response.Error(c, http.StatusBadRequest, "CANNOT_EDIT_ARCHIVED", err.Error(), nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 

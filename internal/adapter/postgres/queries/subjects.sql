@@ -14,10 +14,17 @@ FROM subjects
 WHERE id = $1 AND branch_id = $2
 LIMIT 1;
 
+-- name: GetSubjectByID :one
+SELECT id, branch_id, name, description, status, created_at, updated_at
+FROM subjects
+WHERE id = $1
+LIMIT 1;
+
 -- name: ListSubjects :many
 SELECT id, branch_id, name, description, status, created_at, updated_at
 FROM subjects
 WHERE branch_id = $1
+	AND (sqlc.narg(status)::entity_status IS NULL OR status = sqlc.narg(status)::entity_status)
 ORDER BY name ASC;
 
 -- name: UpdateSubject :one

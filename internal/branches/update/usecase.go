@@ -18,6 +18,14 @@ func NewUseCase(br domain.BranchRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID, req Request) (Response, error) {
+	currentBranch, err := uc.branchRepo.GetByID(ctx, branchID)
+	if err != nil {
+		return Response{}, err
+	}
+	if currentBranch.Status == domain.StatusArchived {
+		return Response{}, domain.ErrCannotEditArchived
+	}
+
 	branch := &domain.Branch{
 		ID:      branchID,
 		Name:    req.Name,

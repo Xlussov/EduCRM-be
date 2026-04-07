@@ -8,13 +8,25 @@ import (
 
 type UseCase struct {
 	subjectRepo domain.SubjectRepository
+	branchRepo  domain.BranchRepository
 }
 
-func NewUseCase(repo domain.SubjectRepository) *UseCase {
-	return &UseCase{subjectRepo: repo}
+func NewUseCase(sr domain.SubjectRepository, br domain.BranchRepository) *UseCase {
+	return &UseCase{
+		subjectRepo: sr,
+		branchRepo:  br,
+	}
 }
 
 func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
+	isActive, err := uc.branchRepo.IsActive(ctx, req.BranchID)
+	if err != nil {
+		return nil, err
+	}
+	if !isActive {
+		return nil, domain.ErrArchivedReference
+	}
+
 	subject := &domain.Subject{
 		BranchID:    req.BranchID,
 		Name:        req.Name,

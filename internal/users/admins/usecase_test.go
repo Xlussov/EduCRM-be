@@ -37,6 +37,7 @@ func TestUseCase_Execute(t *testing.T) {
 					u := args.Get(1).(*domain.User)
 					u.ID = uuid.New() // simulate DB setting ID
 				})
+				ur.On("CountActiveBranchesByIDs", mock.Anything, []uuid.UUID{branchID}).Return(1, nil)
 				ur.On("AssignToBranches", mock.Anything, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{branchID}).Return(nil)
 			},
 			expectedError: "",

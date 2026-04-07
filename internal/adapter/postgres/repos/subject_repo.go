@@ -58,9 +58,12 @@ func (r *SubjectRepository) UpdateStatus(ctx context.Context, id uuid.UUID, stat
 	return err
 }
 
-func (r *SubjectRepository) GetAll(ctx context.Context, branchID uuid.UUID) ([]*domain.Subject, error) {
+func (r *SubjectRepository) GetAll(ctx context.Context, branchID uuid.UUID, status *domain.EntityStatus) ([]*domain.Subject, error) {
 	q := sqlc.New(r.db(ctx))
-	rows, err := q.ListSubjects(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
+	rows, err := q.ListSubjects(ctx, sqlc.ListSubjectsParams{
+		BranchID: pgtype.UUID{Bytes: branchID, Valid: true},
+		Status:   toSubjectNullEntityStatus(status),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -78,6 +81,24 @@ func (r *SubjectRepository) GetAll(ctx context.Context, branchID uuid.UUID) ([]*
 		})
 	}
 	return subjects, nil
+}
+
+func (r *SubjectRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Subject, error) {
+	q := sqlc.New(r.db(ctx))
+	s, err := q.GetSubjectByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	return &domain.Subject{
+		ID:          s.ID.Bytes,
+		BranchID:    s.BranchID.Bytes,
+		Name:        s.Name,
+		Description: s.Description.String,
+		Status:      domain.EntityStatus(s.Status.EntityStatus),
+		CreatedAt:   s.CreatedAt.Time,
+		UpdatedAt:   s.UpdatedAt.Time,
+	}, nil
 }
 
 func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject) (*domain.Subject, error) {
@@ -104,4 +125,15 @@ func (r *SubjectRepository) Update(ctx context.Context, subject *domain.Subject)
 		CreatedAt:   s.CreatedAt.Time,
 		UpdatedAt:   s.UpdatedAt.Time,
 	}, nil
+}
+
+func toSubjectNullEntityStatus(status *domain.EntityStatus) sqlc.NullEntityStatus {
+	if status == nil {
+		return sqlc.NullEntityStatus{}
+	}
+
+	return sqlc.NullEntityStatus{
+		EntityStatus: sqlc.EntityStatus(*status),
+		Valid:        true,
+	}
 }

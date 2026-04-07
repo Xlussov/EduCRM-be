@@ -236,6 +236,18 @@ const docTemplate = `{
                     "branches"
                 ],
                 "summary": "List Branches",
+                "parameters": [
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "ARCHIVED"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of branches",
@@ -527,6 +539,16 @@ const docTemplate = `{
                         "name": "branch_id",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "ARCHIVED"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {
@@ -1133,8 +1155,12 @@ const docTemplate = `{
                         "in": "query"
                     },
                     {
+                        "enum": [
+                            "ACTIVE",
+                            "ARCHIVED"
+                        ],
                         "type": "string",
-                        "description": "Filter by status (ACTIVE or ARCHIVED)",
+                        "description": "Filter by status",
                         "name": "status",
                         "in": "query"
                     }
@@ -1570,6 +1596,16 @@ const docTemplate = `{
                         "name": "branch_id",
                         "in": "query",
                         "required": true
+                    },
+                    {
+                        "enum": [
+                            "ACTIVE",
+                            "ARCHIVED"
+                        ],
+                        "type": "string",
+                        "description": "Filter by status",
+                        "name": "status",
+                        "in": "query"
                     }
                 ],
                 "responses": {

@@ -144,9 +144,15 @@ SELECT
 FROM groups g
 LEFT JOIN student_groups sg ON g.id = sg.group_id AND sg.left_at IS NULL
 WHERE g.branch_id = $1
+    AND ($2::entity_status IS NULL OR g.status = $2::entity_status)
 GROUP BY g.id, g.name, g.status
 ORDER BY g.created_at DESC
 `
+
+type GetGroupsByBranchIDParams struct {
+	BranchID pgtype.UUID      `json:"branch_id"`
+	Status   NullEntityStatus `json:"status"`
+}
 
 type GetGroupsByBranchIDRow struct {
 	ID            pgtype.UUID      `json:"id"`
@@ -155,8 +161,8 @@ type GetGroupsByBranchIDRow struct {
 	StudentsCount int32            `json:"students_count"`
 }
 
-func (q *Queries) GetGroupsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]GetGroupsByBranchIDRow, error) {
-	rows, err := q.db.Query(ctx, getGroupsByBranchID, branchID)
+func (q *Queries) GetGroupsByBranchID(ctx context.Context, arg GetGroupsByBranchIDParams) ([]GetGroupsByBranchIDRow, error) {
+	rows, err := q.db.Query(ctx, getGroupsByBranchID, arg.BranchID, arg.Status)
 	if err != nil {
 		return nil, err
 	}

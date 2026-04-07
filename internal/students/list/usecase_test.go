@@ -35,7 +35,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branchID},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(students, nil)
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return(students, nil)
 			},
 			wantCount: 3,
 		},
@@ -44,7 +44,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branchID, Status: "ACTIVE"},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(students, nil)
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return([]*domain.Student{students[0], students[2]}, nil)
 			},
 			wantCount: 2,
 		},
@@ -53,7 +53,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branchID, Search: "john"},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(students, nil)
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return(students, nil)
 			},
 			wantCount: 2,
 		},
@@ -62,7 +62,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branchID, Search: "john", Status: "ACTIVE"},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(students, nil)
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return([]*domain.Student{students[0], students[2]}, nil)
 			},
 			wantCount: 2,
 		},
@@ -72,7 +72,7 @@ func TestUseCase_Execute(t *testing.T) {
 			req:  Request{BranchID: branchID},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(students, nil)
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return(students, nil)
 			},
 			wantCount: 3,
 		},
@@ -97,7 +97,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branchID},
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByBranchID", mock.Anything, branchID).Return(nil, errors.New("db error"))
+				sr.On("GetByBranchID", mock.Anything, branchID, mock.Anything).Return(nil, errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),
 		},

@@ -38,6 +38,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
+				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(len(req.SubjectIDs), nil).Once()
 				mockPR.On("CreatePlan", mock.Anything, mock.AnythingOfType("*domain.Plan"), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					plan := args.Get(1).(*domain.Plan)
@@ -51,6 +52,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
+				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(len(req.SubjectIDs), nil).Once()
 				mockPR.On("CreatePlan", mock.Anything, mock.AnythingOfType("*domain.Plan"), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
@@ -65,6 +67,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
+				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch2}, nil).Once()
 			},
 			expectedErr: ErrBranchAccessDenied,
@@ -74,6 +77,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
+				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(0, nil).Once()
 			},
 			expectedErr: ErrSubjectBranchMismatch,

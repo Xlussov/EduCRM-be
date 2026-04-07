@@ -32,8 +32,13 @@ ORDER BY lessons_per_month ASC;
 -- name: ValidatePlanSubject :one
 SELECT EXISTS (
     SELECT 1 
-    FROM plan_subjects 
-    WHERE plan_id = $1 AND subject_id = $2
+    FROM plan_subjects ps
+    JOIN subscription_plans p ON p.id = ps.plan_id
+    JOIN subjects s ON s.id = ps.subject_id
+    WHERE ps.plan_id = $1
+      AND ps.subject_id = $2
+      AND p.status = 'ACTIVE'
+      AND s.status = 'ACTIVE'
 );
 
 -- name: UpdatePlanStatus :exec
@@ -50,4 +55,5 @@ WHERE id = $1 LIMIT 1;
 SELECT COUNT(*)::int
 FROM unnest($2::uuid[]) AS subject_ids(id)
 JOIN subjects s ON s.id = subject_ids.id
-WHERE s.branch_id = $1;
+WHERE s.branch_id = $1
+    AND s.status = 'ACTIVE';

@@ -3,6 +3,8 @@ package list
 import (
 	"context"
 	"errors"
+	"fmt"
+	"strings"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
@@ -49,7 +51,12 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 		}
 	}
 
-	groups, err := uc.groupRepo.GetByBranchID(ctx, req.BranchID)
+	status, err := parseGroupStatus(req.Status)
+	if err != nil {
+		return Response{}, err
+	}
+
+	groups, err := uc.groupRepo.GetByBranchID(ctx, req.BranchID, status)
 	if err != nil {
 		return Response{}, err
 	}
@@ -69,4 +76,17 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 	}
 
 	return Response{Groups: res}, nil
+}
+
+func parseGroupStatus(raw string) (*domain.EntityStatus, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	status := domain.EntityStatus(strings.ToUpper(raw))
+	if status != domain.StatusActive && status != domain.StatusArchived {
+		return nil, fmt.Errorf("%w: status must be ACTIVE or ARCHIVED", domain.ErrInvalidInput)
+	}
+
+	return &status, nil
 }

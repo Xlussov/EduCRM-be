@@ -42,9 +42,12 @@ func (r *GroupRepository) Create(ctx context.Context, group *domain.Group) error
 	return nil
 }
 
-func (r *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.GroupWithCount, error) {
+func (r *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID, status *domain.EntityStatus) ([]*domain.GroupWithCount, error) {
 	q := sqlc.New(r.db(ctx))
-	rows, err := q.GetGroupsByBranchID(ctx, pgtype.UUID{Bytes: branchID, Valid: true})
+	rows, err := q.GetGroupsByBranchID(ctx, sqlc.GetGroupsByBranchIDParams{
+		BranchID: pgtype.UUID{Bytes: branchID, Valid: true},
+		Status:   toGroupNullEntityStatus(status),
+	})
 	if err != nil {
 		return nil, err
 	}
@@ -60,6 +63,17 @@ func (r *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID)
 		})
 	}
 	return res, nil
+}
+
+func toGroupNullEntityStatus(status *domain.EntityStatus) sqlc.NullEntityStatus {
+	if status == nil {
+		return sqlc.NullEntityStatus{}
+	}
+
+	return sqlc.NullEntityStatus{
+		EntityStatus: sqlc.EntityStatus(*status),
+		Valid:        true,
+	}
 }
 
 func (r *GroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Group, error) {

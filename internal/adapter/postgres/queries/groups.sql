@@ -12,6 +12,7 @@ SELECT
 FROM groups g
 LEFT JOIN student_groups sg ON g.id = sg.group_id AND sg.left_at IS NULL
 WHERE g.branch_id = $1
+    AND (sqlc.narg(status)::entity_status IS NULL OR g.status = sqlc.narg(status)::entity_status)
 GROUP BY g.id, g.name, g.status
 ORDER BY g.created_at DESC;
 

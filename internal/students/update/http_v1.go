@@ -5,6 +5,7 @@ import (
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/golang-jwt/jwt/v5"
@@ -70,6 +71,8 @@ func (h *Handler) Handle(c echo.Context) error {
 	res, err := h.usecase.Execute(c.Request().Context(), userID, userClaims.Role, studentID, req)
 	if err != nil {
 		switch {
+		case errors.Is(err, domain.ErrCannotEditArchived):
+			return response.Error(c, http.StatusBadRequest, "CANNOT_EDIT_ARCHIVED", err.Error(), nil)
 		case errors.Is(err, ErrBranchAccessDenied):
 			return response.Error(c, http.StatusForbidden, "BRANCH_ACCESS_DENIED", err.Error(), nil)
 		default:

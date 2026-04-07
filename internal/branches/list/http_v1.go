@@ -1,9 +1,11 @@
 package list
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -22,6 +24,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Tags branches
 // @Security BearerAuth
 // @Produce json
+// @Param status query string false "Filter by status" Enums(ACTIVE, ARCHIVED)
 // @Success 200 {array} BranchResponse "List of branches"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
@@ -41,8 +44,13 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", "Invalid user ID in token", nil)
 	}
 
-	res, err := h.usecase.Execute(c.Request().Context(), userID, userClaims.Role)
+	res, err := h.usecase.Execute(c.Request().Context(), userID, userClaims.Role, Request{
+		Status: c.QueryParam("status"),
+	})
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", err.Error(), nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 

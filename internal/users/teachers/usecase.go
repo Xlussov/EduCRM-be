@@ -33,15 +33,22 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 	}
 
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
+		isActive, err := uc.userRepo.IsBranchActive(txCtx, req.BranchID)
+		if err != nil {
+			return err
+		}
+		if !isActive {
+			return domain.ErrArchivedReference
+		}
 
-		if err := uc.userRepo.Create(ctx, user); err != nil {
+		if err := uc.userRepo.Create(txCtx, user); err != nil {
 			if errors.Is(err, domain.ErrAlreadyExists) {
 				return domain.ErrPhoneAlreadyExists
 			}
 			return err
 		}
 
-		if err := uc.userRepo.AssignToBranches(ctx, user.ID, []uuid.UUID{req.BranchID}); err != nil {
+		if err := uc.userRepo.AssignToBranches(txCtx, user.ID, []uuid.UUID{req.BranchID}); err != nil {
 			return err
 		}
 

@@ -28,7 +28,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  Request{BranchID: branch1},
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
-				mockGR.On("GetByBranchID", mock.Anything, branch1).Return([]*domain.GroupWithCount{
+				mockGR.On("GetByBranchID", mock.Anything, branch1, (*domain.EntityStatus)(nil)).Return([]*domain.GroupWithCount{
 					{
 						Group: domain.Group{
 							ID:     uuid.New(),
@@ -47,7 +47,7 @@ func TestUseCase_Execute(t *testing.T) {
 			req:  Request{BranchID: branch1},
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
 				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
-				mockGR.On("GetByBranchID", mock.Anything, branch1).Return([]*domain.GroupWithCount{}, nil).Once()
+				mockGR.On("GetByBranchID", mock.Anything, branch1, (*domain.EntityStatus)(nil)).Return([]*domain.GroupWithCount{}, nil).Once()
 			},
 			expectedErr: nil,
 		},

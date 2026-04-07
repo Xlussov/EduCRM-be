@@ -30,7 +30,7 @@ func TestUseCase_Execute(t *testing.T) {
 				UpdatedAt:   now,
 			},
 		}
-		repo.On("GetAll", context.Background(), branchID).Return(expected, nil)
+		repo.On("GetAll", context.Background(), branchID, (*domain.EntityStatus)(nil)).Return(expected, nil)
 
 		uc := NewUseCase(repo)
 		res, err := uc.Execute(context.Background(), Request{BranchID: branchID})
@@ -45,7 +45,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("db error", func(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
-		repo.On("GetAll", context.Background(), branchID).Return(nil, errors.New("db error"))
+		repo.On("GetAll", context.Background(), branchID, (*domain.EntityStatus)(nil)).Return(nil, errors.New("db error"))
 
 		uc := NewUseCase(repo)
 		res, err := uc.Execute(context.Background(), Request{BranchID: branchID})

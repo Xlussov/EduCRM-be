@@ -96,11 +96,17 @@ const getStudentsByBranchID = `-- name: GetStudentsByBranchID :many
 SELECT id, branch_id, first_name, last_name, dob, phone, email, address, parent_name, parent_phone, parent_email, parent_relationship, status, created_at
 FROM students
 WHERE branch_id = $1
+    AND ($2::entity_status IS NULL OR status = $2::entity_status)
 ORDER BY created_at DESC
 `
 
-func (q *Queries) GetStudentsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]Student, error) {
-	rows, err := q.db.Query(ctx, getStudentsByBranchID, branchID)
+type GetStudentsByBranchIDParams struct {
+	BranchID pgtype.UUID      `json:"branch_id"`
+	Status   NullEntityStatus `json:"status"`
+}
+
+func (q *Queries) GetStudentsByBranchID(ctx context.Context, arg GetStudentsByBranchIDParams) ([]Student, error) {
+	rows, err := q.db.Query(ctx, getStudentsByBranchID, arg.BranchID, arg.Status)
 	if err != nil {
 		return nil, err
 	}

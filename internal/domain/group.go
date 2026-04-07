@@ -28,7 +28,7 @@ type GroupStudent struct {
 
 type GroupRepository interface {
 	Create(ctx context.Context, group *Group) error
-	GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*GroupWithCount, error)
+	GetByBranchID(ctx context.Context, branchID uuid.UUID, status *EntityStatus) ([]*GroupWithCount, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Group, error)
 	UpdateName(ctx context.Context, id uuid.UUID, name string) (*Group, error)
 	AddStudent(ctx context.Context, groupID, studentID uuid.UUID, joinedAt time.Time) error

@@ -11,6 +11,20 @@ import (
 	"github.com/jackc/pgx/v5/pgtype"
 )
 
+const countActiveBranchesByIDs = `-- name: CountActiveBranchesByIDs :one
+SELECT COUNT(*)::int
+FROM unnest($1::uuid[]) AS branch_ids(id)
+JOIN branches b ON b.id = branch_ids.id
+WHERE b.status = 'ACTIVE'
+`
+
+func (q *Queries) CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error) {
+	row := q.db.QueryRow(ctx, countActiveBranchesByIDs, dollar_1)
+	var column_1 int32
+	err := row.Scan(&column_1)
+	return column_1, err
+}
+
 const createBranch = `-- name: CreateBranch :one
 INSERT INTO branches (name, address, city, status)
 VALUES ($1, $2, $3, 'ACTIVE')
@@ -33,10 +47,11 @@ func (q *Queries) CreateBranch(ctx context.Context, arg CreateBranchParams) (pgt
 const getAllBranches = `-- name: GetAllBranches :many
 SELECT id, name, address, city, status, created_at, updated_at
 FROM branches
+WHERE ($1::entity_status IS NULL OR status = $1::entity_status)
 `
 
-func (q *Queries) GetAllBranches(ctx context.Context) ([]Branch, error) {
-	rows, err := q.db.Query(ctx, getAllBranches)
+func (q *Queries) GetAllBranches(ctx context.Context, status NullEntityStatus) ([]Branch, error) {
+	rows, err := q.db.Query(ctx, getAllBranches, status)
 	if err != nil {
 		return nil, err
 	}
@@ -89,10 +104,16 @@ SELECT b.id, b.name, b.address, b.city, b.status, b.created_at, b.updated_at
 FROM branches b
 JOIN user_branches ub ON b.id = ub.branch_id
 WHERE ub.user_id = $1
+	AND ($2::entity_status IS NULL OR b.status = $2::entity_status)
 `
 
-func (q *Queries) GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) ([]Branch, error) {
-	rows, err := q.db.Query(ctx, getBranchesByUserID, userID)
+type GetBranchesByUserIDParams struct {
+	UserID pgtype.UUID      `json:"user_id"`
+	Status NullEntityStatus `json:"status"`
+}
+
+func (q *Queries) GetBranchesByUserID(ctx context.Context, arg GetBranchesByUserIDParams) ([]Branch, error) {
+	rows, err := q.db.Query(ctx, getBranchesByUserID, arg.UserID, arg.Status)
 	if err != nil {
 		return nil, err
 	}
@@ -117,6 +138,21 @@ func (q *Queries) GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) (
 		return nil, err
 	}
 	return items, nil
+}
+
+const isBranchActive = `-- name: IsBranchActive :one
+SELECT EXISTS (
+		SELECT 1
+		FROM branches
+		WHERE id = $1 AND status = 'ACTIVE'
+)
+`
+
+func (q *Queries) IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error) {
+	row := q.db.QueryRow(ctx, isBranchActive, id)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
 }
 
 const updateBranch = `-- name: UpdateBranch :one

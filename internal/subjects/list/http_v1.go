@@ -1,9 +1,11 @@
 package list
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -23,6 +25,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Security BearerAuth
 // @Produce json
 // @Param branch_id query string true "Branch ID" format(uuid)
+// @Param status query string false "Filter by status" Enums(ACTIVE, ARCHIVED)
 // @Success 200 {object} Response "List of subjects"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
@@ -49,8 +52,14 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid or missing branch_id", nil)
 	}
 
-	res, err := h.usecase.Execute(c.Request().Context(), Request{BranchID: branchID})
+	res, err := h.usecase.Execute(c.Request().Context(), Request{
+		BranchID: branchID,
+		Status:   c.QueryParam("status"),
+	})
 	if err != nil {
+		if errors.Is(err, domain.ErrInvalidInput) {
+			return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", err.Error(), nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to get subjects", nil)
 	}
 

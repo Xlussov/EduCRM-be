@@ -40,6 +40,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				sr.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					s.ID = studentID
 					return s.FirstName == "John" && s.LastName == "Doe" && s.BranchID == branchID
@@ -52,6 +53,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
 				sr.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					s.ID = studentID
@@ -65,6 +67,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				otherBranch := uuid.New()
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{otherBranch}, nil)
 			},
@@ -75,6 +78,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				sr.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),
@@ -84,6 +88,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID(nil), errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),

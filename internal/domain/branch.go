@@ -27,8 +27,10 @@ type Branch struct {
 type BranchRepository interface {
 	Create(ctx context.Context, branch *Branch) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
-	GetAll(ctx context.Context) ([]*Branch, error)
-	GetByUserID(ctx context.Context, userID uuid.UUID) ([]*Branch, error)
+	GetAll(ctx context.Context, status *EntityStatus) ([]*Branch, error)
+	GetByUserID(ctx context.Context, userID uuid.UUID, status *EntityStatus) ([]*Branch, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Branch, error)
+	IsActive(ctx context.Context, id uuid.UUID) (bool, error)
+	CountActiveByIDs(ctx context.Context, ids []uuid.UUID) (int, error)
 	Update(ctx context.Context, branch *Branch) (*Branch, error)
 }

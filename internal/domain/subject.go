@@ -20,6 +20,7 @@ type Subject struct {
 type SubjectRepository interface {
 	Create(ctx context.Context, subject *Subject) error
 	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
-	GetAll(ctx context.Context, branchID uuid.UUID) ([]*Subject, error)
+	GetAll(ctx context.Context, branchID uuid.UUID, status *EntityStatus) ([]*Subject, error)
+	GetByID(ctx context.Context, id uuid.UUID) (*Subject, error)
 	Update(ctx context.Context, subject *Subject) (*Subject, error)
 }

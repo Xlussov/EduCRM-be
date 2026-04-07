@@ -2,6 +2,8 @@ package list
 
 import (
 	"context"
+	"fmt"
+	"strings"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 )
@@ -15,7 +17,12 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
-	subjects, err := uc.subjectRepo.GetAll(ctx, req.BranchID)
+	status, err := parseSubjectStatus(req.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	subjects, err := uc.subjectRepo.GetAll(ctx, req.BranchID, status)
 	if err != nil {
 		return nil, err
 	}
@@ -37,4 +44,17 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) 
 	}
 
 	return res, nil
+}
+
+func parseSubjectStatus(raw string) (*domain.EntityStatus, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	status := domain.EntityStatus(strings.ToUpper(raw))
+	if status != domain.StatusActive && status != domain.StatusArchived {
+		return nil, fmt.Errorf("%w: status must be ACTIVE or ARCHIVED", domain.ErrInvalidInput)
+	}
+
+	return &status, nil
 }

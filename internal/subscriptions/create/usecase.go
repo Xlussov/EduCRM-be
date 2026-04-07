@@ -6,11 +6,11 @@ import (
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 )
 
 var (
 	ErrBranchAccessDenied = errors.New("branch access denied")
-	ErrInvalidSubject     = errors.New("subject is not allowed for this plan")
 	ErrCrossBranchData    = errors.New("student, plan and subject must belong to the same branch")
 )
 
@@ -57,11 +57,14 @@ func (uc *UseCase) Execute(ctx context.Context, userID, studentID uuid.UUID, rol
 		return Response{}, err
 	}
 	if !isValid {
-		return Response{}, ErrInvalidSubject
+		return Response{}, domain.ErrArchivedReference
 	}
 
 	branchIDs, err := uc.subRepo.GetSubscriptionBranchIDs(ctx, studentID, req.PlanID, req.SubjectID)
 	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return Response{}, domain.ErrArchivedReference
+		}
 		return Response{}, err
 	}
 

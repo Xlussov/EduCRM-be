@@ -45,8 +45,8 @@ func (m *StudentRepository) Update(ctx context.Context, student *domain.Student)
 	return res, args.Error(1)
 }
 
-func (m *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID) ([]*domain.Student, error) {
-	args := m.Called(ctx, branchID)
+func (m *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID, status *domain.EntityStatus) ([]*domain.Student, error) {
+	args := m.Called(ctx, branchID, status)
 	var res []*domain.Student
 	if args.Get(0) != nil {
 		res = args.Get(0).([]*domain.Student)

@@ -13,6 +13,7 @@ import (
 type Querier interface {
 	AddStudentToGroup(ctx context.Context, arg AddStudentToGroupParams) error
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
+	CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error)
 	CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error)
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (pgtype.UUID, error)
@@ -23,14 +24,14 @@ type Querier interface {
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateSubscriptionPlan(ctx context.Context, arg CreateSubscriptionPlanParams) (SubscriptionPlan, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
-	GetAllBranches(ctx context.Context) ([]Branch, error)
+	GetAllBranches(ctx context.Context, status NullEntityStatus) ([]Branch, error)
 	GetBranchByID(ctx context.Context, id pgtype.UUID) (Branch, error)
-	GetBranchesByUserID(ctx context.Context, userID pgtype.UUID) ([]Branch, error)
+	GetBranchesByUserID(ctx context.Context, arg GetBranchesByUserIDParams) ([]Branch, error)
 	GetGroupActiveStudentIDs(ctx context.Context, groupID pgtype.UUID) ([]pgtype.UUID, error)
 	GetGroupBranchID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	GetGroupByID(ctx context.Context, id pgtype.UUID) (Group, error)
 	GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error)
-	GetGroupsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]GetGroupsByBranchIDRow, error)
+	GetGroupsByBranchID(ctx context.Context, arg GetGroupsByBranchIDParams) ([]GetGroupsByBranchIDRow, error)
 	GetPlanByID(ctx context.Context, id pgtype.UUID) (SubscriptionPlan, error)
 	GetPlanPricingGrids(ctx context.Context, planID pgtype.UUID) ([]PlanPricingGrid, error)
 	GetPlanSubjects(ctx context.Context, planID pgtype.UUID) ([]GetPlanSubjectsRow, error)
@@ -39,13 +40,15 @@ type Querier interface {
 	GetStudentBranchID(ctx context.Context, id pgtype.UUID) (pgtype.UUID, error)
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error)
 	GetStudentSubscriptions(ctx context.Context, studentID pgtype.UUID) ([]GetStudentSubscriptionsRow, error)
-	GetStudentsByBranchID(ctx context.Context, branchID pgtype.UUID) ([]Student, error)
+	GetStudentsByBranchID(ctx context.Context, arg GetStudentsByBranchIDParams) ([]Student, error)
 	GetSubject(ctx context.Context, arg GetSubjectParams) (Subject, error)
+	GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error)
 	GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByPhone(ctx context.Context, phone string) (User, error)
-	ListSubjects(ctx context.Context, branchID pgtype.UUID) ([]Subject, error)
+	IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error)
+	ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error)
 	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
 	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error

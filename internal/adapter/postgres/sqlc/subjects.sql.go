@@ -65,15 +65,43 @@ func (q *Queries) GetSubject(ctx context.Context, arg GetSubjectParams) (Subject
 	return i, err
 }
 
+const getSubjectByID = `-- name: GetSubjectByID :one
+SELECT id, branch_id, name, description, status, created_at, updated_at
+FROM subjects
+WHERE id = $1
+LIMIT 1
+`
+
+func (q *Queries) GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error) {
+	row := q.db.QueryRow(ctx, getSubjectByID, id)
+	var i Subject
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.Name,
+		&i.Description,
+		&i.Status,
+		&i.CreatedAt,
+		&i.UpdatedAt,
+	)
+	return i, err
+}
+
 const listSubjects = `-- name: ListSubjects :many
 SELECT id, branch_id, name, description, status, created_at, updated_at
 FROM subjects
 WHERE branch_id = $1
+	AND ($2::entity_status IS NULL OR status = $2::entity_status)
 ORDER BY name ASC
 `
 
-func (q *Queries) ListSubjects(ctx context.Context, branchID pgtype.UUID) ([]Subject, error) {
-	rows, err := q.db.Query(ctx, listSubjects, branchID)
+type ListSubjectsParams struct {
+	BranchID pgtype.UUID      `json:"branch_id"`
+	Status   NullEntityStatus `json:"status"`
+}
+
+func (q *Queries) ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error) {
+	rows, err := q.db.Query(ctx, listSubjects, arg.BranchID, arg.Status)
 	if err != nil {
 		return nil, err
 	}

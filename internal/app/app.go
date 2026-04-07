@@ -101,7 +101,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	branchesListUC := brancheslist.NewUseCase(branchRepo)
 	branchesGetUC := branchesget.NewUseCase(branchRepo)
 	branchesUpdateUC := branchesupdate.NewUseCase(branchRepo)
-	subjectsCreateUC := subjectscreate.NewUseCase(subjectRepo)
+	subjectsCreateUC := subjectscreate.NewUseCase(subjectRepo, branchRepo)
 	subjectsArchiveUC := subjectsarchive.NewUseCase(subjectRepo)
 	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
 	subjectsUpdateUC := subjectsupdate.NewUseCase(subjectRepo)

@@ -26,13 +26,15 @@ func NewUseCase(sr domain.StudentRepository, ur domain.UserRepository) *UseCase 
 }
 
 func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, studentID uuid.UUID, req Request) (Response, error) {
+	currentStudent, err := uc.studentRepo.GetByID(ctx, studentID)
+	if err != nil {
+		return Response{}, err
+	}
+	if currentStudent.Status == domain.StatusArchived {
+		return Response{}, domain.ErrCannotEditArchived
+	}
 
 	if role == "ADMIN" {
-		branchID, err := uc.studentRepo.GetBranchID(ctx, studentID)
-		if err != nil {
-			return Response{}, err
-		}
-
 		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
 		if err != nil {
 			return Response{}, err
@@ -40,7 +42,7 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, s
 
 		hasAccess := false
 		for _, bid := range branchIDs {
-			if bid == branchID {
+			if bid == currentStudent.BranchID {
 				hasAccess = true
 				break
 			}

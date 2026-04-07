@@ -3,6 +3,7 @@ package list
 import (
 	"context"
 	"errors"
+	"fmt"
 	"strings"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
@@ -48,7 +49,12 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 		}
 	}
 
-	students, err := uc.studentRepo.GetByBranchID(ctx, req.BranchID)
+	status, err := parseStudentStatus(req.Status)
+	if err != nil {
+		return nil, err
+	}
+
+	students, err := uc.studentRepo.GetByBranchID(ctx, req.BranchID, status)
 	if err != nil {
 		return nil, err
 	}
@@ -58,10 +64,6 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 	}
 
 	for _, s := range students {
-		if req.Status != "" && string(s.Status) != strings.ToUpper(req.Status) {
-			continue
-		}
-
 		if req.Search != "" {
 			search := strings.ToLower(req.Search)
 			if !strings.Contains(strings.ToLower(s.FirstName), search) &&
@@ -79,4 +81,17 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 	}
 
 	return res, nil
+}
+
+func parseStudentStatus(raw string) (*domain.EntityStatus, error) {
+	if raw == "" {
+		return nil, nil
+	}
+
+	status := domain.EntityStatus(strings.ToUpper(raw))
+	if status != domain.StatusActive && status != domain.StatusArchived {
+		return nil, fmt.Errorf("%w: status must be ACTIVE or ARCHIVED", domain.ErrInvalidInput)
+	}
+
+	return &status, nil
 }

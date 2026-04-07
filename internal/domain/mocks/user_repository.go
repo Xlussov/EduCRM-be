@@ -44,3 +44,13 @@ func (m *UserRepository) GetUserBranchIDs(ctx context.Context, userID uuid.UUID)
 	args := m.Called(ctx, userID)
 	return args.Get(0).([]uuid.UUID), args.Error(1)
 }
+
+func (m *UserRepository) IsBranchActive(ctx context.Context, branchID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, branchID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *UserRepository) CountActiveBranchesByIDs(ctx context.Context, branchIDs []uuid.UUID) (int, error) {
+	args := m.Called(ctx, branchIDs)
+	return args.Int(0), args.Error(1)
+}

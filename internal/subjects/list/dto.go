@@ -8,7 +8,8 @@ import (
 )
 
 type Request struct {
-	BranchID uuid.UUID
+	BranchID uuid.UUID `query:"branch_id"`
+	Status   string    `query:"status"`
 }
 
 type SubjectResponse struct {

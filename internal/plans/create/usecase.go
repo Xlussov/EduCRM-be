@@ -29,6 +29,14 @@ func NewUseCase(tx domain.TxManager, pr domain.SubscriptionRepository, ur domain
 }
 
 func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) (Response, error) {
+	isActive, err := uc.userRepo.IsBranchActive(ctx, req.BranchID)
+	if err != nil {
+		return Response{}, err
+	}
+	if !isActive {
+		return Response{}, domain.ErrArchivedReference
+	}
+
 	if role == "ADMIN" {
 		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
 		if err != nil {

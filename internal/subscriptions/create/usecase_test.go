@@ -80,13 +80,13 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: ErrBranchAccessDenied,
 		},
 		{
-			name: "Error_InvalidSubject",
+			name: "Error_ArchivedOrInvalidReference",
 			role: "SUPERADMIN",
 			req:  req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockSR *mocks.SubscriptionRepository, mockStdR *mocks.StudentRepository) {
 				mockSR.On("ValidatePlanSubject", mock.Anything, req.PlanID, req.SubjectID).Return(false, nil).Once()
 			},
-			expectedErr: ErrInvalidSubject,
+			expectedErr: domain.ErrArchivedReference,
 		},
 		{
 			name: "Error_CrossBranchData",

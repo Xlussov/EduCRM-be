@@ -22,7 +22,9 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("success", func(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
+		branchRepo := new(mocks.BranchRepository)
 		expectedID := uuid.New()
+		branchRepo.On("IsActive", mock.Anything, branchID).Return(true, nil)
 
 		repo.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Subject) bool {
 			if s.Name == req.Name && s.BranchID == branchID {
@@ -32,7 +34,7 @@ func TestUseCase_Execute(t *testing.T) {
 			return false
 		})).Return(nil)
 
-		uc := NewUseCase(repo)
+		uc := NewUseCase(repo, branchRepo)
 		res, err := uc.Execute(context.Background(), req)
 
 		assert.NoError(t, err)
@@ -40,16 +42,21 @@ func TestUseCase_Execute(t *testing.T) {
 		assert.Equal(t, expectedID.String(), res.ID)
 		assert.Equal(t, branchID.String(), res.BranchID)
 		repo.AssertExpectations(t)
+		branchRepo.AssertExpectations(t)
 	})
 
 	t.Run("db error", func(t *testing.T) {
 		repo := new(mocks.SubjectRepository)
+		branchRepo := new(mocks.BranchRepository)
+		branchRepo.On("IsActive", mock.Anything, branchID).Return(true, nil)
 		repo.On("Create", mock.Anything, mock.Anything).Return(errors.New("db err"))
 
-		uc := NewUseCase(repo)
+		uc := NewUseCase(repo, branchRepo)
 		res, err := uc.Execute(context.Background(), req)
 
 		assert.Error(t, err)
 		assert.Nil(t, res)
+		repo.AssertExpectations(t)
+		branchRepo.AssertExpectations(t)
 	})
 }

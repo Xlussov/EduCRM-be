@@ -66,6 +66,9 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), subjectID, req)
 	if err != nil {
+		if errors.Is(err, domain.ErrCannotEditArchived) {
+			return response.Error(c, http.StatusBadRequest, "CANNOT_EDIT_ARCHIVED", err.Error(), nil)
+		}
 		if errors.Is(err, domain.ErrAlreadyExists) {
 			return response.Error(c, http.StatusConflict, "SUBJECT_ALREADY_EXISTS", "Subject name already exists in this branch", nil)
 		}

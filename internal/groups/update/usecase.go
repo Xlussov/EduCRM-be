@@ -30,6 +30,9 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, g
 	if err != nil {
 		return Response{}, err
 	}
+	if group.Status == domain.StatusArchived {
+		return Response{}, domain.ErrCannotEditArchived
+	}
 
 	if role == "ADMIN" {
 		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)

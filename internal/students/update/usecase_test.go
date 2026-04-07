@@ -38,6 +38,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID && s.FirstName == "Jane" && s.LastName == "Smith"
 				})).Return(&domain.Student{
@@ -53,7 +54,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetBranchID", mock.Anything, studentID).Return(branchID, nil)
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID
@@ -71,17 +72,17 @@ func TestUseCase_Execute(t *testing.T) {
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				otherBranch := uuid.New()
-				sr.On("GetBranchID", mock.Anything, studentID).Return(branchID, nil)
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{otherBranch}, nil)
 			},
 			wantErr: ErrBranchAccessDenied,
 		},
 		{
-			name: "error getting branch id",
+			name: "error getting student",
 			role: "ADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetBranchID", mock.Anything, studentID).Return(uuid.Nil, errors.New("db error"))
+				sr.On("GetByID", mock.Anything, studentID).Return((*domain.Student)(nil), errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),
 		},
@@ -90,7 +91,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "ADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetBranchID", mock.Anything, studentID).Return(branchID, nil)
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{}, errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),
@@ -100,6 +101,7 @@ func TestUseCase_Execute(t *testing.T) {
 			role: "SUPERADMIN",
 			req:  req,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				sr.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
 			},
 			wantErr: errors.New("db error"),

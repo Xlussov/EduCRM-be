@@ -40,6 +40,14 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 		}
 
 		if len(req.BranchIDs) > 0 {
+			activeCount, err := uc.userRepo.CountActiveBranchesByIDs(txCtx, req.BranchIDs)
+			if err != nil {
+				return err
+			}
+			if activeCount != len(req.BranchIDs) {
+				return domain.ErrArchivedReference
+			}
+
 			if err := uc.userRepo.AssignToBranches(txCtx, user.ID, req.BranchIDs); err != nil {
 				return err
 			}

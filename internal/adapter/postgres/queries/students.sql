@@ -30,4 +30,5 @@ WHERE id = $11 RETURNING *;
 SELECT id, branch_id, first_name, last_name, dob, phone, email, address, parent_name, parent_phone, parent_email, parent_relationship, status, created_at
 FROM students
 WHERE branch_id = $1
+    AND (sqlc.narg(status)::entity_status IS NULL OR status = sqlc.narg(status)::entity_status)
 ORDER BY created_at DESC;

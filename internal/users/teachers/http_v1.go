@@ -74,6 +74,9 @@ func (h *Handler) Handle(c echo.Context) error {
 		if errors.Is(err, domain.ErrPhoneAlreadyExists) {
 			return response.Error(c, http.StatusConflict, "PHONE_ALREADY_EXISTS", "User with this phone already exists", nil)
 		}
+		if errors.Is(err, domain.ErrArchivedReference) {
+			return response.Error(c, http.StatusBadRequest, "ARCHIVED_REFERENCE", err.Error(), nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 

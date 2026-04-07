@@ -29,10 +29,10 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("superadmin - gets all", func(t *testing.T) {
 		repo := new(mocks.BranchRepository)
-		repo.On("GetAll", mock.Anything).Return([]*domain.Branch{branch}, nil)
+		repo.On("GetAll", mock.Anything, (*domain.EntityStatus)(nil)).Return([]*domain.Branch{branch}, nil)
 
 		uc := NewUseCase(repo)
-		res, err := uc.Execute(context.Background(), userID, "SUPERADMIN")
+		res, err := uc.Execute(context.Background(), userID, "SUPERADMIN", Request{})
 
 		assert.NoError(t, err)
 		assert.Len(t, res, 1)
@@ -42,10 +42,10 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("admin - gets by param", func(t *testing.T) {
 		repo := new(mocks.BranchRepository)
-		repo.On("GetByUserID", mock.Anything, userID).Return([]*domain.Branch{branch}, nil)
+		repo.On("GetByUserID", mock.Anything, userID, (*domain.EntityStatus)(nil)).Return([]*domain.Branch{branch}, nil)
 
 		uc := NewUseCase(repo)
-		res, err := uc.Execute(context.Background(), userID, "ADMIN")
+		res, err := uc.Execute(context.Background(), userID, "ADMIN", Request{})
 
 		assert.NoError(t, err)
 		assert.Len(t, res, 1)
@@ -54,10 +54,10 @@ func TestUseCase_Execute(t *testing.T) {
 
 	t.Run("db error", func(t *testing.T) {
 		repo := new(mocks.BranchRepository)
-		repo.On("GetAll", mock.Anything).Return(nil, errors.New("db err"))
+		repo.On("GetAll", mock.Anything, (*domain.EntityStatus)(nil)).Return(nil, errors.New("db err"))
 
 		uc := NewUseCase(repo)
-		_, err := uc.Execute(context.Background(), userID, "SUPERADMIN")
+		_, err := uc.Execute(context.Background(), userID, "SUPERADMIN", Request{})
 
 		assert.Error(t, err)
 		repo.AssertExpectations(t)

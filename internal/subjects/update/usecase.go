@@ -16,6 +16,14 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 }
 
 func (uc *UseCase) Execute(ctx context.Context, subjectID uuid.UUID, req Request) (Response, error) {
+	currentSubject, err := uc.subjectRepo.GetByID(ctx, subjectID)
+	if err != nil {
+		return Response{}, err
+	}
+	if currentSubject.Status == domain.StatusArchived {
+		return Response{}, domain.ErrCannotEditArchived
+	}
+
 	subject := &domain.Subject{
 		ID:          subjectID,
 		BranchID:    req.BranchID,

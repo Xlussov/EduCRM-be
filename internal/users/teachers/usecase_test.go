@@ -31,6 +31,7 @@ func TestUseCase_Execute(t *testing.T) {
 				BranchID:  branchID,
 			},
 			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				ur.On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
 					return u.Phone == "123456" && u.FirstName == "Teacher" && u.Role == domain.RoleTeacher
 				})).Return(nil).Run(func(args mock.Arguments) {
@@ -48,6 +49,7 @@ func TestUseCase_Execute(t *testing.T) {
 				Password: "pw",
 			},
 			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, uuid.Nil).Return(true, nil)
 				ur.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			expectedError: "db error",

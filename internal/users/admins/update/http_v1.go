@@ -67,8 +67,8 @@ func (h *Handler) Handle(c echo.Context) error {
 			return response.Error(c, http.StatusConflict, "PHONE_ALREADY_EXISTS", "User with this phone already exists", nil)
 		case errors.Is(err, domain.ErrArchivedReference):
 			return response.Error(c, http.StatusBadRequest, "ARCHIVED_REFERENCE", "Cannot reference archived entity", nil)
-		case errors.Is(err, domain.ErrAlreadyArchived):
-			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "Cannot update an archived user", nil)
+		case errors.Is(err, domain.ErrCannotEditArchived):
+			return response.Error(c, http.StatusBadRequest, "CANNOT_EDIT_ARCHIVED", err.Error(), nil)
 		case errors.Is(err, domain.ErrNotFound):
 			return response.Error(c, http.StatusNotFound, "NOT_FOUND", "Admin not found", nil)
 		default:

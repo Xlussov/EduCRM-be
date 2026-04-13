@@ -58,7 +58,7 @@ func TestUseCase_Execute(t *testing.T) {
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: false}, nil).Once()
 			},
-			expectedError: domain.ErrAlreadyArchived,
+			expectedError: domain.ErrCannotEditArchived,
 		},
 		{
 			name: "phone_conflict",

@@ -26,7 +26,7 @@ func (uc *UseCase) Execute(ctx context.Context, adminID uuid.UUID, req Request) 
 		return Response{}, domain.ErrNotFound
 	}
 	if !existing.IsActive {
-		return Response{}, domain.ErrAlreadyArchived
+		return Response{}, domain.ErrCannotEditArchived
 	}
 
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {

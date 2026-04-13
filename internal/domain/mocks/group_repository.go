@@ -81,3 +81,8 @@ func (m *GroupRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.U
 	}
 	return r0, args.Error(1)
 }
+
+func (m *GroupRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
+	args := m.Called(ctx, id, status)
+	return args.Error(0)
+}

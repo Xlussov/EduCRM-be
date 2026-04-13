@@ -179,6 +179,11 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_groups_archive.Response:
+    properties:
+      message:
+        type: string
+    type: object
   internal_groups_create.Request:
     properties:
       branch_id:
@@ -213,6 +218,11 @@ definitions:
         items:
           $ref: '#/definitions/list.GroupResponse'
         type: array
+    type: object
+  internal_groups_unarchive.Response:
+    properties:
+      message:
+        type: string
     type: object
   internal_groups_update.Request:
     properties:
@@ -1283,6 +1293,43 @@ paths:
       summary: Update Group
       tags:
       - groups
+  /api/v1/groups/{id}/archive:
+    patch:
+      parameters:
+      - description: Group ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived
+          schema:
+            $ref: '#/definitions/internal_groups_archive.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive Group
+      tags:
+      - groups
   /api/v1/groups/{id}/students:
     post:
       consumes:
@@ -1373,6 +1420,43 @@ paths:
       security:
       - BearerAuth: []
       summary: Remove Student from Group
+      tags:
+      - groups
+  /api/v1/groups/{id}/unarchive:
+    patch:
+      parameters:
+      - description: Group ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unarchived
+          schema:
+            $ref: '#/definitions/internal_groups_unarchive.Response'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unarchive Group
       tags:
       - groups
   /api/v1/plans:

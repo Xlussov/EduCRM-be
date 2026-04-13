@@ -227,3 +227,19 @@ func (q *Queries) UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams
 	)
 	return i, err
 }
+
+const updateGroupStatus = `-- name: UpdateGroupStatus :exec
+UPDATE groups
+SET status = $1
+WHERE id = $2
+`
+
+type UpdateGroupStatusParams struct {
+	Status NullEntityStatus `json:"status"`
+	ID     pgtype.UUID      `json:"id"`
+}
+
+func (q *Queries) UpdateGroupStatus(ctx context.Context, arg UpdateGroupStatusParams) error {
+	_, err := q.db.Exec(ctx, updateGroupStatus, arg.Status, arg.ID)
+	return err
+}

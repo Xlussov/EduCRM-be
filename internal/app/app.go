@@ -19,10 +19,12 @@ import (
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	groupsaddstudents "github.com/Xlussov/EduCRM-be/internal/groups/add_students"
+	groupsarchive "github.com/Xlussov/EduCRM-be/internal/groups/archive"
 	groupscreate "github.com/Xlussov/EduCRM-be/internal/groups/create"
 	groupsget "github.com/Xlussov/EduCRM-be/internal/groups/get"
 	groupslist "github.com/Xlussov/EduCRM-be/internal/groups/list"
 	groupsremovestudent "github.com/Xlussov/EduCRM-be/internal/groups/remove_student"
+	groupsunarchive "github.com/Xlussov/EduCRM-be/internal/groups/unarchive"
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
 	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
 	planscreate "github.com/Xlussov/EduCRM-be/internal/plans/create"
@@ -126,6 +128,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
 	groupsAddStudentsUC := groupsaddstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
 	groupsRemoveStudentUC := groupsremovestudent.NewUseCase(groupRepo, userRepo, studentRepo)
+	groupsArchiveUC := groupsarchive.NewUseCase(groupRepo, userRepo)
+	groupsUnarchiveUC := groupsunarchive.NewUseCase(groupRepo, userRepo)
 
 	plansCreateUC := planscreate.NewUseCase(txManager, planRepo, userRepo)
 	plansListUC := planslist.NewUseCase(planRepo, userRepo)
@@ -168,6 +172,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		GroupsUpdate:        groupsupdate.NewHandler(groupsUpdateUC).Handle,
 		GroupsAddStudents:   groupsaddstudents.NewHandler(groupsAddStudentsUC).Handle,
 		GroupsRemoveStudent: groupsremovestudent.NewHandler(groupsRemoveStudentUC).Handle,
+		GroupsArchive:       groupsarchive.NewHandler(groupsArchiveUC).Handle,
+		GroupsUnarchive:     groupsunarchive.NewHandler(groupsUnarchiveUC).Handle,
 
 		PlansCreate:  planscreate.NewHandler(plansCreateUC).Handle,
 		PlansList:    planslist.NewHandler(plansListUC).Handle,

@@ -165,3 +165,14 @@ func (r *GroupRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.U
 	}
 	return row.Bytes, nil
 }
+
+func (r *GroupRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {
+	q := sqlc.New(r.db(ctx))
+	return q.UpdateGroupStatus(ctx, sqlc.UpdateGroupStatusParams{
+		Status: sqlc.NullEntityStatus{
+			EntityStatus: sqlc.EntityStatus(status),
+			Valid:        true,
+		},
+		ID: pgtype.UUID{Bytes: id, Valid: true},
+	})
+}

@@ -54,8 +54,8 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), subjectID)
 	if err != nil {
-		if errors.Is(err, domain.ErrAlreadyArchived) {
-			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "This subject is already in the active", nil)
+		if errors.Is(err, domain.ErrAlreadyActive) {
+			return response.Error(c, http.StatusBadRequest, "ALREADY_ACTIVE", "This subject is already active", nil)
 		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to unarchive subject", nil)
 	}

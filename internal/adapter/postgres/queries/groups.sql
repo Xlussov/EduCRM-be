@@ -50,3 +50,8 @@ ORDER BY s.last_name, s.first_name;
 
 -- name: GetGroupBranchID :one
 SELECT branch_id FROM groups WHERE id = $1;
+
+-- name: UpdateGroupStatus :exec
+UPDATE groups
+SET status = $1
+WHERE id = $2;

@@ -56,6 +56,7 @@ type Querier interface {
 	UpdateBranch(ctx context.Context, arg UpdateBranchParams) (Branch, error)
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
 	UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) (Group, error)
+	UpdateGroupStatus(ctx context.Context, arg UpdateGroupStatusParams) error
 	UpdatePlanStatus(ctx context.Context, arg UpdatePlanStatusParams) error
 	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error

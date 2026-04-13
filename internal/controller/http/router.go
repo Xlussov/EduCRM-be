@@ -44,6 +44,8 @@ type Handlers struct {
 	GroupsUpdate        echo.HandlerFunc
 	GroupsAddStudents   echo.HandlerFunc
 	GroupsRemoveStudent echo.HandlerFunc
+	GroupsArchive       echo.HandlerFunc
+	GroupsUnarchive     echo.HandlerFunc
 
 	PlansCreate  echo.HandlerFunc
 	PlansList    echo.HandlerFunc
@@ -125,6 +127,8 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		groupsGroup.PUT("/:id", h.GroupsUpdate)
 		groupsGroup.POST("/:id/students", h.GroupsAddStudents)
 		groupsGroup.DELETE("/:id/students/:student_id", h.GroupsRemoveStudent)
+		groupsGroup.PATCH("/:id/archive", h.GroupsArchive)
+		groupsGroup.PATCH("/:id/unarchive", h.GroupsUnarchive)
 
 		plansGroup := protected.Group("/plans")
 		plansGroup.POST("", h.PlansCreate)

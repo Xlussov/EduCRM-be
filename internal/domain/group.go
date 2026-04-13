@@ -36,4 +36,5 @@ type GroupRepository interface {
 	GetActiveStudentIDs(ctx context.Context, groupID uuid.UUID) ([]uuid.UUID, error)
 	GetStudents(ctx context.Context, groupID uuid.UUID) ([]*GroupStudent, error)
 	GetBranchID(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
+	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
 }

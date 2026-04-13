@@ -12,4 +12,5 @@ var (
 	ErrArchivedReference  = errors.New("referenced entity is archived")
 	ErrAlreadyArchived    = errors.New("this entity is already archived")
 	ErrAlreadyActive      = errors.New("this entity is already active")
+	ErrBranchAccessDenied = errors.New("branch access denied")
 )

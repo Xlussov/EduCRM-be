@@ -1,4 +1,4 @@
-package teachers
+package create
 
 import "github.com/google/uuid"
 

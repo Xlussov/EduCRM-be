@@ -11,12 +11,18 @@ import (
 )
 
 type Handlers struct {
-	AuthLogin     echo.HandlerFunc
-	AuthRefresh   echo.HandlerFunc
-	AuthLogout    echo.HandlerFunc
-	AuthMe        echo.HandlerFunc
-	UsersAdmins   echo.HandlerFunc
-	UsersTeachers echo.HandlerFunc
+	AuthLogin   echo.HandlerFunc
+	AuthRefresh echo.HandlerFunc
+	AuthLogout  echo.HandlerFunc
+	AuthMe      echo.HandlerFunc
+
+	UsersAdminsArchive   echo.HandlerFunc
+	UsersAdminsGet       echo.HandlerFunc
+	UsersAdminsList      echo.HandlerFunc
+	UsersAdminsCreate    echo.HandlerFunc
+	UsersAdminsUnarchive echo.HandlerFunc
+	UsersAdminsUpdate    echo.HandlerFunc
+	UsersTeachersCreate  echo.HandlerFunc
 
 	BranchesCreate    echo.HandlerFunc
 	BranchesArchive   echo.HandlerFunc
@@ -92,8 +98,17 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		protectedAuthGroup.POST("/logout", h.AuthLogout)
 
 		usersGroup := protected.Group("/users")
-		usersGroup.POST("/admins", h.UsersAdmins)
-		usersGroup.POST("/teachers", h.UsersTeachers)
+
+		adminsGroup := usersGroup.Group("/admins")
+		adminsGroup.POST("", h.UsersAdminsCreate)
+		adminsGroup.GET("", h.UsersAdminsList)
+		adminsGroup.GET("/:id", h.UsersAdminsGet)
+		adminsGroup.PUT("/:id", h.UsersAdminsUpdate)
+		adminsGroup.PATCH("/:id/archive", h.UsersAdminsArchive)
+		adminsGroup.PATCH("/:id/unarchive", h.UsersAdminsUnarchive)
+
+		teachersGroup := usersGroup.Group("/teachers")
+		teachersGroup.POST("", h.UsersTeachersCreate)
 
 		branchesGroup := protected.Group("/branches")
 		branchesGroup.POST("", h.BranchesCreate)

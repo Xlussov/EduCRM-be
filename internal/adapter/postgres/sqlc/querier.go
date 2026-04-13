@@ -24,6 +24,8 @@ type Querier interface {
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateSubscriptionPlan(ctx context.Context, arg CreateSubscriptionPlanParams) (SubscriptionPlan, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeleteUserBranches(ctx context.Context, userID pgtype.UUID) error
+	GetAdmins(ctx context.Context) ([]GetAdminsRow, error)
 	GetAllBranches(ctx context.Context, status NullEntityStatus) ([]Branch, error)
 	GetBranchByID(ctx context.Context, id pgtype.UUID) (Branch, error)
 	GetBranchesByUserID(ctx context.Context, arg GetBranchesByUserIDParams) ([]Branch, error)
@@ -44,9 +46,11 @@ type Querier interface {
 	GetSubject(ctx context.Context, arg GetSubjectParams) (Subject, error)
 	GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error)
 	GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error)
+	GetTeachers(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetTeachersRow, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByPhone(ctx context.Context, phone string) (User, error)
+	GetUserWithBranchesByID(ctx context.Context, id pgtype.UUID) ([]GetUserWithBranchesByIDRow, error)
 	IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error)
 	ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error)
 	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
@@ -62,6 +66,8 @@ type Querier interface {
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error
 	UpdateSubject(ctx context.Context, arg UpdateSubjectParams) (Subject, error)
 	UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error
+	UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error)
+	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (int64, error)
 	ValidatePlanSubject(ctx context.Context, arg ValidatePlanSubjectParams) (bool, error)
 }
 

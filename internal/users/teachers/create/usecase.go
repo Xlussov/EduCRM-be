@@ -1,10 +1,11 @@
-package admins
+package create
 
 import (
 	"context"
 	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
+	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -28,9 +29,17 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 		PasswordHash: string(hash),
 		FirstName:    req.FirstName,
 		LastName:     req.LastName,
-		Role:         domain.RoleAdmin,
+		Role:         domain.RoleTeacher,
 	}
+
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
+		isActive, err := uc.userRepo.IsBranchActive(txCtx, req.BranchID)
+		if err != nil {
+			return err
+		}
+		if !isActive {
+			return domain.ErrArchivedReference
+		}
 
 		if err := uc.userRepo.Create(txCtx, user); err != nil {
 			if errors.Is(err, domain.ErrAlreadyExists) {
@@ -39,18 +48,8 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 			return err
 		}
 
-		if len(req.BranchIDs) > 0 {
-			activeCount, err := uc.userRepo.CountActiveBranchesByIDs(txCtx, req.BranchIDs)
-			if err != nil {
-				return err
-			}
-			if activeCount != len(req.BranchIDs) {
-				return domain.ErrArchivedReference
-			}
-
-			if err := uc.userRepo.AssignToBranches(txCtx, user.ID, req.BranchIDs); err != nil {
-				return err
-			}
+		if err := uc.userRepo.AssignToBranches(txCtx, user.ID, []uuid.UUID{req.BranchID}); err != nil {
+			return err
 		}
 
 		return nil

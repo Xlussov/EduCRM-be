@@ -42,8 +42,13 @@ import (
 	subjectsupdate "github.com/Xlussov/EduCRM-be/internal/subjects/update"
 	subscriptionscreate "github.com/Xlussov/EduCRM-be/internal/subscriptions/create"
 	subscriptionslist "github.com/Xlussov/EduCRM-be/internal/subscriptions/list"
-	"github.com/Xlussov/EduCRM-be/internal/users/admins"
-	"github.com/Xlussov/EduCRM-be/internal/users/teachers"
+	adminarchive "github.com/Xlussov/EduCRM-be/internal/users/admins/archive"
+	admincreate "github.com/Xlussov/EduCRM-be/internal/users/admins/create"
+	adminget "github.com/Xlussov/EduCRM-be/internal/users/admins/get"
+	adminlist "github.com/Xlussov/EduCRM-be/internal/users/admins/list"
+	adminunarchive "github.com/Xlussov/EduCRM-be/internal/users/admins/unarchive"
+	adminupdate "github.com/Xlussov/EduCRM-be/internal/users/admins/update"
+	teachercreate "github.com/Xlussov/EduCRM-be/internal/users/teachers/create"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -98,8 +103,13 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
 	logoutUC := logout.NewUseCase(authRepo)
-	adminsUC := admins.NewUseCase(userRepo, txManager)
-	teachersUC := teachers.NewUseCase(userRepo, txManager)
+	adminsArchiveUC := adminarchive.NewUseCase(userRepo)
+	adminsCreateUC := admincreate.NewUseCase(userRepo, txManager)
+	adminsGetUC := adminget.NewUseCase(userRepo)
+	adminsListUC := adminlist.NewUseCase(userRepo)
+	adminsUnarchiveUC := adminunarchive.NewUseCase(userRepo)
+	adminsUpdateUC := adminupdate.NewUseCase(userRepo, txManager)
+	teachersCreateUC := teachercreate.NewUseCase(userRepo, txManager)
 	meUC := me.NewUseCase(userRepo)
 
 	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)
@@ -139,12 +149,17 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, userRepo, studentRepo)
 
 	h := httprouter.Handlers{
-		AuthLogin:     login.NewHandler(loginUC).Handle,
-		AuthRefresh:   refresh.NewHandler(refreshUC).Handle,
-		AuthLogout:    logout.NewHandler(logoutUC).Handle,
-		UsersAdmins:   admins.NewHandler(adminsUC).Handle,
-		UsersTeachers: teachers.NewHandler(teachersUC).Handle,
-		AuthMe:        me.NewHandler(meUC).Handle,
+		AuthLogin:            login.NewHandler(loginUC).Handle,
+		AuthRefresh:          refresh.NewHandler(refreshUC).Handle,
+		AuthLogout:           logout.NewHandler(logoutUC).Handle,
+		UsersAdminsArchive:   adminarchive.NewHandler(adminsArchiveUC).Handle,
+		UsersAdminsGet:       adminget.NewHandler(adminsGetUC).Handle,
+		UsersAdminsList:      adminlist.NewHandler(adminsListUC).Handle,
+		UsersAdminsCreate:    admincreate.NewHandler(adminsCreateUC).Handle,
+		UsersAdminsUnarchive: adminunarchive.NewHandler(adminsUnarchiveUC).Handle,
+		UsersAdminsUpdate:    adminupdate.NewHandler(adminsUpdateUC).Handle,
+		UsersTeachersCreate:  teachercreate.NewHandler(teachersCreateUC).Handle,
+		AuthMe:               me.NewHandler(meUC).Handle,
 
 		BranchesCreate:    branchescreate.NewHandler(branchesCreateUC).Handle,
 		BranchesArchive:   branchesarchive.NewHandler(branchesArchiveUC).Handle,

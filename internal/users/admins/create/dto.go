@@ -1,4 +1,4 @@
-package admins
+package create
 
 import "github.com/google/uuid"
 

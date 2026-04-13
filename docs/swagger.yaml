@@ -14,39 +14,6 @@ definitions:
       message:
         type: string
     type: object
-  admins.Request:
-    properties:
-      branch_ids:
-        items:
-          type: string
-        minItems: 1
-        type: array
-        uniqueItems: true
-      first_name:
-        maxLength: 50
-        minLength: 2
-        type: string
-      last_name:
-        maxLength: 50
-        minLength: 2
-        type: string
-      password:
-        minLength: 6
-        type: string
-      phone:
-        type: string
-    required:
-    - branch_ids
-    - first_name
-    - last_name
-    - password
-    - phone
-    type: object
-  admins.Response:
-    properties:
-      id:
-        type: string
-    type: object
   archive.Request:
     properties:
       status:
@@ -87,6 +54,13 @@ definitions:
     - RoleSuperadmin
     - RoleAdmin
     - RoleTeacher
+  get.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   get.StudentResponse:
     properties:
       first_name:
@@ -126,6 +100,19 @@ definitions:
         type: string
     type: object
   internal_branches_get.Response:
+    properties:
+      address:
+        type: string
+      city:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_branches_list.BranchResponse:
     properties:
       address:
         type: string
@@ -530,15 +517,156 @@ definitions:
       id:
         type: string
     type: object
-  list.BranchResponse:
+  internal_users_admins_archive.Response:
     properties:
-      address:
+      message:
         type: string
-      city:
+    type: object
+  internal_users_admins_create.Request:
+    properties:
+      branch_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+        uniqueItems: true
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - branch_ids
+    - first_name
+    - last_name
+    - password
+    - phone
+    type: object
+  internal_users_admins_create.Response:
+    properties:
+      id:
+        type: string
+    type: object
+  internal_users_admins_get.Response:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/get.BranchResponse'
+        type: array
+      first_name:
         type: string
       id:
         type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_users_admins_list.BranchResponse:
+    properties:
+      id:
+        type: string
       name:
+        type: string
+    type: object
+  internal_users_admins_unarchive.Response:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_users_admins_update.Request:
+    properties:
+      branch_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+        uniqueItems: true
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+    required:
+    - branch_ids
+    - first_name
+    - last_name
+    - phone
+    type: object
+  internal_users_admins_update.Response:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/update.BranchResponse'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_users_teachers_create.Request:
+    properties:
+      branch_id:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      password:
+        minLength: 6
+        type: string
+      phone:
+        type: string
+    required:
+    - branch_id
+    - first_name
+    - last_name
+    - password
+    - phone
+    type: object
+  internal_users_teachers_create.Response:
+    properties:
+      id:
+        type: string
+    type: object
+  list.AdminResponse:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/internal_users_admins_list.BranchResponse'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
         type: string
       status:
         type: string
@@ -730,33 +858,11 @@ definitions:
       error:
         $ref: '#/definitions/response.ErrorDetail'
     type: object
-  teachers.Request:
-    properties:
-      branch_id:
-        type: string
-      first_name:
-        maxLength: 50
-        minLength: 2
-        type: string
-      last_name:
-        maxLength: 50
-        minLength: 2
-        type: string
-      password:
-        minLength: 6
-        type: string
-      phone:
-        type: string
-    required:
-    - branch_id
-    - first_name
-    - last_name
-    - password
-    - phone
-    type: object
-  teachers.Response:
+  update.BranchResponse:
     properties:
       id:
+        type: string
+      name:
         type: string
     type: object
 info:
@@ -914,7 +1020,7 @@ paths:
           description: List of branches
           schema:
             items:
-              $ref: '#/definitions/list.BranchResponse'
+              $ref: '#/definitions/internal_branches_list.BranchResponse'
             type: array
         "401":
           description: Unauthorized
@@ -2126,6 +2232,209 @@ paths:
       tags:
       - subjects
   /api/v1/users/admins:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of admins
+          schema:
+            items:
+              $ref: '#/definitions/list.AdminResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Admins
+      tags:
+      - admins
+  /api/v1/users/admins/{id}:
+    get:
+      parameters:
+      - description: Admin ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Admin details
+          schema:
+            $ref: '#/definitions/internal_users_admins_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Admin by ID
+      tags:
+      - admins
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Admin ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Admin update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_users_admins_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated admin
+          schema:
+            $ref: '#/definitions/internal_users_admins_update.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Admin
+      tags:
+      - admins
+  /api/v1/users/admins/{id}/archive:
+    patch:
+      parameters:
+      - description: Admin ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived
+          schema:
+            $ref: '#/definitions/internal_users_admins_archive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive Admin
+      tags:
+      - admins
+  /api/v1/users/admins/{id}/unarchive:
+    patch:
+      parameters:
+      - description: Admin ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unarchived
+          schema:
+            $ref: '#/definitions/internal_users_admins_unarchive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unarchive Admin
+      tags:
+      - admins
+  /api/v1/users/admins/create:
     post:
       consumes:
       - application/json
@@ -2135,14 +2444,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/admins.Request'
+          $ref: '#/definitions/internal_users_admins_create.Request'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/admins.Response'
+            $ref: '#/definitions/internal_users_admins_create.Response'
         "400":
           description: Bad Request
           schema:
@@ -2163,8 +2472,8 @@ paths:
       - BearerAuth: []
       summary: Create Admin
       tags:
-      - users
-  /api/v1/users/teachers:
+      - admins
+  /api/v1/users/teachers/create:
     post:
       consumes:
       - application/json
@@ -2174,14 +2483,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/teachers.Request'
+          $ref: '#/definitions/internal_users_teachers_create.Request'
       produces:
       - application/json
       responses:
         "201":
           description: Created
           schema:
-            $ref: '#/definitions/teachers.Response'
+            $ref: '#/definitions/internal_users_teachers_create.Response'
         "400":
           description: Bad Request
           schema:
@@ -2202,7 +2511,7 @@ paths:
       - BearerAuth: []
       summary: Create Teacher
       tags:
-      - users
+      - teachers
 securityDefinitions:
   BearerAuth:
     description: 'Insert the token in the following format: Bearer {your_token}'

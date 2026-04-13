@@ -1,4 +1,4 @@
-package admins
+package create
 
 import (
 	"errors"
@@ -21,7 +21,7 @@ func NewHandler(uc *UseCase) *Handler {
 }
 
 // @Summary Create Admin
-// @Tags users
+// @Tags admins
 // @Security BearerAuth
 // @Accept json
 // @Produce json
@@ -31,7 +31,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
-// @Router /api/v1/users/admins [post]
+// @Router /api/v1/users/admins/create [post]
 func (h *Handler) Handle(c echo.Context) error {
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {

@@ -63,6 +63,151 @@ func (q *Queries) CreateUser(ctx context.Context, arg CreateUserParams) (User, e
 	return i, err
 }
 
+const deleteUserBranches = `-- name: DeleteUserBranches :exec
+DELETE FROM user_branches
+WHERE user_id = $1
+`
+
+func (q *Queries) DeleteUserBranches(ctx context.Context, userID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deleteUserBranches, userID)
+	return err
+}
+
+const getAdmins = `-- name: GetAdmins :many
+SELECT
+	u.id,
+	u.phone,
+	u.first_name,
+	u.last_name,
+	u.role,
+	u.is_active,
+	u.created_at,
+	u.updated_at,
+	b.id AS branch_id,
+	b.name AS branch_name
+FROM users u
+LEFT JOIN user_branches ub ON ub.user_id = u.id
+LEFT JOIN branches b ON b.id = ub.branch_id
+WHERE u.role = 'ADMIN'
+ORDER BY u.created_at DESC, b.name ASC
+`
+
+type GetAdminsRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	Phone      string             `json:"phone"`
+	FirstName  string             `json:"first_name"`
+	LastName   string             `json:"last_name"`
+	Role       UserRole           `json:"role"`
+	IsActive   pgtype.Bool        `json:"is_active"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	BranchID   pgtype.UUID        `json:"branch_id"`
+	BranchName pgtype.Text        `json:"branch_name"`
+}
+
+func (q *Queries) GetAdmins(ctx context.Context) ([]GetAdminsRow, error) {
+	rows, err := q.db.Query(ctx, getAdmins)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetAdminsRow
+	for rows.Next() {
+		var i GetAdminsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Phone,
+			&i.FirstName,
+			&i.LastName,
+			&i.Role,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.BranchID,
+			&i.BranchName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const getTeachers = `-- name: GetTeachers :many
+SELECT
+	u.id,
+	u.phone,
+	u.first_name,
+	u.last_name,
+	u.role,
+	u.is_active,
+	u.created_at,
+	u.updated_at,
+	b.id AS branch_id,
+	b.name AS branch_name
+FROM users u
+LEFT JOIN user_branches ub ON ub.user_id = u.id
+LEFT JOIN branches b ON b.id = ub.branch_id
+WHERE u.role = 'TEACHER'
+  AND (
+	  $1::uuid[] IS NULL
+	  OR EXISTS (
+		  SELECT 1
+		  FROM user_branches ub2
+		  WHERE ub2.user_id = u.id
+			AND ub2.branch_id = ANY($1::uuid[])
+	  )
+  )
+ORDER BY u.created_at DESC, b.name ASC
+`
+
+type GetTeachersRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	Phone      string             `json:"phone"`
+	FirstName  string             `json:"first_name"`
+	LastName   string             `json:"last_name"`
+	Role       UserRole           `json:"role"`
+	IsActive   pgtype.Bool        `json:"is_active"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	BranchID   pgtype.UUID        `json:"branch_id"`
+	BranchName pgtype.Text        `json:"branch_name"`
+}
+
+func (q *Queries) GetTeachers(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetTeachersRow, error) {
+	rows, err := q.db.Query(ctx, getTeachers, dollar_1)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetTeachersRow
+	for rows.Next() {
+		var i GetTeachersRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Phone,
+			&i.FirstName,
+			&i.LastName,
+			&i.Role,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.BranchID,
+			&i.BranchName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
 const getUserBranchIDs = `-- name: GetUserBranchIDs :many
 SELECT branch_id
 FROM user_branches
@@ -133,4 +278,118 @@ func (q *Queries) GetUserByPhone(ctx context.Context, phone string) (User, error
 		&i.UpdatedAt,
 	)
 	return i, err
+}
+
+const getUserWithBranchesByID = `-- name: GetUserWithBranchesByID :many
+SELECT
+	u.id,
+	u.phone,
+	u.first_name,
+	u.last_name,
+	u.role,
+	u.is_active,
+	u.created_at,
+	u.updated_at,
+	b.id AS branch_id,
+	b.name AS branch_name
+FROM users u
+LEFT JOIN user_branches ub ON ub.user_id = u.id
+LEFT JOIN branches b ON b.id = ub.branch_id
+WHERE u.id = $1
+ORDER BY b.name ASC
+`
+
+type GetUserWithBranchesByIDRow struct {
+	ID         pgtype.UUID        `json:"id"`
+	Phone      string             `json:"phone"`
+	FirstName  string             `json:"first_name"`
+	LastName   string             `json:"last_name"`
+	Role       UserRole           `json:"role"`
+	IsActive   pgtype.Bool        `json:"is_active"`
+	CreatedAt  pgtype.Timestamptz `json:"created_at"`
+	UpdatedAt  pgtype.Timestamptz `json:"updated_at"`
+	BranchID   pgtype.UUID        `json:"branch_id"`
+	BranchName pgtype.Text        `json:"branch_name"`
+}
+
+func (q *Queries) GetUserWithBranchesByID(ctx context.Context, id pgtype.UUID) ([]GetUserWithBranchesByIDRow, error) {
+	rows, err := q.db.Query(ctx, getUserWithBranchesByID, id)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetUserWithBranchesByIDRow
+	for rows.Next() {
+		var i GetUserWithBranchesByIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Phone,
+			&i.FirstName,
+			&i.LastName,
+			&i.Role,
+			&i.IsActive,
+			&i.CreatedAt,
+			&i.UpdatedAt,
+			&i.BranchID,
+			&i.BranchName,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateUser = `-- name: UpdateUser :execrows
+UPDATE users
+SET
+	phone = $2,
+	first_name = $3,
+	last_name = $4,
+	updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserParams struct {
+	ID        pgtype.UUID `json:"id"`
+	Phone     string      `json:"phone"`
+	FirstName string      `json:"first_name"`
+	LastName  string      `json:"last_name"`
+}
+
+func (q *Queries) UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUser,
+		arg.ID,
+		arg.Phone,
+		arg.FirstName,
+		arg.LastName,
+	)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
+}
+
+const updateUserStatus = `-- name: UpdateUserStatus :execrows
+UPDATE users
+SET
+	is_active = $2,
+	updated_at = NOW()
+WHERE id = $1
+`
+
+type UpdateUserStatusParams struct {
+	ID       pgtype.UUID `json:"id"`
+	IsActive pgtype.Bool `json:"is_active"`
+}
+
+func (q *Queries) UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (int64, error) {
+	result, err := q.db.Exec(ctx, updateUserStatus, arg.ID, arg.IsActive)
+	if err != nil {
+		return 0, err
+	}
+	return result.RowsAffected(), nil
 }

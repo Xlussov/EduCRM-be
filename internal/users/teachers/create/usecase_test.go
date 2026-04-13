@@ -1,4 +1,4 @@
-package admins
+package create
 
 import (
 	"context"
@@ -26,18 +26,18 @@ func TestUseCase_Execute(t *testing.T) {
 			req: Request{
 				Phone:     "123456",
 				Password:  "password123",
-				FirstName: "Admin",
+				FirstName: "Teacher",
 				LastName:  "Test",
-				BranchIDs: []uuid.UUID{branchID},
+				BranchID:  branchID,
 			},
 			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
 				ur.On("Create", mock.Anything, mock.MatchedBy(func(u *domain.User) bool {
-					return u.Phone == "123456" && u.FirstName == "Admin" && u.Role == domain.RoleAdmin
+					return u.Phone == "123456" && u.FirstName == "Teacher" && u.Role == domain.RoleTeacher
 				})).Return(nil).Run(func(args mock.Arguments) {
 					u := args.Get(1).(*domain.User)
-					u.ID = uuid.New() // simulate DB setting ID
+					u.ID = uuid.New()
 				})
-				ur.On("CountActiveBranchesByIDs", mock.Anything, []uuid.UUID{branchID}).Return(1, nil)
 				ur.On("AssignToBranches", mock.Anything, mock.AnythingOfType("uuid.UUID"), []uuid.UUID{branchID}).Return(nil)
 			},
 			expectedError: "",
@@ -49,6 +49,7 @@ func TestUseCase_Execute(t *testing.T) {
 				Password: "pw",
 			},
 			mockSetup: func(ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, uuid.Nil).Return(true, nil)
 				ur.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
 			},
 			expectedError: "db error",

@@ -1,4 +1,4 @@
-package archive
+package unarchive
 
 import (
 	"errors"
@@ -20,17 +20,17 @@ func NewHandler(uc *UseCase) *Handler {
 	return &Handler{usecase: uc}
 }
 
-// @Summary Archive Branch
+// @Summary Unarchive Branch
 // @Tags branches
 // @Security BearerAuth
 // @Produce json
 // @Param id path string true "Branch ID format(uuid)"
-// @Success 200 {object} Response "Archived"
+// @Success 200 {object} Response "Unarchived"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
 // @Failure 404 {object} response.ErrorResponse "Not Found"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
-// @Router /api/v1/branches/{id}/archive [patch]
+// @Router /api/v1/branches/{id}/unarchive [patch]
 func (h *Handler) Handle(c echo.Context) error {
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {
@@ -49,7 +49,7 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	// Roles: SUPERADMIN, ADMIN
 	if userClaims.Role != "SUPERADMIN" && userClaims.Role != "ADMIN" {
-		return response.Error(c, http.StatusForbidden, "ROLE_NOT_ALLOWED", "Only SUPERADMIN or ADMIN can archive branches", nil)
+		return response.Error(c, http.StatusForbidden, "ROLE_NOT_ALLOWED", "Only SUPERADMIN or ADMIN can unarchive branches", nil)
 	}
 
 	if userClaims.Role == "ADMIN" {
@@ -67,8 +67,8 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), branchID)
 	if err != nil {
-		if errors.Is(err, domain.ErrAlreadyArchived) {
-			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "This branch is already in the archive", nil)
+		if errors.Is(err, domain.ErrAlreadyActive) {
+			return response.Error(c, http.StatusBadRequest, "ALREADY_ACTIVE", "This branch is already active", nil)
 		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}

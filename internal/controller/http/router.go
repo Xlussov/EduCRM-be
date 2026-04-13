@@ -11,37 +11,46 @@ import (
 )
 
 type Handlers struct {
-	AuthLogin           echo.HandlerFunc
-	AuthRefresh         echo.HandlerFunc
-	AuthLogout          echo.HandlerFunc
-	AuthMe              echo.HandlerFunc
-	UsersAdmins         echo.HandlerFunc
-	UsersTeachers       echo.HandlerFunc
-	BranchesCreate      echo.HandlerFunc
-	BranchesArchive     echo.HandlerFunc
-	BranchesList        echo.HandlerFunc
-	BranchesGet         echo.HandlerFunc
-	BranchesUpdate      echo.HandlerFunc
-	SubjectsCreate      echo.HandlerFunc
-	SubjectsArchive     echo.HandlerFunc
-	SubjectsList        echo.HandlerFunc
-	SubjectsUpdate      echo.HandlerFunc
-	StudentsCreate      echo.HandlerFunc
-	StudentsArchive     echo.HandlerFunc
-	StudentsList        echo.HandlerFunc
-	StudentsGet         echo.HandlerFunc
-	StudentsUpdate      echo.HandlerFunc
+	AuthLogin     echo.HandlerFunc
+	AuthRefresh   echo.HandlerFunc
+	AuthLogout    echo.HandlerFunc
+	AuthMe        echo.HandlerFunc
+	UsersAdmins   echo.HandlerFunc
+	UsersTeachers echo.HandlerFunc
+
+	BranchesCreate    echo.HandlerFunc
+	BranchesArchive   echo.HandlerFunc
+	BranchesUnarchive echo.HandlerFunc
+	BranchesList      echo.HandlerFunc
+	BranchesGet       echo.HandlerFunc
+	BranchesUpdate    echo.HandlerFunc
+
+	SubjectsCreate    echo.HandlerFunc
+	SubjectsArchive   echo.HandlerFunc
+	SubjectsUnarchive echo.HandlerFunc
+	SubjectsList      echo.HandlerFunc
+	SubjectsUpdate    echo.HandlerFunc
+
+	StudentsCreate    echo.HandlerFunc
+	StudentsArchive   echo.HandlerFunc
+	StudentsUnarchive echo.HandlerFunc
+	StudentsList      echo.HandlerFunc
+	StudentsGet       echo.HandlerFunc
+	StudentsUpdate    echo.HandlerFunc
+
 	GroupsCreate        echo.HandlerFunc
 	GroupsList          echo.HandlerFunc
 	GroupsGet           echo.HandlerFunc
 	GroupsUpdate        echo.HandlerFunc
 	GroupsAddStudents   echo.HandlerFunc
 	GroupsRemoveStudent echo.HandlerFunc
-	PlansCreate         echo.HandlerFunc
-	PlansList           echo.HandlerFunc
+
+	PlansCreate  echo.HandlerFunc
+	PlansList    echo.HandlerFunc
+	PlansArchive echo.HandlerFunc
+
 	SubscriptionsCreate echo.HandlerFunc
 	SubscriptionsList   echo.HandlerFunc
-	PlansArchive        echo.HandlerFunc
 }
 
 type Logger interface {
@@ -90,11 +99,14 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		branchesGroup.GET("/:id", h.BranchesGet)
 		branchesGroup.PUT("/:id", h.BranchesUpdate)
 		branchesGroup.PATCH("/:id/archive", h.BranchesArchive)
+		branchesGroup.PATCH("/:id/unarchive", h.BranchesUnarchive)
+
 		subjectsGroup := protected.Group("/subjects")
 		subjectsGroup.POST("", h.SubjectsCreate)
 		subjectsGroup.GET("", h.SubjectsList)
 		subjectsGroup.PUT("/:id", h.SubjectsUpdate)
 		subjectsGroup.PATCH("/:id/archive", h.SubjectsArchive)
+		subjectsGroup.PATCH("/:id/unarchive", h.SubjectsUnarchive)
 
 		studentsGroup := protected.Group("/students")
 		studentsGroup.POST("", h.StudentsCreate)
@@ -102,6 +114,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		studentsGroup.GET("/:id", h.StudentsGet)
 		studentsGroup.PUT("/:id", h.StudentsUpdate)
 		studentsGroup.PATCH("/:id/archive", h.StudentsArchive)
+		studentsGroup.PATCH("/:id/unarchive", h.StudentsUnarchive)
 		studentsGroup.POST("/:id/subscriptions", h.SubscriptionsCreate)
 		studentsGroup.GET("/:id/subscriptions", h.SubscriptionsList)
 

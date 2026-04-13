@@ -1,4 +1,4 @@
-package archive
+package unarchive
 
 import (
 	"context"
@@ -27,22 +27,22 @@ func TestUseCase_Execute(t *testing.T) {
 			mockSetup: func(repo *mocks.StudentRepository) {
 				repo.On("GetByID", mock.Anything, studentID).Return(&domain.Student{
 					ID:     studentID,
-					Status: domain.StatusActive,
+					Status: domain.StatusArchived,
 				}, nil).Once()
-				repo.On("UpdateStatus", mock.Anything, studentID, domain.StatusArchived).Return(nil).Once()
+				repo.On("UpdateStatus", mock.Anything, studentID, domain.StatusActive).Return(nil).Once()
 			},
 			expectedError: nil,
 			expectedMsg:   "success",
 		},
 		{
-			name: "error_already_archived",
+			name: "error_already_active",
 			mockSetup: func(repo *mocks.StudentRepository) {
 				repo.On("GetByID", mock.Anything, studentID).Return(&domain.Student{
 					ID:     studentID,
-					Status: domain.StatusArchived,
+					Status: domain.StatusActive,
 				}, nil).Once()
 			},
-			expectedError: domain.ErrAlreadyArchived,
+			expectedError: domain.ErrAlreadyActive,
 			expectedMsg:   "",
 		},
 		{
@@ -58,9 +58,9 @@ func TestUseCase_Execute(t *testing.T) {
 			mockSetup: func(repo *mocks.StudentRepository) {
 				repo.On("GetByID", mock.Anything, studentID).Return(&domain.Student{
 					ID:     studentID,
-					Status: domain.StatusActive,
+					Status: domain.StatusArchived,
 				}, nil).Once()
-				repo.On("UpdateStatus", mock.Anything, studentID, domain.StatusArchived).Return(errDB).Once()
+				repo.On("UpdateStatus", mock.Anything, studentID, domain.StatusActive).Return(errDB).Once()
 			},
 			expectedError: errDB,
 			expectedMsg:   "",

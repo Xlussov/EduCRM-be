@@ -1,4 +1,4 @@
-package archive
+package unarchive
 
 import (
 	"errors"
@@ -20,7 +20,7 @@ func NewHandler(uc *UseCase) *Handler {
 	return &Handler{usecase: uc}
 }
 
-// @Summary Archive Subject
+// @Summary Unarchive Subject
 // @Tags subjects
 // @Security BearerAuth
 // @Accept json
@@ -31,7 +31,7 @@ func NewHandler(uc *UseCase) *Handler {
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
 // @Failure 400 {object} response.ErrorResponse "Bad Request"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
-// @Router /api/v1/subjects/{id}/archive [patch]
+// @Router /api/v1/subjects/{id}/unarchive [patch]
 func (h *Handler) Handle(c echo.Context) error {
 	userToken, ok := c.Get("user").(*jwt.Token)
 	if !ok {
@@ -43,7 +43,7 @@ func (h *Handler) Handle(c echo.Context) error {
 	}
 
 	if userClaims.Role != "SUPERADMIN" && userClaims.Role != "ADMIN" {
-		return response.Error(c, http.StatusForbidden, "ROLE_NOT_ALLOWED", "Only SUPERADMIN or ADMIN can archive subjects", nil)
+		return response.Error(c, http.StatusForbidden, "ROLE_NOT_ALLOWED", "Only SUPERADMIN or ADMIN can unarchive subjects", nil)
 	}
 
 	subjectIDParam := c.Param("id")
@@ -55,9 +55,9 @@ func (h *Handler) Handle(c echo.Context) error {
 	res, err := h.usecase.Execute(c.Request().Context(), subjectID)
 	if err != nil {
 		if errors.Is(err, domain.ErrAlreadyArchived) {
-			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "This subject is already in the archive", nil)
+			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "This subject is already in the active", nil)
 		}
-		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to archive subject", nil)
+		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", "Failed to unarchive subject", nil)
 	}
 
 	return response.Success(c, http.StatusNoContent, res)

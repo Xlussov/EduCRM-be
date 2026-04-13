@@ -1,9 +1,11 @@
 package archive
 
 import (
+	"errors"
 	"net/http"
 
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
+	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/golang-jwt/jwt/v5"
 	"github.com/google/uuid"
@@ -50,6 +52,9 @@ func (h *Handler) Handle(c echo.Context) error {
 
 	res, err := h.usecase.Execute(c.Request().Context(), studentID)
 	if err != nil {
+		if errors.Is(err, domain.ErrAlreadyArchived) {
+			return response.Error(c, http.StatusBadRequest, "ALREADY_ARCHIVED", "This student is already in the archive", nil)
+		}
 		return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 	}
 

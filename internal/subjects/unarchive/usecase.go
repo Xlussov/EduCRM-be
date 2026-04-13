@@ -1,4 +1,4 @@
-package archive
+package unarchive
 
 import (
 	"context"
@@ -21,11 +21,11 @@ func (uc *UseCase) Execute(ctx context.Context, id uuid.UUID) (Response, error) 
 		return Response{}, err
 	}
 
-	if subject.Status == domain.StatusArchived {
-		return Response{}, domain.ErrAlreadyArchived
+	if subject.Status == domain.StatusActive {
+		return Response{}, domain.ErrAlreadyActive
 	}
 
-	err = uc.subjectRepo.UpdateStatus(ctx, id, domain.StatusArchived)
+	err = uc.subjectRepo.UpdateStatus(ctx, id, domain.StatusActive)
 	if err != nil {
 		return Response{}, err
 	}

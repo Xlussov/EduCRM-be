@@ -15,6 +15,7 @@ import (
 	branchescreate "github.com/Xlussov/EduCRM-be/internal/branches/create"
 	branchesget "github.com/Xlussov/EduCRM-be/internal/branches/get"
 	brancheslist "github.com/Xlussov/EduCRM-be/internal/branches/list"
+	branchesunarchive "github.com/Xlussov/EduCRM-be/internal/branches/unarchive"
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
 	groupsaddstudents "github.com/Xlussov/EduCRM-be/internal/groups/add_students"
@@ -30,10 +31,12 @@ import (
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
 	studentslist "github.com/Xlussov/EduCRM-be/internal/students/list"
+	studentsunarchive "github.com/Xlussov/EduCRM-be/internal/students/unarchive"
 	studentsupdate "github.com/Xlussov/EduCRM-be/internal/students/update"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
+	subjectsunarchive "github.com/Xlussov/EduCRM-be/internal/subjects/unarchive"
 	subjectsupdate "github.com/Xlussov/EduCRM-be/internal/subjects/update"
 	subscriptionscreate "github.com/Xlussov/EduCRM-be/internal/subscriptions/create"
 	subscriptionslist "github.com/Xlussov/EduCRM-be/internal/subscriptions/list"
@@ -96,64 +99,82 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	adminsUC := admins.NewUseCase(userRepo, txManager)
 	teachersUC := teachers.NewUseCase(userRepo, txManager)
 	meUC := me.NewUseCase(userRepo)
+
 	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)
 	branchesArchiveUC := branchesarchive.NewUseCase(branchRepo)
 	branchesListUC := brancheslist.NewUseCase(branchRepo)
 	branchesGetUC := branchesget.NewUseCase(branchRepo)
 	branchesUpdateUC := branchesupdate.NewUseCase(branchRepo)
+	branchesUnarchiveUC := branchesunarchive.NewUseCase(branchRepo)
+
 	subjectsCreateUC := subjectscreate.NewUseCase(subjectRepo, branchRepo)
 	subjectsArchiveUC := subjectsarchive.NewUseCase(subjectRepo)
 	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
 	subjectsUpdateUC := subjectsupdate.NewUseCase(subjectRepo)
+	subjectsUnarchiveUC := subjectsunarchive.NewUseCase(subjectRepo)
+
 	studentsCreateUC := studentscreate.NewUseCase(studentRepo, userRepo)
 	studentsArchiveUC := studentsarchive.NewUseCase(studentRepo)
+	studentUnarchiveUC := studentsunarchive.NewUseCase(studentRepo)
 	studentsListUC := studentslist.NewUseCase(studentRepo, userRepo)
 	studentsGetUC := studentsget.NewUseCase(studentRepo)
 	studentsUpdateUC := studentsupdate.NewUseCase(studentRepo, userRepo)
+
 	groupsCreateUC := groupscreate.NewUseCase(groupRepo, userRepo)
 	groupsListUC := groupslist.NewUseCase(groupRepo, userRepo)
 	groupsGetUC := groupsget.NewUseCase(groupRepo, userRepo)
 	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
 	groupsAddStudentsUC := groupsaddstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
 	groupsRemoveStudentUC := groupsremovestudent.NewUseCase(groupRepo, userRepo, studentRepo)
+
 	plansCreateUC := planscreate.NewUseCase(txManager, planRepo, userRepo)
 	plansListUC := planslist.NewUseCase(planRepo, userRepo)
 	plansArchiveUC := plansarchive.NewUseCase(planRepo, userRepo)
+
 	subscriptionsCreateUC := subscriptionscreate.NewUseCase(planRepo, userRepo, studentRepo)
 	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, userRepo, studentRepo)
 
 	h := httprouter.Handlers{
-		AuthLogin:           login.NewHandler(loginUC).Handle,
-		AuthRefresh:         refresh.NewHandler(refreshUC).Handle,
-		AuthLogout:          logout.NewHandler(logoutUC).Handle,
-		UsersAdmins:         admins.NewHandler(adminsUC).Handle,
-		UsersTeachers:       teachers.NewHandler(teachersUC).Handle,
-		AuthMe:              me.NewHandler(meUC).Handle,
-		BranchesCreate:      branchescreate.NewHandler(branchesCreateUC).Handle,
-		BranchesArchive:     branchesarchive.NewHandler(branchesArchiveUC).Handle,
-		BranchesList:        brancheslist.NewHandler(branchesListUC).Handle,
-		BranchesGet:         branchesget.NewHandler(branchesGetUC).Handle,
-		BranchesUpdate:      branchesupdate.NewHandler(branchesUpdateUC).Handle,
-		SubjectsCreate:      subjectscreate.NewHandler(subjectsCreateUC).Handle,
-		SubjectsArchive:     subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
-		SubjectsList:        subjectslist.NewHandler(subjectsListUC).Handle,
-		SubjectsUpdate:      subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
-		StudentsCreate:      studentscreate.NewHandler(studentsCreateUC).Handle,
-		StudentsArchive:     studentsarchive.NewHandler(studentsArchiveUC).Handle,
-		StudentsList:        studentslist.NewHandler(studentsListUC).Handle,
-		StudentsGet:         studentsget.NewHandler(studentsGetUC).Handle,
-		StudentsUpdate:      studentsupdate.NewHandler(studentsUpdateUC).Handle,
+		AuthLogin:     login.NewHandler(loginUC).Handle,
+		AuthRefresh:   refresh.NewHandler(refreshUC).Handle,
+		AuthLogout:    logout.NewHandler(logoutUC).Handle,
+		UsersAdmins:   admins.NewHandler(adminsUC).Handle,
+		UsersTeachers: teachers.NewHandler(teachersUC).Handle,
+		AuthMe:        me.NewHandler(meUC).Handle,
+
+		BranchesCreate:    branchescreate.NewHandler(branchesCreateUC).Handle,
+		BranchesArchive:   branchesarchive.NewHandler(branchesArchiveUC).Handle,
+		BranchesUnarchive: branchesunarchive.NewHandler(branchesUnarchiveUC).Handle,
+		BranchesList:      brancheslist.NewHandler(branchesListUC).Handle,
+		BranchesGet:       branchesget.NewHandler(branchesGetUC).Handle,
+		BranchesUpdate:    branchesupdate.NewHandler(branchesUpdateUC).Handle,
+
+		SubjectsCreate:    subjectscreate.NewHandler(subjectsCreateUC).Handle,
+		SubjectsArchive:   subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
+		SubjectsUnarchive: subjectsunarchive.NewHandler(subjectsUnarchiveUC).Handle,
+		SubjectsList:      subjectslist.NewHandler(subjectsListUC).Handle,
+		SubjectsUpdate:    subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
+
+		StudentsCreate:    studentscreate.NewHandler(studentsCreateUC).Handle,
+		StudentsArchive:   studentsarchive.NewHandler(studentsArchiveUC).Handle,
+		StudentsUnarchive: studentsunarchive.NewHandler(studentUnarchiveUC).Handle,
+		StudentsList:      studentslist.NewHandler(studentsListUC).Handle,
+		StudentsGet:       studentsget.NewHandler(studentsGetUC).Handle,
+		StudentsUpdate:    studentsupdate.NewHandler(studentsUpdateUC).Handle,
+
 		GroupsCreate:        groupscreate.NewHandler(groupsCreateUC).Handle,
 		GroupsList:          groupslist.NewHandler(groupsListUC).Handle,
 		GroupsGet:           groupsget.NewHandler(groupsGetUC).Handle,
 		GroupsUpdate:        groupsupdate.NewHandler(groupsUpdateUC).Handle,
 		GroupsAddStudents:   groupsaddstudents.NewHandler(groupsAddStudentsUC).Handle,
 		GroupsRemoveStudent: groupsremovestudent.NewHandler(groupsRemoveStudentUC).Handle,
-		PlansCreate:         planscreate.NewHandler(plansCreateUC).Handle,
-		PlansList:           planslist.NewHandler(plansListUC).Handle,
+
+		PlansCreate:  planscreate.NewHandler(plansCreateUC).Handle,
+		PlansList:    planslist.NewHandler(plansListUC).Handle,
+		PlansArchive: plansarchive.NewHandler(plansArchiveUC).Handle,
+
 		SubscriptionsCreate: subscriptionscreate.NewHandler(subscriptionsCreateUC).Handle,
 		SubscriptionsList:   subscriptionslist.NewHandler(subscriptionsListUC).Handle,
-		PlansArchive:        plansarchive.NewHandler(plansArchiveUC).Handle,
 	}
 
 	e.Validator = validator.New()

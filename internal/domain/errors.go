@@ -10,4 +10,6 @@ var (
 	ErrPhoneAlreadyExists = errors.New("phone already exists")
 	ErrCannotEditArchived = errors.New("cannot edit archived entity")
 	ErrArchivedReference  = errors.New("referenced entity is archived")
+	ErrAlreadyArchived    = errors.New("this entity is already archived")
+	ErrAlreadyActive      = errors.New("this entity is already active")
 )

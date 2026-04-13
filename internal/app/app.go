@@ -48,7 +48,12 @@ import (
 	adminlist "github.com/Xlussov/EduCRM-be/internal/users/admins/list"
 	adminunarchive "github.com/Xlussov/EduCRM-be/internal/users/admins/unarchive"
 	adminupdate "github.com/Xlussov/EduCRM-be/internal/users/admins/update"
+	teacherarchive "github.com/Xlussov/EduCRM-be/internal/users/teachers/archive"
 	teachercreate "github.com/Xlussov/EduCRM-be/internal/users/teachers/create"
+	teacherget "github.com/Xlussov/EduCRM-be/internal/users/teachers/get"
+	teacherlist "github.com/Xlussov/EduCRM-be/internal/users/teachers/list"
+	teacherunarchive "github.com/Xlussov/EduCRM-be/internal/users/teachers/unarchive"
+	teacherupdate "github.com/Xlussov/EduCRM-be/internal/users/teachers/update"
 	"github.com/Xlussov/EduCRM-be/pkg/config"
 	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/labstack/echo/v4"
@@ -109,7 +114,12 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	adminsListUC := adminlist.NewUseCase(userRepo)
 	adminsUnarchiveUC := adminunarchive.NewUseCase(userRepo)
 	adminsUpdateUC := adminupdate.NewUseCase(userRepo, txManager)
+	teachersArchiveUC := teacherarchive.NewUseCase(userRepo)
 	teachersCreateUC := teachercreate.NewUseCase(userRepo, txManager)
+	teachersGetUC := teacherget.NewUseCase(userRepo)
+	teachersListUC := teacherlist.NewUseCase(userRepo)
+	teachersUnarchiveUC := teacherunarchive.NewUseCase(userRepo)
+	teachersUpdateUC := teacherupdate.NewUseCase(userRepo, txManager)
 	meUC := me.NewUseCase(userRepo)
 
 	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)
@@ -149,17 +159,22 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, userRepo, studentRepo)
 
 	h := httprouter.Handlers{
-		AuthLogin:            login.NewHandler(loginUC).Handle,
-		AuthRefresh:          refresh.NewHandler(refreshUC).Handle,
-		AuthLogout:           logout.NewHandler(logoutUC).Handle,
-		UsersAdminsArchive:   adminarchive.NewHandler(adminsArchiveUC).Handle,
-		UsersAdminsGet:       adminget.NewHandler(adminsGetUC).Handle,
-		UsersAdminsList:      adminlist.NewHandler(adminsListUC).Handle,
-		UsersAdminsCreate:    admincreate.NewHandler(adminsCreateUC).Handle,
-		UsersAdminsUnarchive: adminunarchive.NewHandler(adminsUnarchiveUC).Handle,
-		UsersAdminsUpdate:    adminupdate.NewHandler(adminsUpdateUC).Handle,
-		UsersTeachersCreate:  teachercreate.NewHandler(teachersCreateUC).Handle,
-		AuthMe:               me.NewHandler(meUC).Handle,
+		AuthLogin:              login.NewHandler(loginUC).Handle,
+		AuthRefresh:            refresh.NewHandler(refreshUC).Handle,
+		AuthLogout:             logout.NewHandler(logoutUC).Handle,
+		UsersAdminsArchive:     adminarchive.NewHandler(adminsArchiveUC).Handle,
+		UsersAdminsGet:         adminget.NewHandler(adminsGetUC).Handle,
+		UsersAdminsList:        adminlist.NewHandler(adminsListUC).Handle,
+		UsersAdminsCreate:      admincreate.NewHandler(adminsCreateUC).Handle,
+		UsersAdminsUnarchive:   adminunarchive.NewHandler(adminsUnarchiveUC).Handle,
+		UsersAdminsUpdate:      adminupdate.NewHandler(adminsUpdateUC).Handle,
+		UsersTeachersArchive:   teacherarchive.NewHandler(teachersArchiveUC).Handle,
+		UsersTeachersCreate:    teachercreate.NewHandler(teachersCreateUC).Handle,
+		UsersTeachersGet:       teacherget.NewHandler(teachersGetUC).Handle,
+		UsersTeachersList:      teacherlist.NewHandler(teachersListUC).Handle,
+		UsersTeachersUnarchive: teacherunarchive.NewHandler(teachersUnarchiveUC).Handle,
+		UsersTeachersUpdate:    teacherupdate.NewHandler(teachersUpdateUC).Handle,
+		AuthMe:                 me.NewHandler(meUC).Handle,
 
 		BranchesCreate:    branchescreate.NewHandler(branchesCreateUC).Handle,
 		BranchesArchive:   branchesarchive.NewHandler(branchesArchiveUC).Handle,

@@ -54,13 +54,6 @@ definitions:
     - RoleSuperadmin
     - RoleAdmin
     - RoleTeacher
-  get.BranchResponse:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
   get.StudentResponse:
     properties:
       first_name:
@@ -555,11 +548,18 @@ definitions:
       id:
         type: string
     type: object
+  internal_users_admins_get.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   internal_users_admins_get.Response:
     properties:
       branches:
         items:
-          $ref: '#/definitions/get.BranchResponse'
+          $ref: '#/definitions/internal_users_admins_get.BranchResponse'
         type: array
       first_name:
         type: string
@@ -582,6 +582,13 @@ definitions:
   internal_users_admins_unarchive.Response:
     properties:
       message:
+        type: string
+    type: object
+  internal_users_admins_update.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
         type: string
     type: object
   internal_users_admins_update.Request:
@@ -612,7 +619,7 @@ definitions:
     properties:
       branches:
         items:
-          $ref: '#/definitions/update.BranchResponse'
+          $ref: '#/definitions/internal_users_admins_update.BranchResponse'
         type: array
       first_name:
         type: string
@@ -623,6 +630,11 @@ definitions:
       phone:
         type: string
       status:
+        type: string
+    type: object
+  internal_users_teachers_archive.Response:
+    properties:
+      message:
         type: string
     type: object
   internal_users_teachers_create.Request:
@@ -652,6 +664,86 @@ definitions:
   internal_users_teachers_create.Response:
     properties:
       id:
+        type: string
+    type: object
+  internal_users_teachers_get.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_users_teachers_get.Response:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/internal_users_teachers_get.BranchResponse'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+    type: object
+  internal_users_teachers_list.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_users_teachers_unarchive.Response:
+    properties:
+      message:
+        type: string
+    type: object
+  internal_users_teachers_update.BranchResponse:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_users_teachers_update.Request:
+    properties:
+      branch_id:
+        type: string
+      first_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      last_name:
+        maxLength: 50
+        minLength: 2
+        type: string
+      phone:
+        type: string
+    required:
+    - branch_id
+    - first_name
+    - last_name
+    - phone
+    type: object
+  internal_users_teachers_update.Response:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/internal_users_teachers_update.BranchResponse'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      status:
         type: string
     type: object
   list.AdminResponse:
@@ -768,6 +860,23 @@ definitions:
       subject:
         $ref: '#/definitions/list.SubjectRef'
     type: object
+  list.TeacherResponse:
+    properties:
+      branches:
+        items:
+          $ref: '#/definitions/internal_users_teachers_list.BranchResponse'
+        type: array
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+      phone:
+        type: string
+      status:
+        type: string
+    type: object
   login.Request:
     properties:
       password:
@@ -857,13 +966,6 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/response.ErrorDetail'
-    type: object
-  update.BranchResponse:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
     type: object
 info:
   contact: {}
@@ -2473,6 +2575,209 @@ paths:
       summary: Create Admin
       tags:
       - admins
+  /api/v1/users/teachers:
+    get:
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: List of teachers
+          schema:
+            items:
+              $ref: '#/definitions/list.TeacherResponse'
+            type: array
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List Teachers
+      tags:
+      - teachers
+  /api/v1/users/teachers/{id}:
+    get:
+      parameters:
+      - description: Teacher ID format(uuid)
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Teacher details
+          schema:
+            $ref: '#/definitions/internal_users_teachers_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Teacher by ID
+      tags:
+      - teachers
+    put:
+      consumes:
+      - application/json
+      parameters:
+      - description: Teacher ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Teacher update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_users_teachers_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Updated teacher
+          schema:
+            $ref: '#/definitions/internal_users_teachers_update.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update Teacher
+      tags:
+      - teachers
+  /api/v1/users/teachers/{id}/archive:
+    patch:
+      parameters:
+      - description: Teacher ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Archived
+          schema:
+            $ref: '#/definitions/internal_users_teachers_archive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Archive Teacher
+      tags:
+      - teachers
+  /api/v1/users/teachers/{id}/unarchive:
+    patch:
+      parameters:
+      - description: Teacher ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unarchived
+          schema:
+            $ref: '#/definitions/internal_users_teachers_unarchive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unarchive Teacher
+      tags:
+      - teachers
   /api/v1/users/teachers/create:
     post:
       consumes:

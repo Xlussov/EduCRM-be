@@ -16,13 +16,18 @@ type Handlers struct {
 	AuthLogout  echo.HandlerFunc
 	AuthMe      echo.HandlerFunc
 
-	UsersAdminsArchive   echo.HandlerFunc
-	UsersAdminsGet       echo.HandlerFunc
-	UsersAdminsList      echo.HandlerFunc
-	UsersAdminsCreate    echo.HandlerFunc
-	UsersAdminsUnarchive echo.HandlerFunc
-	UsersAdminsUpdate    echo.HandlerFunc
-	UsersTeachersCreate  echo.HandlerFunc
+	UsersAdminsArchive     echo.HandlerFunc
+	UsersAdminsGet         echo.HandlerFunc
+	UsersAdminsList        echo.HandlerFunc
+	UsersAdminsCreate      echo.HandlerFunc
+	UsersAdminsUnarchive   echo.HandlerFunc
+	UsersAdminsUpdate      echo.HandlerFunc
+	UsersTeachersArchive   echo.HandlerFunc
+	UsersTeachersCreate    echo.HandlerFunc
+	UsersTeachersGet       echo.HandlerFunc
+	UsersTeachersList      echo.HandlerFunc
+	UsersTeachersUnarchive echo.HandlerFunc
+	UsersTeachersUpdate    echo.HandlerFunc
 
 	BranchesCreate    echo.HandlerFunc
 	BranchesArchive   echo.HandlerFunc
@@ -108,7 +113,12 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		adminsGroup.PATCH("/:id/unarchive", h.UsersAdminsUnarchive)
 
 		teachersGroup := usersGroup.Group("/teachers")
+		teachersGroup.GET("", h.UsersTeachersList)
+		teachersGroup.GET("/:id", h.UsersTeachersGet)
 		teachersGroup.POST("", h.UsersTeachersCreate)
+		teachersGroup.PATCH("/:id/archive", h.UsersTeachersArchive)
+		teachersGroup.PATCH("/:id/unarchive", h.UsersTeachersUnarchive)
+		teachersGroup.PUT("/:id", h.UsersTeachersUpdate)
 
 		branchesGroup := protected.Group("/branches")
 		branchesGroup.POST("", h.BranchesCreate)

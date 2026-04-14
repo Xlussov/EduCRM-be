@@ -13,16 +13,20 @@ import (
 )
 
 type UseCase struct {
-	userRepo  domain.UserRepository
-	authRepo  domain.AuthRepository
-	jwtSecret string
+	userRepo   domain.UserRepository
+	authRepo   domain.AuthRepository
+	jwtSecret  string
+	accessTTL  time.Duration
+	refreshTTL time.Duration
 }
 
-func NewUseCase(ur domain.UserRepository, ar domain.AuthRepository, secret string) *UseCase {
+func NewUseCase(ur domain.UserRepository, ar domain.AuthRepository, secret string, accessTTL, refreshTTL time.Duration) *UseCase {
 	return &UseCase{
-		userRepo:  ur,
-		authRepo:  ar,
-		jwtSecret: secret,
+		userRepo:   ur,
+		authRepo:   ar,
+		jwtSecret:  secret,
+		accessTTL:  accessTTL,
+		refreshTTL: refreshTTL,
 	}
 }
 
@@ -50,20 +54,20 @@ func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
 		bStr[i] = b.String()
 	}
 
-	accessToken, err := uc.generateToken(user.ID.String(), string(user.Role), bStr, time.Minute*15)
+	accessToken, err := uc.generateToken(user.ID.String(), string(user.Role), bStr, uc.accessTTL)
 	if err != nil {
 		return Response{}, err
 	}
 
 	refreshTokenID := uuid.New()
-	refreshTokenStr, err := uc.generateToken(user.ID.String(), string(user.Role), bStr, time.Hour*24*7)
+	refreshTokenStr, err := uc.generateToken(user.ID.String(), string(user.Role), bStr, uc.refreshTTL)
 	if err != nil {
 		return Response{}, err
 	}
 
 	hashStr := hash.SHA256Token(refreshTokenStr)
 
-	err = uc.authRepo.SaveRefreshToken(ctx, refreshTokenID, user.ID, hashStr, time.Now().Add(time.Hour*24*7))
+	err = uc.authRepo.SaveRefreshToken(ctx, refreshTokenID, user.ID, hashStr, time.Now().Add(uc.refreshTTL))
 	if err != nil {
 		return Response{}, err
 	}

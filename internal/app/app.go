@@ -79,16 +79,7 @@ type App struct {
 func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	e := echo.New()
 
-	pgCfg := postgres.Config{
-		User:     cfg.Postgres.User,
-		Password: cfg.Postgres.Password,
-		Host:     cfg.Postgres.Host,
-		Port:     cfg.Postgres.Port,
-		DBName:   cfg.Postgres.DBName,
-		SSLMode:  cfg.Postgres.SSLMode,
-	}
-
-	dbPool, err := postgres.New(ctx, pgCfg, log)
+	dbPool, err := postgres.New(ctx, cfg.Postgres.URL, log)
 	if err != nil {
 		log.Errorf("failed to init postgres: %v", err)
 		return nil, err
@@ -105,8 +96,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 
 	txManager := postgres.NewTxManager(dbPool.Conn())
 
-	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
-	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWTSecret)
+	loginUC := login.NewUseCase(userRepo, authRepo, cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
+	refreshUC := refresh.NewUseCase(userRepo, authRepo, cfg.JWT.Secret, cfg.JWT.AccessTTL, cfg.JWT.RefreshTTL)
 	logoutUC := logout.NewUseCase(authRepo)
 	adminsArchiveUC := adminarchive.NewUseCase(userRepo)
 	adminsCreateUC := admincreate.NewUseCase(userRepo, txManager)

@@ -100,7 +100,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 			tt.mockSetup(userRepo, authRepo)
 
-			uc := NewUseCase(userRepo, authRepo, "secret")
+			uc := NewUseCase(userRepo, authRepo, "test-secret", 15*time.Minute, 720*time.Hour)
 			res, err := uc.Execute(context.Background(), tt.req)
 
 			if tt.expectedError != "" {

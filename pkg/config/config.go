@@ -12,7 +12,7 @@ import (
 
 type Config struct {
 	Env        string     `yaml:"env" env-default:"prod" env-required:"true"`
-	JWTSecret  string     `yaml:"jwt_secret" env:"JWT_SECRET" env-required:"true"`
+	JWT        JWT        `yaml:"jwt" env-required:"true"`
 	HTTPServer HTTPServer `yaml:"http_server"`
 	Postgres   Postgres   `yaml:"postgres"`
 }
@@ -23,13 +23,14 @@ type HTTPServer struct {
 	WriteTimeout time.Duration `yaml:"write_timeout"`
 }
 
+type JWT struct {
+	Secret     string        `yaml:"secret" env:"JWT_SECRET" env-required:"true"`
+	AccessTTL  time.Duration `yaml:"access_ttl" env:"JWT_ACCESS_TTL" env-default:"15m"`
+	RefreshTTL time.Duration `yaml:"refresh_ttl" env:"JWT_REFRESH_TTL" env-default:"720h"`
+}
+
 type Postgres struct {
-	User     string `yaml:"user" env:"POSTGRES_USER" env-required:"true"`
-	Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-required:"true"`
-	Host     string `yaml:"host" env:"POSTGRES_HOST" env-required:"true"`
-	Port     string `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
-	DBName   string `yaml:"db_name" env:"POSTGRES_DB_NAME" env-required:"true"`
-	SSLMode  string `yaml:"sslmode" env:"POSTGRES_SSLMODE" env-default:"disable"`
+	URL string `yaml:"url" env:"DATABASE_URL" env-required:"true"`
 }
 
 func LoadENV() error {

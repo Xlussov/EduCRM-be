@@ -8,15 +8,6 @@ import (
 	"github.com/jackc/pgx/v5/pgxpool"
 )
 
-type Config struct {
-	User     string `yaml:"user" env:"POSTGRES_USER" env-required:"true"`
-	Password string `yaml:"password" env:"POSTGRES_PASSWORD" env-required:"true"`
-	Host     string `yaml:"host" env:"POSTGRES_HOST" env-required:"true"`
-	Port     string `yaml:"port" env:"POSTGRES_PORT" env-required:"true"`
-	DBName   string `yaml:"db_name" env:"POSTGRES_DB_NAME" env-required:"true"`
-	SSLMode  string `yaml:"sslmode" env:"POSTGRES_SSLMODE" env-default:"disable"`
-}
-
 type Logger interface {
 	Debug(msg string)
 	Info(msg string)
@@ -30,13 +21,8 @@ type Pool struct {
 	conn *pgxpool.Pool
 }
 
-func New(ctx context.Context, cfg Config, log Logger) (*Pool, error) {
-	dsn := fmt.Sprintf(
-		"postgresql://%s:%s@%s:%s/%s?sslmode=%s",
-		cfg.User, cfg.Password, cfg.Host, cfg.Port, cfg.DBName, cfg.SSLMode,
-	)
-
-	pool, err := pgxpool.New(ctx, dsn)
+func New(ctx context.Context, databaseURL string, log Logger) (*Pool, error) {
+	pool, err := pgxpool.New(ctx, databaseURL)
 	if err != nil {
 		return nil, fmt.Errorf("failed to create pgxpool: %w", err)
 	}

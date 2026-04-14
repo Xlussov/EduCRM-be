@@ -96,7 +96,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 
 		// Protected routes
 		protected := v1.Group("")
-		protected.Use(mw.JWT(cfg.JWTSecret))
+		protected.Use(mw.JWT(cfg.JWT.Secret))
 
 		protectedAuthGroup := protected.Group("/auth")
 		protectedAuthGroup.GET("/me", h.AuthMe)

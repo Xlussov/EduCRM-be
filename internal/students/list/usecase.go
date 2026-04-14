@@ -76,6 +76,8 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 			ID:        s.ID,
 			FirstName: s.FirstName,
 			LastName:  s.LastName,
+			Phone:     s.Phone,
+			Email:     s.Email,
 			Status:    s.Status,
 		})
 	}

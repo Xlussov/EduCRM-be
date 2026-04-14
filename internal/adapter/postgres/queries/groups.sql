@@ -36,13 +36,25 @@ UPDATE student_groups
 SET left_at = $3
 WHERE student_id = $1 AND group_id = $2 AND left_at IS NULL;
 
+-- name: AddStudentsToGroupBulk :exec
+INSERT INTO student_groups (student_id, group_id, joined_at)
+SELECT student_id, $1, $3
+FROM unnest($2::uuid[]) AS student_ids(student_id);
+
+-- name: RemoveStudentsFromGroupBulk :exec
+UPDATE student_groups
+SET left_at = $3
+WHERE student_id = ANY($1::uuid[])
+    AND group_id = $2
+    AND left_at IS NULL;
+
 -- name: GetGroupActiveStudentIDs :many
 SELECT student_id
 FROM student_groups
 WHERE group_id = $1 AND left_at IS NULL;
 
 -- name: GetGroupStudents :many
-SELECT s.id, s.first_name, s.last_name
+SELECT s.id, s.first_name, s.last_name, s.phone, s.email, s.status
 FROM students s
 JOIN student_groups sg ON s.id = sg.student_id
 WHERE sg.group_id = $1 AND sg.left_at IS NULL

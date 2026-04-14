@@ -27,6 +27,23 @@ func (q *Queries) AddStudentToGroup(ctx context.Context, arg AddStudentToGroupPa
 	return err
 }
 
+const addStudentsToGroupBulk = `-- name: AddStudentsToGroupBulk :exec
+INSERT INTO student_groups (student_id, group_id, joined_at)
+SELECT student_id, $1, $3
+FROM unnest($2::uuid[]) AS student_ids(student_id)
+`
+
+type AddStudentsToGroupBulkParams struct {
+	GroupID  pgtype.UUID        `json:"group_id"`
+	Column2  []pgtype.UUID      `json:"column_2"`
+	JoinedAt pgtype.Timestamptz `json:"joined_at"`
+}
+
+func (q *Queries) AddStudentsToGroupBulk(ctx context.Context, arg AddStudentsToGroupBulkParams) error {
+	_, err := q.db.Exec(ctx, addStudentsToGroupBulk, arg.GroupID, arg.Column2, arg.JoinedAt)
+	return err
+}
+
 const createGroup = `-- name: CreateGroup :one
 INSERT INTO groups (branch_id, name, status)
 VALUES ($1, $2, 'ACTIVE')
@@ -102,7 +119,7 @@ func (q *Queries) GetGroupByID(ctx context.Context, id pgtype.UUID) (Group, erro
 }
 
 const getGroupStudents = `-- name: GetGroupStudents :many
-SELECT s.id, s.first_name, s.last_name
+SELECT s.id, s.first_name, s.last_name, s.phone, s.email, s.status
 FROM students s
 JOIN student_groups sg ON s.id = sg.student_id
 WHERE sg.group_id = $1 AND sg.left_at IS NULL
@@ -110,9 +127,12 @@ ORDER BY s.last_name, s.first_name
 `
 
 type GetGroupStudentsRow struct {
-	ID        pgtype.UUID `json:"id"`
-	FirstName string      `json:"first_name"`
-	LastName  string      `json:"last_name"`
+	ID        pgtype.UUID      `json:"id"`
+	FirstName string           `json:"first_name"`
+	LastName  string           `json:"last_name"`
+	Phone     pgtype.Text      `json:"phone"`
+	Email     pgtype.Text      `json:"email"`
+	Status    NullEntityStatus `json:"status"`
 }
 
 func (q *Queries) GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error) {
@@ -124,7 +144,14 @@ func (q *Queries) GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]
 	var items []GetGroupStudentsRow
 	for rows.Next() {
 		var i GetGroupStudentsRow
-		if err := rows.Scan(&i.ID, &i.FirstName, &i.LastName); err != nil {
+		if err := rows.Scan(
+			&i.ID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Phone,
+			&i.Email,
+			&i.Status,
+		); err != nil {
 			return nil, err
 		}
 		items = append(items, i)
@@ -200,6 +227,25 @@ type RemoveStudentFromGroupParams struct {
 
 func (q *Queries) RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error {
 	_, err := q.db.Exec(ctx, removeStudentFromGroup, arg.StudentID, arg.GroupID, arg.LeftAt)
+	return err
+}
+
+const removeStudentsFromGroupBulk = `-- name: RemoveStudentsFromGroupBulk :exec
+UPDATE student_groups
+SET left_at = $3
+WHERE student_id = ANY($1::uuid[])
+    AND group_id = $2
+    AND left_at IS NULL
+`
+
+type RemoveStudentsFromGroupBulkParams struct {
+	Column1 []pgtype.UUID      `json:"column_1"`
+	GroupID pgtype.UUID        `json:"group_id"`
+	LeftAt  pgtype.Timestamptz `json:"left_at"`
+}
+
+func (q *Queries) RemoveStudentsFromGroupBulk(ctx context.Context, arg RemoveStudentsFromGroupBulkParams) error {
+	_, err := q.db.Exec(ctx, removeStudentsFromGroupBulk, arg.Column1, arg.GroupID, arg.LeftAt)
 	return err
 }
 

@@ -109,21 +109,29 @@ func (r *GroupRepository) UpdateName(ctx context.Context, id uuid.UUID, name str
 	}, nil
 }
 
-func (r *GroupRepository) AddStudent(ctx context.Context, groupID, studentID uuid.UUID, joinedAt time.Time) error {
+func (r *GroupRepository) AddStudents(ctx context.Context, groupID uuid.UUID, studentIDs []uuid.UUID, joinedAt time.Time) error {
+	if len(studentIDs) == 0 {
+		return nil
+	}
+
 	q := sqlc.New(r.db(ctx))
-	return q.AddStudentToGroup(ctx, sqlc.AddStudentToGroupParams{
-		StudentID: pgtype.UUID{Bytes: studentID, Valid: true},
-		GroupID:   pgtype.UUID{Bytes: groupID, Valid: true},
-		JoinedAt:  pgtype.Timestamptz{Time: joinedAt, Valid: true},
+	return q.AddStudentsToGroupBulk(ctx, sqlc.AddStudentsToGroupBulkParams{
+		GroupID:  pgtype.UUID{Bytes: groupID, Valid: true},
+		Column2:  toPGUUIDArray(studentIDs),
+		JoinedAt: pgtype.Timestamptz{Time: joinedAt, Valid: true},
 	})
 }
 
-func (r *GroupRepository) RemoveStudent(ctx context.Context, groupID, studentID uuid.UUID, leftAt time.Time) error {
+func (r *GroupRepository) RemoveStudents(ctx context.Context, groupID uuid.UUID, studentIDs []uuid.UUID, leftAt time.Time) error {
+	if len(studentIDs) == 0 {
+		return nil
+	}
+
 	q := sqlc.New(r.db(ctx))
-	return q.RemoveStudentFromGroup(ctx, sqlc.RemoveStudentFromGroupParams{
-		StudentID: pgtype.UUID{Bytes: studentID, Valid: true},
-		GroupID:   pgtype.UUID{Bytes: groupID, Valid: true},
-		LeftAt:    pgtype.Timestamptz{Time: leftAt, Valid: true},
+	return q.RemoveStudentsFromGroupBulk(ctx, sqlc.RemoveStudentsFromGroupBulkParams{
+		Column1: toPGUUIDArray(studentIDs),
+		GroupID: pgtype.UUID{Bytes: groupID, Valid: true},
+		LeftAt:  pgtype.Timestamptz{Time: leftAt, Valid: true},
 	})
 }
 
@@ -152,9 +160,30 @@ func (r *GroupRepository) GetStudents(ctx context.Context, groupID uuid.UUID) ([
 			ID:        row.ID.Bytes,
 			FirstName: row.FirstName,
 			LastName:  row.LastName,
+			Status:    domain.EntityStatus(row.Status.EntityStatus),
+			Phone:     pgTextToPtr(row.Phone),
+			Email:     pgTextToPtr(row.Email),
 		})
 	}
 	return res, nil
+}
+
+func toPGUUIDArray(ids []uuid.UUID) []pgtype.UUID {
+	res := make([]pgtype.UUID, 0, len(ids))
+	for _, id := range ids {
+		res = append(res, pgtype.UUID{Bytes: id, Valid: true})
+	}
+
+	return res
+}
+
+func pgTextToPtr(v pgtype.Text) *string {
+	if !v.Valid {
+		return nil
+	}
+
+	value := v.String
+	return &value
 }
 
 func (r *GroupRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.UUID, error) {

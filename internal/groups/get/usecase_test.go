@@ -31,7 +31,7 @@ func TestUseCase_Execute(t *testing.T) {
 			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
 				mockGR.On("GetStudents", mock.Anything, groupID).Return([]*domain.GroupStudent{
-					{ID: uuid.New(), FirstName: "John", LastName: "Doe"},
+					{ID: uuid.New(), FirstName: "John", LastName: "Doe", Status: domain.StatusActive},
 				}, nil).Once()
 			},
 			expectedErr: nil,

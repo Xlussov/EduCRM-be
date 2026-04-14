@@ -18,12 +18,11 @@ import (
 	branchesunarchive "github.com/Xlussov/EduCRM-be/internal/branches/unarchive"
 	branchesupdate "github.com/Xlussov/EduCRM-be/internal/branches/update"
 	httprouter "github.com/Xlussov/EduCRM-be/internal/controller/http"
-	groupsaddstudents "github.com/Xlussov/EduCRM-be/internal/groups/add_students"
 	groupsarchive "github.com/Xlussov/EduCRM-be/internal/groups/archive"
 	groupscreate "github.com/Xlussov/EduCRM-be/internal/groups/create"
 	groupsget "github.com/Xlussov/EduCRM-be/internal/groups/get"
 	groupslist "github.com/Xlussov/EduCRM-be/internal/groups/list"
-	groupsremovestudent "github.com/Xlussov/EduCRM-be/internal/groups/remove_student"
+	groupssyncstudents "github.com/Xlussov/EduCRM-be/internal/groups/sync_students"
 	groupsunarchive "github.com/Xlussov/EduCRM-be/internal/groups/unarchive"
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
 	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
@@ -137,8 +136,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupsListUC := groupslist.NewUseCase(groupRepo, userRepo)
 	groupsGetUC := groupsget.NewUseCase(groupRepo, userRepo)
 	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
-	groupsAddStudentsUC := groupsaddstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
-	groupsRemoveStudentUC := groupsremovestudent.NewUseCase(groupRepo, userRepo, studentRepo)
+	groupsSyncStudentsUC := groupssyncstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
 	groupsArchiveUC := groupsarchive.NewUseCase(groupRepo, userRepo)
 	groupsUnarchiveUC := groupsunarchive.NewUseCase(groupRepo, userRepo)
 
@@ -187,14 +185,13 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		StudentsGet:       studentsget.NewHandler(studentsGetUC).Handle,
 		StudentsUpdate:    studentsupdate.NewHandler(studentsUpdateUC).Handle,
 
-		GroupsCreate:        groupscreate.NewHandler(groupsCreateUC).Handle,
-		GroupsList:          groupslist.NewHandler(groupsListUC).Handle,
-		GroupsGet:           groupsget.NewHandler(groupsGetUC).Handle,
-		GroupsUpdate:        groupsupdate.NewHandler(groupsUpdateUC).Handle,
-		GroupsAddStudents:   groupsaddstudents.NewHandler(groupsAddStudentsUC).Handle,
-		GroupsRemoveStudent: groupsremovestudent.NewHandler(groupsRemoveStudentUC).Handle,
-		GroupsArchive:       groupsarchive.NewHandler(groupsArchiveUC).Handle,
-		GroupsUnarchive:     groupsunarchive.NewHandler(groupsUnarchiveUC).Handle,
+		GroupsCreate:       groupscreate.NewHandler(groupsCreateUC).Handle,
+		GroupsList:         groupslist.NewHandler(groupsListUC).Handle,
+		GroupsGet:          groupsget.NewHandler(groupsGetUC).Handle,
+		GroupsUpdate:       groupsupdate.NewHandler(groupsUpdateUC).Handle,
+		GroupsSyncStudents: groupssyncstudents.NewHandler(groupsSyncStudentsUC).Handle,
+		GroupsArchive:      groupsarchive.NewHandler(groupsArchiveUC).Handle,
+		GroupsUnarchive:    groupsunarchive.NewHandler(groupsUnarchiveUC).Handle,
 
 		PlansCreate:  planscreate.NewHandler(plansCreateUC).Handle,
 		PlansList:    planslist.NewHandler(plansListUC).Handle,

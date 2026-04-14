@@ -900,7 +900,7 @@ const docTemplate = `{
             }
         },
         "/api/v1/groups/{id}/students": {
-            "post": {
+            "put": {
                 "security": [
                     {
                         "BearerAuth": []
@@ -915,7 +915,7 @@ const docTemplate = `{
                 "tags": [
                     "groups"
                 ],
-                "summary": "Add Students to Group",
+                "summary": "Sync Group Students",
                 "parameters": [
                     {
                         "type": "string",
@@ -931,87 +931,21 @@ const docTemplate = `{
                         "in": "body",
                         "required": true,
                         "schema": {
-                            "$ref": "#/definitions/addstudents.Request"
+                            "$ref": "#/definitions/syncstudents.Request"
                         }
                     }
                 ],
                 "responses": {
                     "200": {
-                        "description": "Students added",
+                        "description": "Students synced",
                         "schema": {
-                            "$ref": "#/definitions/addstudents.Response"
+                            "$ref": "#/definitions/syncstudents.Response"
                         }
                     },
                     "400": {
                         "description": "Bad Request",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "401": {
-                        "description": "Unauthorized",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "403": {
-                        "description": "Forbidden",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "404": {
-                        "description": "Not Found",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    },
-                    "500": {
-                        "description": "Internal Server Error",
-                        "schema": {
-                            "$ref": "#/definitions/response.ErrorResponse"
-                        }
-                    }
-                }
-            }
-        },
-        "/api/v1/groups/{id}/students/{student_id}": {
-            "delete": {
-                "security": [
-                    {
-                        "BearerAuth": []
-                    }
-                ],
-                "produces": [
-                    "application/json"
-                ],
-                "tags": [
-                    "groups"
-                ],
-                "summary": "Remove Student from Group",
-                "parameters": [
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Group ID",
-                        "name": "id",
-                        "in": "path",
-                        "required": true
-                    },
-                    {
-                        "type": "string",
-                        "format": "uuid",
-                        "description": "Student ID",
-                        "name": "student_id",
-                        "in": "path",
-                        "required": true
-                    }
-                ],
-                "responses": {
-                    "200": {
-                        "description": "Student removed",
-                        "schema": {
-                            "$ref": "#/definitions/removestudent.Response"
                         }
                     },
                     "401": {
@@ -2892,29 +2826,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "addstudents.Request": {
-            "type": "object",
-            "required": [
-                "student_ids"
-            ],
-            "properties": {
-                "student_ids": {
-                    "type": "array",
-                    "minItems": 1,
-                    "items": {
-                        "type": "string"
-                    }
-                }
-            }
-        },
-        "addstudents.Response": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "archive.Request": {
             "type": "object",
             "required": [
@@ -2974,6 +2885,9 @@ const docTemplate = `{
         "get.StudentResponse": {
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
@@ -2982,6 +2896,12 @@ const docTemplate = `{
                 },
                 "last_name": {
                     "type": "string"
+                },
+                "phone": {
+                    "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.EntityStatus"
                 }
             }
         },
@@ -3161,11 +3081,17 @@ const docTemplate = `{
         "internal_groups_get.Response": {
             "type": "object",
             "properties": {
+                "branch_id": {
+                    "type": "string"
+                },
                 "id": {
                     "type": "string"
                 },
                 "name": {
                     "type": "string"
+                },
+                "status": {
+                    "$ref": "#/definitions/domain.EntityStatus"
                 },
                 "students": {
                     "type": "array",
@@ -4079,6 +4005,9 @@ const docTemplate = `{
         "list.StudentResponse": {
             "type": "object",
             "properties": {
+                "email": {
+                    "type": "string"
+                },
                 "first_name": {
                     "type": "string"
                 },
@@ -4086,6 +4015,9 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "last_name": {
+                    "type": "string"
+                },
+                "phone": {
                     "type": "string"
                 },
                 "status": {
@@ -4294,14 +4226,6 @@ const docTemplate = `{
                 }
             }
         },
-        "removestudent.Response": {
-            "type": "object",
-            "properties": {
-                "message": {
-                    "type": "string"
-                }
-            }
-        },
         "response.ErrorDetail": {
             "type": "object",
             "properties": {
@@ -4324,6 +4248,25 @@ const docTemplate = `{
             "properties": {
                 "error": {
                     "$ref": "#/definitions/response.ErrorDetail"
+                }
+            }
+        },
+        "syncstudents.Request": {
+            "type": "object",
+            "properties": {
+                "student_ids": {
+                    "type": "array",
+                    "items": {
+                        "type": "string"
+                    }
+                }
+            }
+        },
+        "syncstudents.Response": {
+            "type": "object",
+            "properties": {
+                "message": {
+                    "type": "string"
                 }
             }
         }

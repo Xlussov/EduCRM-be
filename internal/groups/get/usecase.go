@@ -59,6 +59,9 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, g
 			ID:        s.ID,
 			FirstName: s.FirstName,
 			LastName:  s.LastName,
+			Status:    s.Status,
+			Phone:     s.Phone,
+			Email:     s.Email,
 		})
 	}
 	if students == nil {
@@ -68,6 +71,8 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, g
 	return Response{
 		ID:       group.ID,
 		Name:     group.Name,
+		Status:   group.Status,
+		BranchID: group.BranchID,
 		Students: students,
 	}, nil
 }

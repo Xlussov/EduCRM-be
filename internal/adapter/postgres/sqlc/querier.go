@@ -12,6 +12,7 @@ import (
 
 type Querier interface {
 	AddStudentToGroup(ctx context.Context, arg AddStudentToGroupParams) error
+	AddStudentsToGroupBulk(ctx context.Context, arg AddStudentsToGroupBulkParams) error
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
 	CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error)
 	CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error)
@@ -54,6 +55,7 @@ type Querier interface {
 	IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error)
 	ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error)
 	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
+	RemoveStudentsFromGroupBulk(ctx context.Context, arg RemoveStudentsFromGroupBulkParams) error
 	RevokeAllUserTokens(ctx context.Context, userID pgtype.UUID) error
 	RevokeRefreshToken(ctx context.Context, id pgtype.UUID) error
 	SaveRefreshToken(ctx context.Context, arg SaveRefreshTokenParams) error

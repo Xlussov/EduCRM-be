@@ -45,13 +45,13 @@ func (m *GroupRepository) UpdateName(ctx context.Context, id uuid.UUID, name str
 	return r0, args.Error(1)
 }
 
-func (m *GroupRepository) AddStudent(ctx context.Context, groupID, studentID uuid.UUID, joinedAt time.Time) error {
-	args := m.Called(ctx, groupID, studentID, joinedAt)
+func (m *GroupRepository) AddStudents(ctx context.Context, groupID uuid.UUID, studentIDs []uuid.UUID, joinedAt time.Time) error {
+	args := m.Called(ctx, groupID, studentIDs, joinedAt)
 	return args.Error(0)
 }
 
-func (m *GroupRepository) RemoveStudent(ctx context.Context, groupID, studentID uuid.UUID, leftAt time.Time) error {
-	args := m.Called(ctx, groupID, studentID, leftAt)
+func (m *GroupRepository) RemoveStudents(ctx context.Context, groupID uuid.UUID, studentIDs []uuid.UUID, leftAt time.Time) error {
+	args := m.Called(ctx, groupID, studentIDs, leftAt)
 	return args.Error(0)
 }
 

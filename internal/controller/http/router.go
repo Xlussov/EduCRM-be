@@ -49,14 +49,13 @@ type Handlers struct {
 	StudentsGet       echo.HandlerFunc
 	StudentsUpdate    echo.HandlerFunc
 
-	GroupsCreate        echo.HandlerFunc
-	GroupsList          echo.HandlerFunc
-	GroupsGet           echo.HandlerFunc
-	GroupsUpdate        echo.HandlerFunc
-	GroupsAddStudents   echo.HandlerFunc
-	GroupsRemoveStudent echo.HandlerFunc
-	GroupsArchive       echo.HandlerFunc
-	GroupsUnarchive     echo.HandlerFunc
+	GroupsCreate       echo.HandlerFunc
+	GroupsList         echo.HandlerFunc
+	GroupsGet          echo.HandlerFunc
+	GroupsUpdate       echo.HandlerFunc
+	GroupsSyncStudents echo.HandlerFunc
+	GroupsArchive      echo.HandlerFunc
+	GroupsUnarchive    echo.HandlerFunc
 
 	PlansCreate  echo.HandlerFunc
 	PlansList    echo.HandlerFunc
@@ -150,8 +149,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		groupsGroup.GET("", h.GroupsList)
 		groupsGroup.GET("/:id", h.GroupsGet)
 		groupsGroup.PUT("/:id", h.GroupsUpdate)
-		groupsGroup.POST("/:id/students", h.GroupsAddStudents)
-		groupsGroup.DELETE("/:id/students/:student_id", h.GroupsRemoveStudent)
+		groupsGroup.PUT("/:id/students", h.GroupsSyncStudents)
 		groupsGroup.PATCH("/:id/archive", h.GroupsArchive)
 		groupsGroup.PATCH("/:id/unarchive", h.GroupsUnarchive)
 

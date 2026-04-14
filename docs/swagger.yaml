@@ -1,19 +1,4 @@
 definitions:
-  addstudents.Request:
-    properties:
-      student_ids:
-        items:
-          type: string
-        minItems: 1
-        type: array
-    required:
-    - student_ids
-    type: object
-  addstudents.Response:
-    properties:
-      message:
-        type: string
-    type: object
   archive.Request:
     properties:
       status:
@@ -56,12 +41,18 @@ definitions:
     - RoleTeacher
   get.StudentResponse:
     properties:
+      email:
+        type: string
       first_name:
         type: string
       id:
         type: string
       last_name:
         type: string
+      phone:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
     type: object
   internal_branches_archive.Response:
     properties:
@@ -183,10 +174,14 @@ definitions:
     type: object
   internal_groups_get.Response:
     properties:
+      branch_id:
+        type: string
       id:
         type: string
       name:
         type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
       students:
         items:
           $ref: '#/definitions/get.StudentResponse'
@@ -807,11 +802,15 @@ definitions:
     type: object
   list.StudentResponse:
     properties:
+      email:
+        type: string
       first_name:
         type: string
       id:
         type: string
       last_name:
+        type: string
+      phone:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
@@ -946,11 +945,6 @@ definitions:
       refresh_token:
         type: string
     type: object
-  removestudent.Response:
-    properties:
-      message:
-        type: string
-    type: object
   response.ErrorDetail:
     properties:
       code:
@@ -966,6 +960,18 @@ definitions:
     properties:
       error:
         $ref: '#/definitions/response.ErrorDetail'
+    type: object
+  syncstudents.Request:
+    properties:
+      student_ids:
+        items:
+          type: string
+        type: array
+    type: object
+  syncstudents.Response:
+    properties:
+      message:
+        type: string
     type: object
 info:
   contact: {}
@@ -1539,7 +1545,7 @@ paths:
       tags:
       - groups
   /api/v1/groups/{id}/students:
-    post:
+    put:
       consumes:
       - application/json
       parameters:
@@ -1554,14 +1560,14 @@ paths:
         name: request
         required: true
         schema:
-          $ref: '#/definitions/addstudents.Request'
+          $ref: '#/definitions/syncstudents.Request'
       produces:
       - application/json
       responses:
         "200":
-          description: Students added
+          description: Students synced
           schema:
-            $ref: '#/definitions/addstudents.Response'
+            $ref: '#/definitions/syncstudents.Response'
         "400":
           description: Bad Request
           schema:
@@ -1584,50 +1590,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Add Students to Group
-      tags:
-      - groups
-  /api/v1/groups/{id}/students/{student_id}:
-    delete:
-      parameters:
-      - description: Group ID
-        format: uuid
-        in: path
-        name: id
-        required: true
-        type: string
-      - description: Student ID
-        format: uuid
-        in: path
-        name: student_id
-        required: true
-        type: string
-      produces:
-      - application/json
-      responses:
-        "200":
-          description: Student removed
-          schema:
-            $ref: '#/definitions/removestudent.Response'
-        "401":
-          description: Unauthorized
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "403":
-          description: Forbidden
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "404":
-          description: Not Found
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-        "500":
-          description: Internal Server Error
-          schema:
-            $ref: '#/definitions/response.ErrorResponse'
-      security:
-      - BearerAuth: []
-      summary: Remove Student from Group
+      summary: Sync Group Students
       tags:
       - groups
   /api/v1/groups/{id}/unarchive:

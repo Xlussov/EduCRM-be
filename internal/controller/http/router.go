@@ -121,6 +121,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		teachersGroup.PUT("/:id", h.UsersTeachersUpdate)
 
 		branchesGroup := protected.Group("/branches")
+		branchesGroup.Use(mw.RequireRoles("SUPERADMIN", "ADMIN"))
 		branchesGroup.POST("", h.BranchesCreate)
 		branchesGroup.GET("", h.BranchesList)
 		branchesGroup.GET("/:id", h.BranchesGet)

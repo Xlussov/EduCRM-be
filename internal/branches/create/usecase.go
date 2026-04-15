@@ -21,7 +21,7 @@ func NewUseCase(br domain.BranchRepository, ur domain.UserRepository, tm domain.
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (Response, error) {
 	branch := &domain.Branch{
 		Name:    req.Name,
 		Address: req.Address,
@@ -30,12 +30,11 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, req Request) (
 	}
 
 	err := uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
-
-		if err := uc.branchRepo.Create(ctx, branch); err != nil {
+		if err := uc.branchRepo.Create(txCtx, branch); err != nil {
 			return err
 		}
 
-		if err := uc.userRepo.AssignToBranches(ctx, userID, []uuid.UUID{branch.ID}); err != nil {
+		if err := uc.userRepo.AssignToBranches(txCtx, caller.UserID, []uuid.UUID{branch.ID}); err != nil {
 			return err
 		}
 		return nil

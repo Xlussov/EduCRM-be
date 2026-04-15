@@ -14,9 +14,9 @@ import (
 )
 
 func TestUseCase_Execute(t *testing.T) {
-	userId := uuid.New()
+	userID := uuid.New()
 	branchId := uuid.New()
-
+	caller := domain.Caller{UserID: userID, Role: domain.RoleAdmin}
 	req := Request{
 		Name:    "Test Branch",
 		Address: "123 Main St",
@@ -29,65 +29,84 @@ func TestUseCase_Execute(t *testing.T) {
 		City:    req.City,
 		Status:  domain.StatusActive,
 	}
+	errCreate := errors.New("db error")
+	errAssign := errors.New("db user error")
 
-	t.Run("success", func(t *testing.T) {
-		branchRepo := new(mocks.BranchRepository)
-		userRepo := new(mocks.UserRepository)
+	tests := []struct {
+		name        string
+		caller      domain.Caller
+		mockSetup   func(branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository)
+		expectedID  uuid.UUID
+		expectedErr error
+		assertRepo  func(t *testing.T, branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository)
+	}{
+		{
+			name:   "success",
+			caller: caller,
+			mockSetup: func(branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository) {
+				branchRepo.On("Create", mock.Anything, mock.MatchedBy(func(b *domain.Branch) bool {
+					b.ID = branchId
+					b.CreatedAt = time.Now()
+					b.UpdatedAt = time.Now()
+					return b.Name == expectedBranch.Name && b.Address == expectedBranch.Address && b.Status == expectedBranch.Status
+				})).Return(nil)
 
-		branchRepo.On("Create", mock.Anything, mock.MatchedBy(func(b *domain.Branch) bool {
-			// Populate ID to mock DB behavior
-			b.ID = branchId
-			b.CreatedAt = time.Now()
-			b.UpdatedAt = time.Now()
-			return b.Name == expectedBranch.Name && b.Address == expectedBranch.Address && b.Status == expectedBranch.Status
-		})).Return(nil)
+				userRepo.On("AssignToBranches", mock.Anything, userID, []uuid.UUID{branchId}).Return(nil)
+			},
+			expectedID: branchId,
+		},
+		{
+			name:   "failed to create branch",
+			caller: caller,
+			mockSetup: func(branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository) {
+				branchRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Branch")).Return(errCreate)
+			},
+			expectedErr: errCreate,
+			assertRepo: func(t *testing.T, branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository) {
+				branchRepo.AssertExpectations(t)
+				userRepo.AssertNotCalled(t, "AssignToBranches", mock.Anything, mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name:   "failed to assign user to branch",
+			caller: caller,
+			mockSetup: func(branchRepo *mocks.BranchRepository, userRepo *mocks.UserRepository) {
+				branchRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Branch")).Return(nil).Run(func(args mock.Arguments) {
+					b := args.Get(1).(*domain.Branch)
+					b.ID = branchId
+				})
 
-		userRepo.On("AssignToBranches", mock.Anything, userId, []uuid.UUID{branchId}).Return(nil)
+				userRepo.On("AssignToBranches", mock.Anything, userID, []uuid.UUID{branchId}).Return(errAssign)
+			},
+			expectedErr: errAssign,
+		},
+	}
 
-		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
-		res, err := uc.Execute(context.Background(), userId, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			branchRepo := new(mocks.BranchRepository)
+			userRepo := new(mocks.UserRepository)
+			if tt.mockSetup != nil {
+				tt.mockSetup(branchRepo, userRepo)
+			}
 
-		assert.NoError(t, err)
-		assert.Equal(t, branchId, res.ID)
+			uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
+			res, err := uc.Execute(context.Background(), tt.caller, req)
 
-		branchRepo.AssertExpectations(t)
-		userRepo.AssertExpectations(t)
-	})
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedID, res.ID)
+			}
 
-	t.Run("failed to create branch", func(t *testing.T) {
-		branchRepo := new(mocks.BranchRepository)
-		userRepo := new(mocks.UserRepository)
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, branchRepo, userRepo)
+				return
+			}
 
-		branchRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Branch")).Return(errors.New("db error"))
-
-		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
-		_, err := uc.Execute(context.Background(), userId, req)
-
-		assert.Error(t, err)
-		assert.Equal(t, "db error", err.Error())
-
-		branchRepo.AssertExpectations(t)
-		userRepo.AssertNotCalled(t, "AssignToBranches", mock.Anything, mock.Anything, mock.Anything)
-	})
-
-	t.Run("failed to assign user to branch", func(t *testing.T) {
-		branchRepo := new(mocks.BranchRepository)
-		userRepo := new(mocks.UserRepository)
-
-		branchRepo.On("Create", mock.Anything, mock.AnythingOfType("*domain.Branch")).Return(nil).Run(func(args mock.Arguments) {
-			b := args.Get(1).(*domain.Branch)
-			b.ID = branchId
+			branchRepo.AssertExpectations(t)
+			userRepo.AssertExpectations(t)
 		})
-
-		userRepo.On("AssignToBranches", mock.Anything, userId, []uuid.UUID{branchId}).Return(errors.New("db user error"))
-
-		uc := NewUseCase(branchRepo, userRepo, &mocks.MockTxManager{})
-		_, err := uc.Execute(context.Background(), userId, req)
-
-		assert.Error(t, err)
-		assert.Equal(t, "db user error", err.Error())
-
-		branchRepo.AssertExpectations(t)
-		userRepo.AssertExpectations(t)
-	})
+	}
 }

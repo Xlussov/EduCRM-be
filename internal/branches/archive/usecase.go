@@ -17,7 +17,11 @@ func NewUseCase(br domain.BranchRepository) *UseCase {
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, branchID uuid.UUID) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, branchID uuid.UUID) (Response, error) {
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, branchID) {
+		return Response{}, domain.ErrBranchAccessDenied
+	}
+
 	branch, err := uc.branchRepo.GetByID(ctx, branchID)
 	if err != nil {
 		return Response{}, err

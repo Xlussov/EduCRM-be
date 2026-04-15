@@ -15,6 +15,10 @@ import (
 
 func TestUseCase_Execute(t *testing.T) {
 	branchID := uuid.New()
+	callerSuper := domain.Caller{UserID: uuid.New(), Role: domain.RoleSuperadmin}
+	callerAdminAllowed := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminDenied := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}}
+	errDB := errors.New("db err")
 	branch := &domain.Branch{
 		ID:        branchID,
 		Name:      "Test",
@@ -25,26 +29,71 @@ func TestUseCase_Execute(t *testing.T) {
 		UpdatedAt: time.Now(),
 	}
 
-	t.Run("success", func(t *testing.T) {
-		repo := new(mocks.BranchRepository)
-		repo.On("GetByID", mock.Anything, branchID).Return(branch, nil)
+	tests := []struct {
+		name        string
+		caller      domain.Caller
+		mockSetup   func(repo *mocks.BranchRepository)
+		expectedErr error
+		expectedID  uuid.UUID
+		assertRepo  func(t *testing.T, repo *mocks.BranchRepository)
+	}{
+		{
+			name:   "success",
+			caller: callerSuper,
+			mockSetup: func(repo *mocks.BranchRepository) {
+				repo.On("GetByID", mock.Anything, branchID).Return(branch, nil)
+			},
+			expectedID: branchID,
+		},
+		{
+			name:        "admin access denied",
+			caller:      callerAdminDenied,
+			expectedErr: domain.ErrBranchAccessDenied,
+			assertRepo: func(t *testing.T, repo *mocks.BranchRepository) {
+				repo.AssertNotCalled(t, "GetByID", mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name:   "admin access allowed",
+			caller: callerAdminAllowed,
+			mockSetup: func(repo *mocks.BranchRepository) {
+				repo.On("GetByID", mock.Anything, branchID).Return(branch, nil)
+			},
+			expectedID: branchID,
+		},
+		{
+			name:   "db err",
+			caller: callerSuper,
+			mockSetup: func(repo *mocks.BranchRepository) {
+				repo.On("GetByID", mock.Anything, branchID).Return(nil, errDB)
+			},
+			expectedErr: errDB,
+		},
+	}
 
-		uc := NewUseCase(repo)
-		res, err := uc.Execute(context.Background(), branchID)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := new(mocks.BranchRepository)
+			if tt.mockSetup != nil {
+				tt.mockSetup(repo)
+			}
 
-		assert.NoError(t, err)
-		assert.Equal(t, branchID, res.ID)
-		repo.AssertExpectations(t)
-	})
+			uc := NewUseCase(repo)
+			res, err := uc.Execute(context.Background(), tt.caller, branchID)
 
-	t.Run("db err", func(t *testing.T) {
-		repo := new(mocks.BranchRepository)
-		repo.On("GetByID", mock.Anything, branchID).Return(nil, errors.New("db err"))
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				assert.Equal(t, tt.expectedID, res.ID)
+			}
 
-		uc := NewUseCase(repo)
-		_, err := uc.Execute(context.Background(), branchID)
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, repo)
+				return
+			}
 
-		assert.Error(t, err)
-		repo.AssertExpectations(t)
-	})
+			repo.AssertExpectations(t)
+		})
+	}
 }

@@ -40,6 +40,7 @@ type Handlers struct {
 	SubjectsArchive   echo.HandlerFunc
 	SubjectsUnarchive echo.HandlerFunc
 	SubjectsList      echo.HandlerFunc
+	SubjectsGet       echo.HandlerFunc
 	SubjectsUpdate    echo.HandlerFunc
 
 	StudentsCreate    echo.HandlerFunc
@@ -130,6 +131,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		subjectsGroup := protected.Group("/subjects")
 		subjectsGroup.POST("", h.SubjectsCreate)
 		subjectsGroup.GET("", h.SubjectsList)
+		subjectsGroup.GET("/:id", h.SubjectsGet)
 		subjectsGroup.PUT("/:id", h.SubjectsUpdate)
 		subjectsGroup.PATCH("/:id/archive", h.SubjectsArchive)
 		subjectsGroup.PATCH("/:id/unarchive", h.SubjectsUnarchive)

@@ -36,6 +36,7 @@ import (
 	studentsupdate "github.com/Xlussov/EduCRM-be/internal/students/update"
 	subjectsarchive "github.com/Xlussov/EduCRM-be/internal/subjects/archive"
 	subjectscreate "github.com/Xlussov/EduCRM-be/internal/subjects/create"
+	subjectsget "github.com/Xlussov/EduCRM-be/internal/subjects/get"
 	subjectslist "github.com/Xlussov/EduCRM-be/internal/subjects/list"
 	subjectsunarchive "github.com/Xlussov/EduCRM-be/internal/subjects/unarchive"
 	subjectsupdate "github.com/Xlussov/EduCRM-be/internal/subjects/update"
@@ -122,6 +123,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subjectsCreateUC := subjectscreate.NewUseCase(subjectRepo, branchRepo)
 	subjectsArchiveUC := subjectsarchive.NewUseCase(subjectRepo)
 	subjectsListUC := subjectslist.NewUseCase(subjectRepo)
+	subjectsGetUC := subjectsget.NewUseCase(subjectRepo)
 	subjectsUpdateUC := subjectsupdate.NewUseCase(subjectRepo)
 	subjectsUnarchiveUC := subjectsunarchive.NewUseCase(subjectRepo)
 
@@ -176,6 +178,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		SubjectsArchive:   subjectsarchive.NewHandler(subjectsArchiveUC).Handle,
 		SubjectsUnarchive: subjectsunarchive.NewHandler(subjectsUnarchiveUC).Handle,
 		SubjectsList:      subjectslist.NewHandler(subjectsListUC).Handle,
+		SubjectsGet:       subjectsget.NewHandler(subjectsGetUC).Handle,
 		SubjectsUpdate:    subjectsupdate.NewHandler(subjectsUpdateUC).Handle,
 
 		StudentsCreate:    studentscreate.NewHandler(studentsCreateUC).Handle,

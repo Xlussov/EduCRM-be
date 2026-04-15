@@ -54,6 +54,23 @@ definitions:
       status:
         $ref: '#/definitions/domain.EntityStatus'
     type: object
+  get.SubjectResponse:
+    properties:
+      branch_id:
+        type: string
+      created_at:
+        type: string
+      description:
+        type: string
+      id:
+        type: string
+      name:
+        type: string
+      status:
+        $ref: '#/definitions/domain.EntityStatus'
+      updated_at:
+        type: string
+    type: object
   internal_branches_archive.Response:
     properties:
       message:
@@ -446,6 +463,11 @@ definitions:
         type: string
       name:
         type: string
+    type: object
+  internal_subjects_get.Response:
+    properties:
+      subject:
+        $ref: '#/definitions/get.SubjectResponse'
     type: object
   internal_subjects_list.Response:
     properties:
@@ -2170,6 +2192,46 @@ paths:
       tags:
       - subjects
   /api/v1/subjects/{id}:
+    get:
+      parameters:
+      - description: Subject ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Subject details
+          schema:
+            $ref: '#/definitions/internal_subjects_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Subject by ID
+      tags:
+      - subjects
     put:
       consumes:
       - application/json

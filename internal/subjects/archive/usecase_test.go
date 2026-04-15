@@ -15,19 +15,27 @@ import (
 func TestUseCase_Execute(t *testing.T) {
 	subjectID := uuid.New()
 	errDB := errors.New("db error")
+	branchID := uuid.New()
+	callerSuper := domain.Caller{UserID: uuid.New(), Role: domain.RoleSuperadmin}
+	callerAllowed := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerDenied := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}}
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.SubjectRepository)
 		expectedError error
 		expectedMsg   string
+		assertRepo    func(t *testing.T, repo *mocks.SubjectRepository)
 	}{
 		{
-			name: "success",
+			name:   "superadmin success",
+			caller: callerSuper,
 			mockSetup: func(repo *mocks.SubjectRepository) {
 				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{
-					ID:     subjectID,
-					Status: domain.StatusActive,
+					ID:       subjectID,
+					BranchID: branchID,
+					Status:   domain.StatusActive,
 				}, nil).Once()
 				repo.On("UpdateStatus", mock.Anything, subjectID, domain.StatusArchived).Return(nil).Once()
 			},
@@ -35,18 +43,50 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "success",
 		},
 		{
-			name: "error_already_archived",
+			name:   "admin access denied",
+			caller: callerDenied,
 			mockSetup: func(repo *mocks.SubjectRepository) {
 				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{
-					ID:     subjectID,
-					Status: domain.StatusArchived,
+					ID:       subjectID,
+					BranchID: branchID,
+					Status:   domain.StatusActive,
+				}, nil).Once()
+			},
+			expectedError: domain.ErrBranchAccessDenied,
+			assertRepo: func(t *testing.T, repo *mocks.SubjectRepository) {
+				repo.AssertNotCalled(t, "UpdateStatus", mock.Anything, mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name:   "admin access allowed",
+			caller: callerAllowed,
+			mockSetup: func(repo *mocks.SubjectRepository) {
+				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{
+					ID:       subjectID,
+					BranchID: branchID,
+					Status:   domain.StatusActive,
+				}, nil).Once()
+				repo.On("UpdateStatus", mock.Anything, subjectID, domain.StatusArchived).Return(nil).Once()
+			},
+			expectedError: nil,
+			expectedMsg:   "success",
+		},
+		{
+			name:   "error_already_archived",
+			caller: callerSuper,
+			mockSetup: func(repo *mocks.SubjectRepository) {
+				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{
+					ID:       subjectID,
+					BranchID: branchID,
+					Status:   domain.StatusArchived,
 				}, nil).Once()
 			},
 			expectedError: domain.ErrAlreadyArchived,
 			expectedMsg:   "",
 		},
 		{
-			name: "error_db_on_getbyid",
+			name:   "error_db_on_getbyid",
+			caller: callerSuper,
 			mockSetup: func(repo *mocks.SubjectRepository) {
 				repo.On("GetByID", mock.Anything, subjectID).Return((*domain.Subject)(nil), errDB).Once()
 			},
@@ -54,11 +94,13 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "",
 		},
 		{
-			name: "error_db_on_updatestatus",
+			name:   "error_db_on_updatestatus",
+			caller: callerSuper,
 			mockSetup: func(repo *mocks.SubjectRepository) {
 				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{
-					ID:     subjectID,
-					Status: domain.StatusActive,
+					ID:       subjectID,
+					BranchID: branchID,
+					Status:   domain.StatusActive,
 				}, nil).Once()
 				repo.On("UpdateStatus", mock.Anything, subjectID, domain.StatusArchived).Return(errDB).Once()
 			},
@@ -70,16 +112,23 @@ func TestUseCase_Execute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := new(mocks.SubjectRepository)
-			tt.mockSetup(repo)
+			if tt.mockSetup != nil {
+				tt.mockSetup(repo)
+			}
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), subjectID)
+			res, err := uc.Execute(context.Background(), tt.caller, subjectID)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.expectedMsg, res.Message)
+			}
+
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, repo)
+				return
 			}
 
 			repo.AssertExpectations(t)

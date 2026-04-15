@@ -130,6 +130,7 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		branchesGroup.PATCH("/:id/unarchive", h.BranchesUnarchive)
 
 		subjectsGroup := protected.Group("/subjects")
+		subjectsGroup.Use(mw.RequireRoles("SUPERADMIN", "ADMIN"))
 		subjectsGroup.POST("", h.SubjectsCreate)
 		subjectsGroup.GET("", h.SubjectsList)
 		subjectsGroup.GET("/:id", h.SubjectsGet)

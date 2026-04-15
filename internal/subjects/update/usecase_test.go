@@ -14,48 +14,99 @@ import (
 
 func TestUseCase_Execute(t *testing.T) {
 	branchID := uuid.New()
+	callerAllowed := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerDenied := domain.Caller{UserID: uuid.New(), Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}}
 	req := Request{
 		BranchID:    branchID,
 		Name:        "New Math",
 		Description: "New Desc",
 	}
 	subjectID := uuid.New()
+	updatedDomain := &domain.Subject{
+		ID:          subjectID,
+		BranchID:    branchID,
+		Name:        req.Name,
+		Description: req.Description,
+		Status:      domain.StatusActive,
+	}
+	errDB := errors.New("db error")
 
-	t.Run("success", func(t *testing.T) {
-		repo := new(mocks.SubjectRepository)
-		repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, Status: domain.StatusActive}, nil)
-		updatedDomain := &domain.Subject{
-			ID:          subjectID,
-			BranchID:    branchID,
-			Name:        req.Name,
-			Description: req.Description,
-			Status:      domain.StatusActive,
-		}
-		repo.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Subject) bool {
-			return s.Name == req.Name && s.Description == req.Description && s.ID == subjectID && s.BranchID == req.BranchID
-		})).Return(updatedDomain, nil)
+	tests := []struct {
+		name        string
+		caller      domain.Caller
+		mockSetup   func(repo *mocks.SubjectRepository)
+		expectedErr error
+		expectedRes *Response
+		assertRepo  func(t *testing.T, repo *mocks.SubjectRepository)
+	}{
+		{
+			name:   "success",
+			caller: callerAllowed,
+			mockSetup: func(repo *mocks.SubjectRepository) {
+				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, BranchID: branchID, Status: domain.StatusActive}, nil)
+				repo.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Subject) bool {
+					return s.Name == req.Name && s.Description == req.Description && s.ID == subjectID && s.BranchID == req.BranchID
+				})).Return(updatedDomain, nil)
+			},
+			expectedRes: &Response{
+				ID:          subjectID.String(),
+				BranchID:    branchID.String(),
+				Name:        req.Name,
+				Description: req.Description,
+				Status:      string(domain.StatusActive),
+			},
+		},
+		{
+			name:   "access denied",
+			caller: callerDenied,
+			mockSetup: func(repo *mocks.SubjectRepository) {
+				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, BranchID: branchID, Status: domain.StatusActive}, nil)
+			},
+			expectedErr: domain.ErrBranchAccessDenied,
+			assertRepo: func(t *testing.T, repo *mocks.SubjectRepository) {
+				repo.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+			},
+		},
+		{
+			name:   "db error",
+			caller: callerAllowed,
+			mockSetup: func(repo *mocks.SubjectRepository) {
+				repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, BranchID: branchID, Status: domain.StatusActive}, nil)
+				repo.On("Update", mock.Anything, mock.Anything).Return(nil, errDB)
+			},
+			expectedErr: errDB,
+		},
+	}
 
-		uc := NewUseCase(repo)
-		res, err := uc.Execute(context.Background(), subjectID, req)
+	for _, tt := range tests {
+		t.Run(tt.name, func(t *testing.T) {
+			repo := new(mocks.SubjectRepository)
+			if tt.mockSetup != nil {
+				tt.mockSetup(repo)
+			}
 
-		assert.Equal(t, subjectID.String(), res.ID)
-		assert.Equal(t, branchID.String(), res.BranchID)
-		assert.Equal(t, req.Name, res.Name)
-		assert.Equal(t, req.Description, res.Description)
-		assert.Equal(t, string(domain.StatusActive), res.Status)
-		assert.NoError(t, err)
-		repo.AssertExpectations(t)
-	})
+			uc := NewUseCase(repo)
+			res, err := uc.Execute(context.Background(), tt.caller, subjectID, req)
 
-	t.Run("db error", func(t *testing.T) {
-		repo := new(mocks.SubjectRepository)
-		repo.On("GetByID", mock.Anything, subjectID).Return(&domain.Subject{ID: subjectID, Status: domain.StatusActive}, nil)
-		repo.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+			if tt.expectedErr != nil {
+				assert.ErrorIs(t, err, tt.expectedErr)
+			} else {
+				assert.NoError(t, err)
+				if tt.expectedRes != nil {
+					assert.Equal(t, tt.expectedRes.ID, res.ID)
+					assert.Equal(t, tt.expectedRes.BranchID, res.BranchID)
+					assert.Equal(t, tt.expectedRes.Name, res.Name)
+					assert.Equal(t, tt.expectedRes.Description, res.Description)
+					assert.Equal(t, tt.expectedRes.Status, res.Status)
+				}
+			}
 
-		uc := NewUseCase(repo)
-		_, err := uc.Execute(context.Background(), subjectID, req)
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, repo)
+				return
+			}
 
-		assert.Error(t, err)
-		repo.AssertExpectations(t)
-	})
+			repo.AssertExpectations(t)
+		})
+	}
 }

@@ -15,11 +15,22 @@ func NewUseCase(repo domain.SubjectRepository) *UseCase {
 	return &UseCase{subjectRepo: repo}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, subjectID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, subjectID uuid.UUID, req Request) (Response, error) {
 	currentSubject, err := uc.subjectRepo.GetByID(ctx, subjectID)
 	if err != nil {
 		return Response{}, err
 	}
+
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, currentSubject.BranchID) {
+		return Response{}, domain.ErrBranchAccessDenied
+	}
+
+	if currentSubject.BranchID != req.BranchID {
+		if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+			return Response{}, domain.ErrBranchAccessDenied
+		}
+	}
+
 	if currentSubject.Status == domain.StatusArchived {
 		return Response{}, domain.ErrCannotEditArchived
 	}

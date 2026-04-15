@@ -18,7 +18,11 @@ func NewUseCase(sr domain.SubjectRepository, br domain.BranchRepository) *UseCas
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, req Request) (*Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (*Response, error) {
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+		return nil, domain.ErrBranchAccessDenied
+	}
+
 	isActive, err := uc.branchRepo.IsActive(ctx, req.BranchID)
 	if err != nil {
 		return nil, err

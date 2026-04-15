@@ -140,6 +140,96 @@ func (q *Queries) GetStudentsByBranchID(ctx context.Context, arg GetStudentsByBr
 	return items, nil
 }
 
+const getStudentsByBranchIDAndTeacherID = `-- name: GetStudentsByBranchIDAndTeacherID :many
+SELECT DISTINCT s.id, s.branch_id, s.first_name, s.last_name, s.dob, s.phone, s.email, s.address, s.parent_name, s.parent_phone, s.parent_email, s.parent_relationship, s.status, s.created_at
+FROM students s
+WHERE s.branch_id = $1
+    AND ($3::entity_status IS NULL OR s.status = $3::entity_status)
+    AND (
+        EXISTS (
+            SELECT 1
+            FROM lessons l
+            WHERE l.teacher_id = $2 AND l.student_id = s.id
+        )
+        OR EXISTS (
+            SELECT 1
+            FROM lessons l
+            JOIN student_groups sg ON sg.group_id = l.group_id AND sg.left_at IS NULL
+            WHERE l.teacher_id = $2 AND sg.student_id = s.id
+        )
+    )
+ORDER BY s.created_at DESC
+`
+
+type GetStudentsByBranchIDAndTeacherIDParams struct {
+	BranchID  pgtype.UUID      `json:"branch_id"`
+	TeacherID pgtype.UUID      `json:"teacher_id"`
+	Status    NullEntityStatus `json:"status"`
+}
+
+func (q *Queries) GetStudentsByBranchIDAndTeacherID(ctx context.Context, arg GetStudentsByBranchIDAndTeacherIDParams) ([]Student, error) {
+	rows, err := q.db.Query(ctx, getStudentsByBranchIDAndTeacherID, arg.BranchID, arg.TeacherID, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []Student
+	for rows.Next() {
+		var i Student
+		if err := rows.Scan(
+			&i.ID,
+			&i.BranchID,
+			&i.FirstName,
+			&i.LastName,
+			&i.Dob,
+			&i.Phone,
+			&i.Email,
+			&i.Address,
+			&i.ParentName,
+			&i.ParentPhone,
+			&i.ParentEmail,
+			&i.ParentRelationship,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const isTeacherStudent = `-- name: IsTeacherStudent :one
+SELECT (
+    EXISTS (
+        SELECT 1
+        FROM lessons l
+        WHERE l.teacher_id = $1 AND l.student_id = $2
+    )
+    OR EXISTS (
+        SELECT 1
+        FROM lessons l
+        JOIN student_groups sg ON sg.group_id = l.group_id AND sg.left_at IS NULL
+        WHERE l.teacher_id = $1 AND sg.student_id = $2
+    )
+) AS is_teacher_student
+`
+
+type IsTeacherStudentParams struct {
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	StudentID pgtype.UUID `json:"student_id"`
+}
+
+func (q *Queries) IsTeacherStudent(ctx context.Context, arg IsTeacherStudentParams) (pgtype.Bool, error) {
+	row := q.db.QueryRow(ctx, isTeacherStudent, arg.TeacherID, arg.StudentID)
+	var is_teacher_student pgtype.Bool
+	err := row.Scan(&is_teacher_student)
+	return is_teacher_student, err
+}
+
 const updateStudent = `-- name: UpdateStudent :one
 UPDATE students
 SET first_name = $1, last_name = $2, dob = $3, phone = $4, email = $5,

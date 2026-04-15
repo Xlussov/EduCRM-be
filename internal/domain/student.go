@@ -31,4 +31,6 @@ type StudentRepository interface {
 	GetByID(ctx context.Context, id uuid.UUID) (*Student, error)
 	Update(ctx context.Context, student *Student) (*Student, error)
 	GetByBranchID(ctx context.Context, branchID uuid.UUID, status *EntityStatus) ([]*Student, error)
+	GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *EntityStatus) ([]*Student, error)
+	IsTeacherStudent(ctx context.Context, teacherID, studentID uuid.UUID) (bool, error)
 }

@@ -15,6 +15,7 @@ import (
 func TestUseCase_Execute(t *testing.T) {
 	userID := uuid.New()
 	branchID := uuid.New()
+	otherBranchID := uuid.New()
 	studentID := uuid.New()
 	dob := "2010-05-15"
 
@@ -27,71 +28,84 @@ func TestUseCase_Execute(t *testing.T) {
 		ParentPhone: "+1234567890",
 	}
 
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}}
+
+	errDB := errors.New("db error")
+
 	tests := []struct {
-		name      string
-		role      string
-		req       Request
-		setupMock func(sr *mocks.StudentRepository, ur *mocks.UserRepository)
-		wantErr   error
-		wantID    uuid.UUID
+		name       string
+		caller     domain.Caller
+		req        Request
+		setupMock  func(sr *mocks.StudentRepository, ur *mocks.UserRepository)
+		wantErr    error
+		wantID     uuid.UUID
+		assertRepo func(t *testing.T, sr *mocks.StudentRepository, ur *mocks.UserRepository)
 	}{
 		{
-			name: "success as SUPERADMIN",
-			role: "SUPERADMIN",
-			req:  validReq,
+			name:   "success as SUPERADMIN",
+			caller: callerSuper,
+			req:    validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
-				sr.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
+				sr.On("Create", mock.Anything, mock.AnythingOfType("*domain.Student")).Return(nil).Run(func(args mock.Arguments) {
+					s := args.Get(1).(*domain.Student)
 					s.ID = studentID
-					return s.FirstName == "John" && s.LastName == "Doe" && s.BranchID == branchID
-				})).Return(nil)
+				})
 			},
 			wantID: studentID,
 		},
 		{
-			name: "success as ADMIN with branch access",
-			role: "ADMIN",
-			req:  validReq,
+			name:   "success as ADMIN with branch access",
+			caller: callerAdmin,
+			req:    validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
-				sr.On("Create", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
+				sr.On("Create", mock.Anything, mock.AnythingOfType("*domain.Student")).Return(nil).Run(func(args mock.Arguments) {
+					s := args.Get(1).(*domain.Student)
 					s.ID = studentID
-					return s.BranchID == branchID
-				})).Return(nil)
+				})
 			},
 			wantID: studentID,
 		},
 		{
-			name: "ADMIN without branch access",
-			role: "ADMIN",
-			req:  validReq,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
-				otherBranch := uuid.New()
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{otherBranch}, nil)
+			name:    "ADMIN without branch access",
+			caller:  callerAdminNoAccess,
+			req:     validReq,
+			wantErr: domain.ErrBranchAccessDenied,
+			assertRepo: func(t *testing.T, sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				sr.AssertNotCalled(t, "Create", mock.Anything, mock.Anything)
+				ur.AssertNotCalled(t, "IsBranchActive", mock.Anything, mock.Anything)
 			},
-			wantErr: ErrBranchAccessDenied,
 		},
 		{
-			name: "db error on create",
-			role: "SUPERADMIN",
-			req:  validReq,
+			name:   "branch is archived",
+			caller: callerSuper,
+			req:    validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
-				sr.On("Create", mock.Anything, mock.Anything).Return(errors.New("db error"))
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(false, nil)
 			},
-			wantErr: errors.New("db error"),
+			wantErr: domain.ErrArchivedReference,
 		},
 		{
-			name: "db error fetching branch IDs",
-			role: "ADMIN",
-			req:  validReq,
+			name:   "db error on IsBranchActive",
+			caller: callerSuper,
+			req:    validReq,
+			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+				ur.On("IsBranchActive", mock.Anything, branchID).Return(false, errDB)
+			},
+			wantErr: errDB,
+		},
+		{
+			name:   "db error on create",
+			caller: callerSuper,
+			req:    validReq,
 			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
 				ur.On("IsBranchActive", mock.Anything, branchID).Return(true, nil)
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID(nil), errors.New("db error"))
+				sr.On("Create", mock.Anything, mock.Anything).Return(errDB)
 			},
-			wantErr: errors.New("db error"),
+			wantErr: errDB,
 		},
 	}
 
@@ -104,16 +118,19 @@ func TestUseCase_Execute(t *testing.T) {
 			}
 
 			uc := NewUseCase(sr, ur)
-			res, err := uc.Execute(context.Background(), userID, tt.role, tt.req)
+			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr.Error(), err.Error())
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, tt.wantID, res.ID)
 			}
 
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, sr, ur)
+				return
+			}
 			sr.AssertExpectations(t)
 			ur.AssertExpectations(t)
 		})

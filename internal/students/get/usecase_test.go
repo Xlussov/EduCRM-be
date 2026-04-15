@@ -16,6 +16,8 @@ import (
 func TestUseCase_Execute(t *testing.T) {
 	studentID := uuid.New()
 	branchID := uuid.New()
+	otherBranchID := uuid.New()
+	userID := uuid.New()
 	dob := time.Date(2010, 5, 15, 0, 0, 0, 0, time.UTC)
 
 	student := &domain.Student{
@@ -30,19 +32,59 @@ func TestUseCase_Execute(t *testing.T) {
 		CreatedAt:   time.Now(),
 	}
 
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerTeacher := domain.Caller{UserID: userID, Role: domain.RoleTeacher, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}}
+
 	tests := []struct {
 		name      string
+		caller    domain.Caller
 		setupMock func(sr *mocks.StudentRepository)
 		wantErr   error
 	}{
 		{
-			name: "success",
+			name:   "success as SUPERADMIN",
+			caller: callerSuper,
 			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(student, nil)
 			},
 		},
 		{
-			name: "not found",
+			name:   "success as ADMIN with branch access",
+			caller: callerAdmin,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(student, nil)
+			},
+		},
+		{
+			name:   "success as TEACHER with branch access",
+			caller: callerTeacher,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(student, nil)
+				sr.On("IsTeacherStudent", mock.Anything, userID, studentID).Return(true, nil)
+			},
+		},
+		{
+			name:   "teacher not assigned to student",
+			caller: callerTeacher,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(student, nil)
+				sr.On("IsTeacherStudent", mock.Anything, userID, studentID).Return(false, nil)
+			},
+			wantErr: domain.ErrBranchAccessDenied,
+		},
+		{
+			name:   "access denied",
+			caller: callerAdminNoAccess,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(student, nil)
+			},
+			wantErr: domain.ErrBranchAccessDenied,
+		},
+		{
+			name:   "not found",
+			caller: callerSuper,
 			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(nil, errors.New("no rows"))
 			},
@@ -56,11 +98,10 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.setupMock(sr)
 
 			uc := NewUseCase(sr)
-			res, err := uc.Execute(context.Background(), studentID)
+			res, err := uc.Execute(context.Background(), tt.caller, studentID)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr.Error(), err.Error())
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 				assert.NotNil(t, res)

@@ -18,10 +18,24 @@ func NewUseCase(sr domain.StudentRepository) *UseCase {
 	return &UseCase{studentRepo: sr}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, studentID uuid.UUID) (*Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, studentID uuid.UUID) (*Response, error) {
 	student, err := uc.studentRepo.GetByID(ctx, studentID)
 	if err != nil {
 		return nil, ErrStudentNotFound
+	}
+
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, student.BranchID) {
+		return nil, domain.ErrBranchAccessDenied
+	}
+
+	if caller.Role == domain.RoleTeacher {
+		ok, err := uc.studentRepo.IsTeacherStudent(ctx, caller.UserID, studentID)
+		if err != nil {
+			return nil, err
+		}
+		if !ok {
+			return nil, domain.ErrBranchAccessDenied
+		}
 	}
 
 	res := &Response{

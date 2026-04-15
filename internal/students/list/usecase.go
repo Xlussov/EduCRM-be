@@ -3,7 +3,6 @@ package list
 import (
 	"context"
 	"errors"
-	"fmt"
 	"strings"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
@@ -11,50 +10,39 @@ import (
 )
 
 var (
-	ErrBranchIDRequired   = errors.New("branch_id is required")
-	ErrBranchAccessDenied = errors.New("branch access denied")
+	ErrBranchIDRequired = errors.New("branch_id is required")
 )
 
 type UseCase struct {
 	studentRepo domain.StudentRepository
-	userRepo    domain.UserRepository
 }
 
-func NewUseCase(sr domain.StudentRepository, ur domain.UserRepository) *UseCase {
+func NewUseCase(sr domain.StudentRepository) *UseCase {
 	return &UseCase{
 		studentRepo: sr,
-		userRepo:    ur,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) (*Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (*Response, error) {
 	if req.BranchID == uuid.Nil {
 		return nil, ErrBranchIDRequired
 	}
 
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == req.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return nil, ErrBranchAccessDenied
-		}
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+		return nil, domain.ErrBranchAccessDenied
 	}
 
-	status, err := parseStudentStatus(req.Status)
+	status, err := domain.ParseEntityStatus(req.Status)
 	if err != nil {
 		return nil, err
 	}
 
-	students, err := uc.studentRepo.GetByBranchID(ctx, req.BranchID, status)
+	var students []*domain.Student
+	if caller.Role == domain.RoleTeacher {
+		students, err = uc.studentRepo.GetByBranchIDAndTeacherID(ctx, req.BranchID, caller.UserID, status)
+	} else {
+		students, err = uc.studentRepo.GetByBranchID(ctx, req.BranchID, status)
+	}
 	if err != nil {
 		return nil, err
 	}
@@ -83,17 +71,4 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, r
 	}
 
 	return res, nil
-}
-
-func parseStudentStatus(raw string) (*domain.EntityStatus, error) {
-	if raw == "" {
-		return nil, nil
-	}
-
-	status := domain.EntityStatus(strings.ToUpper(raw))
-	if status != domain.StatusActive && status != domain.StatusArchived {
-		return nil, fmt.Errorf("%w: status must be ACTIVE or ARCHIVED", domain.ErrInvalidInput)
-	}
-
-	return &status, nil
 }

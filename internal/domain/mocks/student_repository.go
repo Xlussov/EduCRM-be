@@ -53,3 +53,17 @@ func (m *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUI
 	}
 	return res, args.Error(1)
 }
+
+func (m *StudentRepository) GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *domain.EntityStatus) ([]*domain.Student, error) {
+	args := m.Called(ctx, branchID, teacherID, status)
+	var res []*domain.Student
+	if args.Get(0) != nil {
+		res = args.Get(0).([]*domain.Student)
+	}
+	return res, args.Error(1)
+}
+
+func (m *StudentRepository) IsTeacherStudent(ctx context.Context, teacherID, studentID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, studentID)
+	return args.Bool(0), args.Error(1)
+}

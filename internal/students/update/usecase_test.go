@@ -16,6 +16,7 @@ func TestUseCase_Execute(t *testing.T) {
 	userID := uuid.New()
 	studentID := uuid.New()
 	branchID := uuid.New()
+	otherBranchID := uuid.New()
 	dob := "2015-01-01"
 
 	req := Request{
@@ -26,18 +27,25 @@ func TestUseCase_Execute(t *testing.T) {
 		ParentPhone: "12345678",
 	}
 
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}}
+
+	errDB := errors.New("db error")
+
 	tests := []struct {
-		name      string
-		role      string
-		req       Request
-		setupMock func(sr *mocks.StudentRepository, ur *mocks.UserRepository)
-		wantErr   error
+		name       string
+		caller     domain.Caller
+		req        Request
+		setupMock  func(sr *mocks.StudentRepository)
+		wantErr    error
+		assertRepo func(t *testing.T, sr *mocks.StudentRepository)
 	}{
 		{
-			name: "success as SUPERADMIN",
-			role: "SUPERADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+			name:   "success as SUPERADMIN",
+			caller: callerSuper,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID && s.FirstName == "Jane" && s.LastName == "Smith"
@@ -50,12 +58,11 @@ func TestUseCase_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "success as ADMIN",
-			role: "ADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+			name:   "success as ADMIN",
+			caller: callerAdmin,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil)
 				sr.On("Update", mock.Anything, mock.MatchedBy(func(s *domain.Student) bool {
 					return s.ID == studentID
 				})).Return(&domain.Student{
@@ -67,61 +74,59 @@ func TestUseCase_Execute(t *testing.T) {
 			},
 		},
 		{
-			name: "ADMIN access denied",
-			role: "ADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				otherBranch := uuid.New()
+			name:   "ADMIN access denied",
+			caller: callerAdminNoAccess,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{otherBranch}, nil)
 			},
-			wantErr: ErrBranchAccessDenied,
+			wantErr: domain.ErrBranchAccessDenied,
+			assertRepo: func(t *testing.T, sr *mocks.StudentRepository) {
+				sr.AssertNotCalled(t, "Update", mock.Anything, mock.Anything)
+			},
 		},
 		{
-			name: "error getting student",
-			role: "ADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByID", mock.Anything, studentID).Return((*domain.Student)(nil), errors.New("db error"))
+			name:   "cannot edit archived",
+			caller: callerSuper,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusArchived}, nil)
 			},
-			wantErr: errors.New("db error"),
+			wantErr: domain.ErrCannotEditArchived,
 		},
 		{
-			name: "error getting user branch ids",
-			role: "ADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
-				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
-				ur.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{}, errors.New("db error"))
+			name:   "error getting student",
+			caller: callerSuper,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
+				sr.On("GetByID", mock.Anything, studentID).Return((*domain.Student)(nil), errDB)
 			},
-			wantErr: errors.New("db error"),
+			wantErr: errDB,
 		},
 		{
-			name: "update error",
-			role: "SUPERADMIN",
-			req:  req,
-			setupMock: func(sr *mocks.StudentRepository, ur *mocks.UserRepository) {
+			name:   "update error",
+			caller: callerSuper,
+			req:    req,
+			setupMock: func(sr *mocks.StudentRepository) {
 				sr.On("GetByID", mock.Anything, studentID).Return(&domain.Student{ID: studentID, BranchID: branchID, Status: domain.StatusActive}, nil)
-				sr.On("Update", mock.Anything, mock.Anything).Return(nil, errors.New("db error"))
+				sr.On("Update", mock.Anything, mock.Anything).Return(nil, errDB)
 			},
-			wantErr: errors.New("db error"),
+			wantErr: errDB,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			sr := new(mocks.StudentRepository)
-			ur := new(mocks.UserRepository)
 			if tt.setupMock != nil {
-				tt.setupMock(sr, ur)
+				tt.setupMock(sr)
 			}
 
-			uc := NewUseCase(sr, ur)
-			res, err := uc.Execute(context.Background(), userID, tt.role, studentID, tt.req)
+			uc := NewUseCase(sr)
+			res, err := uc.Execute(context.Background(), tt.caller, studentID, tt.req)
 
 			if tt.wantErr != nil {
-				assert.Error(t, err)
-				assert.Equal(t, tt.wantErr.Error(), err.Error())
+				assert.ErrorIs(t, err, tt.wantErr)
 			} else {
 				assert.NoError(t, err)
 				assert.Equal(t, studentID.String(), res.ID)
@@ -129,8 +134,11 @@ func TestUseCase_Execute(t *testing.T) {
 				assert.Equal(t, "Smith", res.LastName)
 			}
 
+			if tt.assertRepo != nil {
+				tt.assertRepo(t, sr)
+				return
+			}
 			sr.AssertExpectations(t)
-			ur.AssertExpectations(t)
 		})
 	}
 }

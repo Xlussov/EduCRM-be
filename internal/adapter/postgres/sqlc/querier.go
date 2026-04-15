@@ -44,6 +44,7 @@ type Querier interface {
 	GetStudentByID(ctx context.Context, id pgtype.UUID) (Student, error)
 	GetStudentSubscriptions(ctx context.Context, studentID pgtype.UUID) ([]GetStudentSubscriptionsRow, error)
 	GetStudentsByBranchID(ctx context.Context, arg GetStudentsByBranchIDParams) ([]Student, error)
+	GetStudentsByBranchIDAndTeacherID(ctx context.Context, arg GetStudentsByBranchIDAndTeacherIDParams) ([]Student, error)
 	GetSubject(ctx context.Context, arg GetSubjectParams) (Subject, error)
 	GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error)
 	GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error)
@@ -53,6 +54,7 @@ type Querier interface {
 	GetUserByPhone(ctx context.Context, phone string) (User, error)
 	GetUserWithBranchesByID(ctx context.Context, id pgtype.UUID) ([]GetUserWithBranchesByIDRow, error)
 	IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error)
+	IsTeacherStudent(ctx context.Context, arg IsTeacherStudentParams) (pgtype.Bool, error)
 	ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error)
 	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
 	RemoveStudentsFromGroupBulk(ctx context.Context, arg RemoveStudentsFromGroupBulkParams) error

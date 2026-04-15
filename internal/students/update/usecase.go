@@ -2,54 +2,34 @@ package update
 
 import (
 	"context"
-	"errors"
 	"time"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
 )
 
-var (
-	ErrBranchAccessDenied = errors.New("branch access denied")
-)
-
 type UseCase struct {
 	studentRepo domain.StudentRepository
-	userRepo    domain.UserRepository
 }
 
-func NewUseCase(sr domain.StudentRepository, ur domain.UserRepository) *UseCase {
+func NewUseCase(sr domain.StudentRepository) *UseCase {
 	return &UseCase{
 		studentRepo: sr,
-		userRepo:    ur,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, studentID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, studentID uuid.UUID, req Request) (Response, error) {
 	currentStudent, err := uc.studentRepo.GetByID(ctx, studentID)
 	if err != nil {
 		return Response{}, err
 	}
-	if currentStudent.Status == domain.StatusArchived {
-		return Response{}, domain.ErrCannotEditArchived
+
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, currentStudent.BranchID) {
+		return Response{}, domain.ErrBranchAccessDenied
 	}
 
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return Response{}, err
-		}
-
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == currentStudent.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return Response{}, ErrBranchAccessDenied
-		}
+	if currentStudent.Status == domain.StatusArchived {
+		return Response{}, domain.ErrCannotEditArchived
 	}
 
 	student := &domain.Student{

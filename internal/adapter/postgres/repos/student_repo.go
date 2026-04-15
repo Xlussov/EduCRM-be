@@ -142,6 +142,35 @@ func (r *StudentRepository) GetByBranchID(ctx context.Context, branchID uuid.UUI
 	return res, nil
 }
 
+func (r *StudentRepository) GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *domain.EntityStatus) ([]*domain.Student, error) {
+	q := sqlc.New(r.db(ctx))
+	students, err := q.GetStudentsByBranchIDAndTeacherID(ctx, sqlc.GetStudentsByBranchIDAndTeacherIDParams{
+		BranchID:  pgtype.UUID{Bytes: branchID, Valid: true},
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		Status:    toStudentNullEntityStatus(status),
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res []*domain.Student
+	for _, s := range students {
+		res = append(res, r.toDomain(s))
+	}
+	return res, nil
+}
+
+func (r *StudentRepository) IsTeacherStudent(ctx context.Context, teacherID, studentID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	res, err := q.IsTeacherStudent(ctx, sqlc.IsTeacherStudentParams{
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		StudentID: pgtype.UUID{Bytes: studentID, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+	return res.Bool, nil
+}
+
 func toStudentNullEntityStatus(status *domain.EntityStatus) sqlc.NullEntityStatus {
 	if status == nil {
 		return sqlc.NullEntityStatus{}

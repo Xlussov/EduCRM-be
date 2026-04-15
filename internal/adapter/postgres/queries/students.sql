@@ -32,3 +32,38 @@ FROM students
 WHERE branch_id = $1
     AND (sqlc.narg(status)::entity_status IS NULL OR status = sqlc.narg(status)::entity_status)
 ORDER BY created_at DESC;
+
+-- name: GetStudentsByBranchIDAndTeacherID :many
+SELECT DISTINCT s.id, s.branch_id, s.first_name, s.last_name, s.dob, s.phone, s.email, s.address, s.parent_name, s.parent_phone, s.parent_email, s.parent_relationship, s.status, s.created_at
+FROM students s
+WHERE s.branch_id = $1
+    AND (sqlc.narg(status)::entity_status IS NULL OR s.status = sqlc.narg(status)::entity_status)
+    AND (
+        EXISTS (
+            SELECT 1
+            FROM lessons l
+            WHERE l.teacher_id = $2 AND l.student_id = s.id
+        )
+        OR EXISTS (
+            SELECT 1
+            FROM lessons l
+            JOIN student_groups sg ON sg.group_id = l.group_id AND sg.left_at IS NULL
+            WHERE l.teacher_id = $2 AND sg.student_id = s.id
+        )
+    )
+ORDER BY s.created_at DESC;
+
+-- name: IsTeacherStudent :one
+SELECT (
+    EXISTS (
+        SELECT 1
+        FROM lessons l
+        WHERE l.teacher_id = $1 AND l.student_id = $2
+    )
+    OR EXISTS (
+        SELECT 1
+        FROM lessons l
+        JOIN student_groups sg ON sg.group_id = l.group_id AND sg.left_at IS NULL
+        WHERE l.teacher_id = $1 AND sg.student_id = $2
+    )
+) AS is_teacher_student;

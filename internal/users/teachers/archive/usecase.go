@@ -15,7 +15,7 @@ func NewUseCase(ur domain.UserRepository) *UseCase {
 	return &UseCase{userRepo: ur}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, role string, adminBranchIDs []uuid.UUID, teacherID uuid.UUID) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID uuid.UUID) (Response, error) {
 	teacher, err := uc.userRepo.GetWithBranchesByID(ctx, teacherID)
 	if err != nil {
 		return Response{}, err
@@ -25,16 +25,11 @@ func (uc *UseCase) Execute(ctx context.Context, role string, adminBranchIDs []uu
 		return Response{}, domain.ErrNotFound
 	}
 
-	if role == "ADMIN" {
+	if domain.RequiresBranchAccess(caller.Role) {
 		hasAccess := false
-		for _, adminBranchID := range adminBranchIDs {
-			for _, teacherBranch := range teacher.Branches {
-				if adminBranchID == teacherBranch.ID {
-					hasAccess = true
-					break
-				}
-			}
-			if hasAccess {
+		for _, teacherBranch := range teacher.Branches {
+			if domain.HasBranchAccess(caller.BranchIDs, teacherBranch.ID) {
+				hasAccess = true
 				break
 			}
 		}

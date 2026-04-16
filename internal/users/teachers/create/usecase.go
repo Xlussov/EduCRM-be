@@ -18,7 +18,13 @@ func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
 	return &UseCase{userRepo: ur, txManager: tm}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (Response, error) {
+	if domain.RequiresBranchAccess(caller.Role) {
+		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+			return Response{}, domain.ErrBranchAccessDenied
+		}
+	}
+
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return Response{}, err

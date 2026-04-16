@@ -14,7 +14,7 @@ func NewUseCase(ur domain.UserRepository) *UseCase {
 	return &UseCase{userRepo: ur}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, _ domain.Caller, req Request) (Response, error) {
 	admin, err := uc.userRepo.GetWithBranchesByID(ctx, req.ID)
 	if err != nil {
 		return Response{}, err

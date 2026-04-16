@@ -17,12 +17,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		req           Request
 		mockSetup     func(userRepo *mocks.UserRepository)
 		expectedError string
 	}{
 		{
-			name: "Success path",
+			name:   "Success path",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			req: Request{
 				Phone:     "123456",
 				Password:  "password123",
@@ -43,7 +45,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "Create user error",
+			name:   "Create user error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			req: Request{
 				Phone:    "123456",
 				Password: "pw",
@@ -61,7 +64,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(userRepo)
 
 			uc := NewUseCase(userRepo, &mocks.MockTxManager{})
-			res, err := uc.Execute(context.Background(), tt.req)
+			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedError != "" {
 				assert.Error(t, err)

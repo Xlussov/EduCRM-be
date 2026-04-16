@@ -26,11 +26,13 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.UserRepository)
 		expectedError error
 	}{
 		{
-			name: "success",
+			name:   "success",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: true}, nil).Once()
 				repo.On("CountActiveBranchesByIDs", mock.Anything, req.BranchIDs).Return(1, nil).Once()
@@ -54,14 +56,16 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name: "error_already_archived",
+			name:   "error_already_archived",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: false}, nil).Once()
 			},
 			expectedError: domain.ErrCannotEditArchived,
 		},
 		{
-			name: "phone_conflict",
+			name:   "phone_conflict",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: true}, nil).Once()
 				repo.On("CountActiveBranchesByIDs", mock.Anything, req.BranchIDs).Return(1, nil).Once()
@@ -70,7 +74,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: domain.ErrPhoneAlreadyExists,
 		},
 		{
-			name: "archived_branch_in_request",
+			name:   "archived_branch_in_request",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: true}, nil).Once()
 				repo.On("CountActiveBranchesByIDs", mock.Anything, req.BranchIDs).Return(0, nil).Once()
@@ -85,7 +90,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo, &mocks.MockTxManager{})
-			res, err := uc.Execute(context.Background(), adminID, req)
+			res, err := uc.Execute(context.Background(), tt.caller, adminID, req)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)

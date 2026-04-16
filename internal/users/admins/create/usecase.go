@@ -17,7 +17,7 @@ func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
 	return &UseCase{userRepo: ur, txManager: tm}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, _ domain.Caller, req Request) (Response, error) {
 	hash, err := bcrypt.GenerateFromPassword([]byte(req.Password), bcrypt.DefaultCost)
 	if err != nil {
 		return Response{}, err

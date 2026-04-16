@@ -17,12 +17,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		req           Request
 		mockSetup     func(userRepo *mocks.UserRepository)
 		expectedError string
 	}{
 		{
-			name: "Success path",
+			name:   "Success path",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
 			req: Request{
 				Phone:     "123456",
 				Password:  "password123",
@@ -43,7 +45,21 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: "",
 		},
 		{
-			name: "Create user error",
+			name:   "Admin branch access denied",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}},
+			req: Request{
+				Phone:     "123456",
+				Password:  "password123",
+				FirstName: "Teacher",
+				LastName:  "Test",
+				BranchID:  branchID,
+			},
+			mockSetup:     func(ur *mocks.UserRepository) {},
+			expectedError: domain.ErrBranchAccessDenied.Error(),
+		},
+		{
+			name:   "Create user error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			req: Request{
 				Phone:    "123456",
 				Password: "pw",
@@ -62,7 +78,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(userRepo)
 
 			uc := NewUseCase(userRepo, &mocks.MockTxManager{})
-			res, err := uc.Execute(context.Background(), tt.req)
+			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedError != "" {
 				assert.Error(t, err)

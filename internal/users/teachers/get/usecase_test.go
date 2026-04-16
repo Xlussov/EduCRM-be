@@ -20,16 +20,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		role          string
-		branchIDs     []uuid.UUID
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.UserRepository)
 		expectedError error
 		expectedID    uuid.UUID
 	}{
 		{
-			name:      "superadmin_success",
-			role:      "SUPERADMIN",
-			branchIDs: nil,
+			name:   "superadmin_success",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetWithBranchesByID", mock.Anything, teacherID).Return(&domain.UserWithBranches{
 					ID:        teacherID,
@@ -47,9 +45,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedID:    teacherID,
 		},
 		{
-			name:      "admin_success_with_shared_branch",
-			role:      "ADMIN",
-			branchIDs: []uuid.UUID{branchID},
+			name:   "admin_success_with_shared_branch",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetWithBranchesByID", mock.Anything, teacherID).Return(&domain.UserWithBranches{
 					ID:       teacherID,
@@ -62,9 +59,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedID:    teacherID,
 		},
 		{
-			name:      "admin_no_access",
-			role:      "ADMIN",
-			branchIDs: []uuid.UUID{otherBranchID},
+			name:   "admin_no_access",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetWithBranchesByID", mock.Anything, teacherID).Return(&domain.UserWithBranches{
 					ID:       teacherID,
@@ -76,18 +72,16 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: domain.ErrBranchAccessDenied,
 		},
 		{
-			name:      "not_teacher",
-			role:      "SUPERADMIN",
-			branchIDs: nil,
+			name:   "not_teacher",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetWithBranchesByID", mock.Anything, teacherID).Return(&domain.UserWithBranches{ID: teacherID, Role: domain.RoleAdmin}, nil).Once()
 			},
 			expectedError: domain.ErrNotFound,
 		},
 		{
-			name:      "repo_error",
-			role:      "SUPERADMIN",
-			branchIDs: nil,
+			name:   "repo_error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetWithBranchesByID", mock.Anything, teacherID).Return(nil, errors.New("db error")).Once()
 			},
@@ -101,7 +95,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), tt.role, tt.branchIDs, Request{ID: teacherID})
+			res, err := uc.Execute(context.Background(), tt.caller, Request{ID: teacherID})
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

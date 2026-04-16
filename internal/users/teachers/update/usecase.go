@@ -17,7 +17,7 @@ func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
 	return &UseCase{userRepo: ur, txManager: tm}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, role string, adminBranchIDs []uuid.UUID, teacherID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID uuid.UUID, req Request) (Response, error) {
 	existing, err := uc.userRepo.GetWithBranchesByID(ctx, teacherID)
 	if err != nil {
 		return Response{}, err
@@ -31,16 +31,11 @@ func (uc *UseCase) Execute(ctx context.Context, role string, adminBranchIDs []uu
 		return Response{}, domain.ErrCannotEditArchived
 	}
 
-	if role == "ADMIN" {
+	if domain.RequiresBranchAccess(caller.Role) {
 		hasCurrentAccess := false
-		for _, adminBranchID := range adminBranchIDs {
-			for _, teacherBranch := range existing.Branches {
-				if adminBranchID == teacherBranch.ID {
-					hasCurrentAccess = true
-					break
-				}
-			}
-			if hasCurrentAccess {
+		for _, teacherBranch := range existing.Branches {
+			if domain.HasBranchAccess(caller.BranchIDs, teacherBranch.ID) {
+				hasCurrentAccess = true
 				break
 			}
 		}
@@ -48,14 +43,7 @@ func (uc *UseCase) Execute(ctx context.Context, role string, adminBranchIDs []uu
 			return Response{}, domain.ErrBranchAccessDenied
 		}
 
-		hasNewAccess := false
-		for _, adminBranchID := range adminBranchIDs {
-			if adminBranchID == req.BranchID {
-				hasNewAccess = true
-				break
-			}
-		}
-		if !hasNewAccess {
+		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
 			return Response{}, domain.ErrBranchAccessDenied
 		}
 	}

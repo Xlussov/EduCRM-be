@@ -19,16 +19,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
-		role          string
-		branchIDs     []uuid.UUID
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.UserRepository)
 		expectedCount int
 		expectedError error
 	}{
 		{
-			name:      "superadmin_success",
-			role:      "SUPERADMIN",
-			branchIDs: nil,
+			name:   "superadmin_success",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetTeachers", mock.Anything, []uuid.UUID(nil)).Return([]*domain.UserWithBranches{
 					{
@@ -48,9 +46,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:      "admin_success_filtered",
-			role:      "ADMIN",
-			branchIDs: []uuid.UUID{branchID},
+			name:   "admin_success_filtered",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetTeachers", mock.Anything, []uuid.UUID{branchID}).Return([]*domain.UserWithBranches{}, nil).Once()
 			},
@@ -58,18 +55,16 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: nil,
 		},
 		{
-			name:      "admin_no_branches",
-			role:      "ADMIN",
-			branchIDs: []uuid.UUID{},
+			name:   "admin_no_branches",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{}},
 			mockSetup: func(repo *mocks.UserRepository) {
 			},
 			expectedCount: 0,
 			expectedError: nil,
 		},
 		{
-			name:      "repo_error",
-			role:      "SUPERADMIN",
-			branchIDs: nil,
+			name:   "repo_error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetTeachers", mock.Anything, []uuid.UUID(nil)).Return(nil, errors.New("db error")).Once()
 			},
@@ -84,7 +79,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), tt.role, tt.branchIDs, Request{})
+			res, err := uc.Execute(context.Background(), tt.caller, Request{})
 
 			if tt.expectedError != nil {
 				assert.Error(t, err)

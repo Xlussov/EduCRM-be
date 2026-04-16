@@ -20,12 +20,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.UserRepository)
 		expectedError error
 		expectedLen   int
 	}{
 		{
-			name: "success",
+			name:   "success",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetAdmins", mock.Anything).Return([]*domain.UserWithBranches{
 					{
@@ -47,7 +49,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedLen:   1,
 		},
 		{
-			name: "repo_error",
+			name:   "repo_error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetAdmins", mock.Anything).Return(([]*domain.UserWithBranches)(nil), errDB).Once()
 			},
@@ -62,7 +65,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), Request{})
+			res, err := uc.Execute(context.Background(), tt.caller, Request{})
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)

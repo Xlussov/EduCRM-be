@@ -14,7 +14,7 @@ func NewUseCase(ur domain.UserRepository) *UseCase {
 	return &UseCase{userRepo: ur}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, _ Request) ([]AdminResponse, error) {
+func (uc *UseCase) Execute(ctx context.Context, _ domain.Caller, _ Request) ([]AdminResponse, error) {
 	admins, err := uc.userRepo.GetAdmins(ctx)
 	if err != nil {
 		return nil, err

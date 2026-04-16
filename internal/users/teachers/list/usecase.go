@@ -15,14 +15,14 @@ func NewUseCase(ur domain.UserRepository) *UseCase {
 	return &UseCase{userRepo: ur}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, role string, branchIDs []uuid.UUID, _ Request) ([]TeacherResponse, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, _ Request) ([]TeacherResponse, error) {
 	var filter []uuid.UUID
 
-	if role == "ADMIN" {
-		if len(branchIDs) == 0 {
+	if domain.RequiresBranchAccess(caller.Role) {
+		if len(caller.BranchIDs) == 0 {
 			return []TeacherResponse{}, nil
 		}
-		filter = branchIDs
+		filter = caller.BranchIDs
 	}
 
 	teachers, err := uc.userRepo.GetTeachers(ctx, filter)

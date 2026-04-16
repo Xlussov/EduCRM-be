@@ -18,12 +18,14 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name          string
+		caller        domain.Caller
 		mockSetup     func(repo *mocks.UserRepository)
 		expectedError error
 		expectedMsg   string
 	}{
 		{
-			name: "success",
+			name:   "success",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: true}, nil).Once()
 				repo.On("UpdateUserStatus", mock.Anything, adminID, false).Return(nil).Once()
@@ -32,7 +34,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "success",
 		},
 		{
-			name: "already_archived",
+			name:   "already_archived",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: false}, nil).Once()
 			},
@@ -40,7 +43,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "",
 		},
 		{
-			name: "not_an_admin",
+			name:   "not_an_admin",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleTeacher, IsActive: true}, nil).Once()
 			},
@@ -48,7 +52,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "",
 		},
 		{
-			name: "repo_get_error",
+			name:   "repo_get_error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return((*domain.User)(nil), errDB).Once()
 			},
@@ -56,7 +61,8 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedMsg:   "",
 		},
 		{
-			name: "repo_update_error",
+			name:   "repo_update_error",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
 				repo.On("GetByID", mock.Anything, adminID).Return(&domain.User{ID: adminID, Role: domain.RoleAdmin, IsActive: true}, nil).Once()
 				repo.On("UpdateUserStatus", mock.Anything, adminID, false).Return(errDB).Once()
@@ -72,7 +78,7 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), adminID)
+			res, err := uc.Execute(context.Background(), tt.caller, adminID)
 
 			if tt.expectedError != nil {
 				assert.ErrorIs(t, err, tt.expectedError)

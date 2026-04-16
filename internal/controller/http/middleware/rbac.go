@@ -55,10 +55,10 @@ func GetCaller(c echo.Context) (*Caller, error) {
 	}, nil
 }
 
-func RequireRoles(roles ...string) echo.MiddlewareFunc {
+func RequireRoles(roles ...domain.Role) echo.MiddlewareFunc {
 	allowed := make(map[string]struct{}, len(roles))
 	for _, role := range roles {
-		allowed[role] = struct{}{}
+		allowed[string(role)] = struct{}{}
 	}
 
 	return func(next echo.HandlerFunc) echo.HandlerFunc {

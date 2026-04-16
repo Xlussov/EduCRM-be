@@ -17,7 +17,7 @@ func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
 	return &UseCase{userRepo: ur, txManager: tm}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, adminID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, _ domain.Caller, adminID uuid.UUID, req Request) (Response, error) {
 	existing, err := uc.userRepo.GetByID(ctx, adminID)
 	if err != nil {
 		return Response{}, err

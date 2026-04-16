@@ -9,41 +9,27 @@ import (
 )
 
 var (
-	ErrBranchAccessDenied = errors.New("branch access denied")
-	ErrBranchIDRequired   = errors.New("branch_id is required")
+	ErrBranchIDRequired = errors.New("branch_id is required")
 )
 
 type UseCase struct {
 	planRepo domain.SubscriptionRepository
-	userRepo domain.UserRepository
 }
 
-func NewUseCase(pr domain.SubscriptionRepository, ur domain.UserRepository) *UseCase {
+func NewUseCase(pr domain.SubscriptionRepository) *UseCase {
 	return &UseCase{
 		planRepo: pr,
-		userRepo: ur,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) ([]PlanResponse, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) ([]PlanResponse, error) {
 	if req.BranchID == uuid.Nil {
 		return nil, ErrBranchIDRequired
 	}
 
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == req.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return nil, ErrBranchAccessDenied
+	if domain.RequiresBranchAccess(caller.Role) {
+		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+			return nil, domain.ErrBranchAccessDenied
 		}
 	}
 

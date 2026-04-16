@@ -142,6 +142,55 @@ func (r *SubscriptionRepository) GetPlansByBranchID(ctx context.Context, branchI
 	return plans, nil
 }
 
+func (r *SubscriptionRepository) GetPlanDetailsByID(ctx context.Context, id uuid.UUID) (*domain.PlanDetails, error) {
+	q := sqlc.New(r.db(ctx))
+	row, err := q.GetPlanByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	if err != nil {
+		return nil, err
+	}
+
+	plan := &domain.PlanDetails{
+		Plan: domain.Plan{
+			ID:        row.ID.Bytes,
+			BranchID:  row.BranchID.Bytes,
+			Name:      row.Name,
+			Type:      domain.PlanType(row.Type),
+			Status:    domain.EntityStatus(row.Status.EntityStatus),
+			CreatedAt: row.CreatedAt.Time,
+		},
+	}
+
+	subRows, err := q.GetPlanSubjects(ctx, row.ID)
+	if err != nil {
+		return nil, err
+	}
+	var subjects []*domain.SubjectBase
+	for _, sub := range subRows {
+		subjects = append(subjects, &domain.SubjectBase{
+			ID:   sub.ID.Bytes,
+			Name: sub.Name,
+		})
+	}
+	plan.Subjects = subjects
+
+	gridRows, err := q.GetPlanPricingGrids(ctx, row.ID)
+	if err != nil {
+		return nil, err
+	}
+	var grids []*domain.PricingGrid
+	for _, gr := range gridRows {
+		grids = append(grids, &domain.PricingGrid{
+			ID:              gr.ID.Bytes,
+			PlanID:          gr.PlanID.Bytes,
+			LessonsPerMonth: int(gr.LessonsPerMonth),
+			PricePerLesson:  mapNumericToFloat(gr.PricePerLesson),
+		})
+	}
+	plan.PricingGrid = grids
+
+	return plan, nil
+}
+
 func (r *SubscriptionRepository) AssignToStudent(ctx context.Context, sub *domain.StudentSubscription) error {
 	q := sqlc.New(r.db(ctx))
 	res, err := q.CreateStudentSubscription(ctx, sqlc.CreateStudentSubscriptionParams{

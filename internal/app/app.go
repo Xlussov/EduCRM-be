@@ -27,7 +27,9 @@ import (
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
 	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
 	planscreate "github.com/Xlussov/EduCRM-be/internal/plans/create"
+	plansget "github.com/Xlussov/EduCRM-be/internal/plans/get"
 	planslist "github.com/Xlussov/EduCRM-be/internal/plans/list"
+	plansunarchive "github.com/Xlussov/EduCRM-be/internal/plans/unarchive"
 	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
@@ -143,11 +145,13 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupsUnarchiveUC := groupsunarchive.NewUseCase(groupRepo)
 
 	plansCreateUC := planscreate.NewUseCase(txManager, planRepo, userRepo)
-	plansListUC := planslist.NewUseCase(planRepo, userRepo)
-	plansArchiveUC := plansarchive.NewUseCase(planRepo, userRepo)
+	plansListUC := planslist.NewUseCase(planRepo)
+	plansArchiveUC := plansarchive.NewUseCase(planRepo)
+	plansGetUC := plansget.NewUseCase(planRepo)
+	plansUnarchiveUC := plansunarchive.NewUseCase(planRepo)
 
-	subscriptionsCreateUC := subscriptionscreate.NewUseCase(planRepo, userRepo, studentRepo)
-	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, userRepo, studentRepo)
+	subscriptionsCreateUC := subscriptionscreate.NewUseCase(planRepo, studentRepo)
+	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, studentRepo)
 
 	h := httprouter.Handlers{
 		AuthLogin:              login.NewHandler(loginUC).Handle,
@@ -196,9 +200,11 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		GroupsArchive:      groupsarchive.NewHandler(groupsArchiveUC).Handle,
 		GroupsUnarchive:    groupsunarchive.NewHandler(groupsUnarchiveUC).Handle,
 
-		PlansCreate:  planscreate.NewHandler(plansCreateUC).Handle,
-		PlansList:    planslist.NewHandler(plansListUC).Handle,
-		PlansArchive: plansarchive.NewHandler(plansArchiveUC).Handle,
+		PlansCreate:    planscreate.NewHandler(plansCreateUC).Handle,
+		PlansList:      planslist.NewHandler(plansListUC).Handle,
+		PlansArchive:   plansarchive.NewHandler(plansArchiveUC).Handle,
+		PlansGet:       plansget.NewHandler(plansGetUC).Handle,
+		PlansUnarchive: plansunarchive.NewHandler(plansUnarchiveUC).Handle,
 
 		SubscriptionsCreate: subscriptionscreate.NewHandler(subscriptionsCreateUC).Handle,
 		SubscriptionsList:   subscriptionslist.NewHandler(subscriptionsListUC).Handle,

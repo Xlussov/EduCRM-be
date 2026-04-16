@@ -2,51 +2,32 @@ package list
 
 import (
 	"context"
-	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/google/uuid"
 )
 
-var (
-	ErrBranchAccessDenied = errors.New("branch access denied")
-)
-
 type UseCase struct {
 	subRepo     domain.SubscriptionRepository
-	userRepo    domain.UserRepository
 	studentRepo domain.StudentRepository
 }
 
-func NewUseCase(sr domain.SubscriptionRepository, ur domain.UserRepository, std domain.StudentRepository) *UseCase {
+func NewUseCase(sr domain.SubscriptionRepository, std domain.StudentRepository) *UseCase {
 	return &UseCase{
 		subRepo:     sr,
-		userRepo:    ur,
 		studentRepo: std,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID, studentID uuid.UUID, role string) ([]SubscriptionResponse, error) {
-	if role == "ADMIN" {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, studentID uuid.UUID) ([]SubscriptionResponse, error) {
+	if domain.RequiresBranchAccess(caller.Role) {
 		branchID, err := uc.studentRepo.GetBranchID(ctx, studentID)
 		if err != nil {
 			return nil, err
 		}
 
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return nil, err
-		}
-
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == branchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return nil, ErrBranchAccessDenied
+		if !domain.HasBranchAccess(caller.BranchIDs, branchID) {
+			return nil, domain.ErrBranchAccessDenied
 		}
 	}
 

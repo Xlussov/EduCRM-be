@@ -14,7 +14,6 @@ import (
 func TestUseCase_Execute(t *testing.T) {
 	branch1 := uuid.New()
 	branch2 := uuid.New()
-	userID := uuid.New()
 
 	req := Request{
 		BranchID:   branch1,
@@ -28,15 +27,15 @@ func TestUseCase_Execute(t *testing.T) {
 
 	tests := []struct {
 		name        string
-		role        string
+		caller      domain.Caller
 		req         Request
 		setupMocks  func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager)
 		expectedErr error
 	}{
 		{
-			name: "Success_SUPERADMIN",
-			role: "SUPERADMIN",
-			req:  req,
+			name:   "Success_SUPERADMIN",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			req:    req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
 				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(len(req.SubjectIDs), nil).Once()
@@ -48,12 +47,11 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "Success_ADMIN_HasAccess",
-			role: "ADMIN",
-			req:  req,
+			name:   "Success_ADMIN_HasAccess",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branch1}},
+			req:    req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
 				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(len(req.SubjectIDs), nil).Once()
 				mockPR.On("CreatePlan", mock.Anything, mock.AnythingOfType("*domain.Plan"), mock.Anything, mock.Anything).Run(func(args mock.Arguments) {
 					plan := args.Get(1).(*domain.Plan)
@@ -63,19 +61,17 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "Forbidden_ADMIN_NoAccess",
-			role: "ADMIN",
-			req:  req,
+			name:   "Forbidden_ADMIN_NoAccess",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branch2}},
+			req:    req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
-				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch2}, nil).Once()
 			},
-			expectedErr: ErrBranchAccessDenied,
+			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
-			name: "BadRequest_SubjectBranchMismatch",
-			role: "SUPERADMIN",
-			req:  req,
+			name:   "BadRequest_SubjectBranchMismatch",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			req:    req,
 			setupMocks: func(mockUR *mocks.UserRepository, mockPR *mocks.SubscriptionRepository, mockTx *mocks.MockTxManager) {
 				mockUR.On("IsBranchActive", mock.Anything, req.BranchID).Return(true, nil).Once()
 				mockPR.On("CountSubjectsInBranch", mock.Anything, req.BranchID, req.SubjectIDs).Return(0, nil).Once()
@@ -95,7 +91,7 @@ func TestUseCase_Execute(t *testing.T) {
 			}
 
 			uc := NewUseCase(mockTx, mockPR, mockUR)
-			_, err := uc.Execute(context.Background(), userID, tt.role, tt.req)
+			_, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr)

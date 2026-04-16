@@ -1,4 +1,4 @@
-package list
+package unarchive
 
 import (
 	"errors"
@@ -8,6 +8,7 @@ import (
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
 	"github.com/google/uuid"
+	"github.com/jackc/pgx/v5"
 	"github.com/labstack/echo/v4"
 )
 
@@ -19,42 +20,38 @@ func NewHandler(uc *UseCase) *Handler {
 	return &Handler{usecase: uc}
 }
 
-// Handle handles the request to list subscription plans.
-// @Summary List plans
-// @Description Returns list of subscription plans (with linked subjects and pricing grid) for the branch
+// @Summary Unarchive Plan
 // @Tags plans
 // @Security BearerAuth
 // @Produce json
-// @Param branch_id query string true "Branch ID" format(uuid)
-// @Success 200 {object} PlanResponse "List of plans"
+// @Param id path string true "Plan ID" format(uuid)
+// @Success 200 {object} Response "Unarchived"
 // @Failure 400 {object} response.ErrorResponse "Bad Request"
 // @Failure 401 {object} response.ErrorResponse "Unauthorized"
 // @Failure 403 {object} response.ErrorResponse "Forbidden"
+// @Failure 404 {object} response.ErrorResponse "Not Found"
 // @Failure 500 {object} response.ErrorResponse "Internal Server Error"
-// @Router /api/v1/plans [get]
+// @Router /api/v1/plans/{id}/unarchive [patch]
 func (h *Handler) Handle(c echo.Context) error {
 	caller, err := middleware.GetCaller(c)
 	if err != nil {
 		return response.Error(c, http.StatusUnauthorized, "UNAUTHORIZED", err.Error(), nil)
 	}
 
-	branchIDStr := c.QueryParam("branch_id")
-	branchID, err := uuid.Parse(branchIDStr)
+	planID, err := uuid.Parse(c.Param("id"))
 	if err != nil {
-		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid or missing branch_id", nil)
+		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "Invalid plan ID", nil)
 	}
 
-	req := Request{
-		BranchID: branchID,
-	}
-
-	res, err := h.usecase.Execute(c.Request().Context(), *caller, req)
+	res, err := h.usecase.Execute(c.Request().Context(), *caller, planID)
 	if err != nil {
 		switch {
-		case errors.Is(err, ErrBranchIDRequired):
-			return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", err.Error(), nil)
 		case errors.Is(err, domain.ErrBranchAccessDenied):
 			return response.Error(c, http.StatusForbidden, "BRANCH_ACCESS_DENIED", err.Error(), nil)
+		case errors.Is(err, domain.ErrAlreadyActive):
+			return response.Error(c, http.StatusBadRequest, "ALREADY_ACTIVE", "This plan is already active", nil)
+		case errors.Is(err, pgx.ErrNoRows):
+			return response.Error(c, http.StatusNotFound, "NOT_FOUND", "Plan not found", nil)
 		default:
 			return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 		}

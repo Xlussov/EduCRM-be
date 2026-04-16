@@ -29,6 +29,14 @@ func (m *SubscriptionRepository) GetPlansByBranchID(ctx context.Context, branchI
 	return nil, args.Error(1)
 }
 
+func (m *SubscriptionRepository) GetPlanDetailsByID(ctx context.Context, id uuid.UUID) (*domain.PlanDetails, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) != nil {
+		return args.Get(0).(*domain.PlanDetails), args.Error(1)
+	}
+	return nil, args.Error(1)
+}
+
 func (m *SubscriptionRepository) AssignToStudent(ctx context.Context, sub *domain.StudentSubscription) error {
 	args := m.Called(ctx, sub)
 	return args.Error(0)

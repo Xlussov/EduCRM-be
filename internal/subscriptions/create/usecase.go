@@ -10,45 +10,30 @@ import (
 )
 
 var (
-	ErrBranchAccessDenied = errors.New("branch access denied")
-	ErrCrossBranchData    = errors.New("student, plan and subject must belong to the same branch")
+	ErrCrossBranchData = errors.New("student, plan and subject must belong to the same branch")
 )
 
 type UseCase struct {
 	subRepo     domain.SubscriptionRepository
-	userRepo    domain.UserRepository
 	studentRepo domain.StudentRepository
 }
 
-func NewUseCase(sr domain.SubscriptionRepository, ur domain.UserRepository, std domain.StudentRepository) *UseCase {
+func NewUseCase(sr domain.SubscriptionRepository, std domain.StudentRepository) *UseCase {
 	return &UseCase{
 		subRepo:     sr,
-		userRepo:    ur,
 		studentRepo: std,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID, studentID uuid.UUID, role string, req Request) (Response, error) {
-	if role == "ADMIN" {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, studentID uuid.UUID, req Request) (Response, error) {
+	if domain.RequiresBranchAccess(caller.Role) {
 		branchID, err := uc.studentRepo.GetBranchID(ctx, studentID)
 		if err != nil {
 			return Response{}, err
 		}
 
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return Response{}, err
-		}
-
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == branchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return Response{}, ErrBranchAccessDenied
+		if !domain.HasBranchAccess(caller.BranchIDs, branchID) {
+			return Response{}, domain.ErrBranchAccessDenied
 		}
 	}
 

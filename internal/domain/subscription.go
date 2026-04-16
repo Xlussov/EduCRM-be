@@ -78,6 +78,7 @@ type SubscriptionBranchIDs struct {
 type SubscriptionRepository interface {
 	CreatePlan(ctx context.Context, plan *Plan, subjectIDs []uuid.UUID, grids []*PricingGrid) error
 	GetPlansByBranchID(ctx context.Context, branchID uuid.UUID) ([]*PlanDetails, error)
+	GetPlanDetailsByID(ctx context.Context, id uuid.UUID) (*PlanDetails, error)
 	UpdatePlanStatus(ctx context.Context, planID uuid.UUID, status EntityStatus) error
 	AssignToStudent(ctx context.Context, sub *StudentSubscription) error
 	GetStudentSubscriptions(ctx context.Context, studentID uuid.UUID) ([]*StudentSubscriptionDetails, error)

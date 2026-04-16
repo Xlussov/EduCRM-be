@@ -52,6 +52,10 @@ db-reset:
 db-logs:
 	docker compose logs -f postgres
 
+db-seed:
+	psql "$(DATABASE_URL)" -f ./db_seed.sql
+	@echo "Seeding completed"
+
 # --- SQLC ---
 sqlc:
 	sqlc generate

@@ -4,8 +4,8 @@ import (
 	"errors"
 	"net/http"
 
+	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
-	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
 
@@ -34,6 +34,11 @@ func NewHandler(uc *UseCase) *Handler {
 // @Failure 500 {object} map[string]interface{}
 // @Router /api/v1/plans [post]
 func (h *Handler) Handle(c echo.Context) error {
+	caller, err := middleware.GetCaller(c)
+	if err != nil {
+		return echo.NewHTTPError(http.StatusUnauthorized, err.Error())
+	}
+
 	var req Request
 	if err := c.Bind(&req); err != nil {
 		return echo.NewHTTPError(http.StatusBadRequest, "invalid request format")
@@ -43,28 +48,13 @@ func (h *Handler) Handle(c echo.Context) error {
 		return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 	}
 
-	userIDStr, ok := c.Get("user_id").(string)
-	if !ok {
-		return echo.NewHTTPError(http.StatusUnauthorized, "invalid user id in context")
-	}
-
-	userID, err := uuid.Parse(userIDStr)
-	if err != nil {
-		return echo.NewHTTPError(http.StatusUnauthorized, "invalid user id in context")
-	}
-
-	role, ok := c.Get("role").(string)
-	if !ok {
-		return echo.NewHTTPError(http.StatusForbidden, "invalid role in context")
-	}
-
 	ctx := c.Request().Context()
-	res, err := h.usecase.Execute(ctx, userID, role, req)
+	res, err := h.usecase.Execute(ctx, *caller, req)
 	if err != nil {
 		if errors.Is(err, domain.ErrArchivedReference) {
 			return echo.NewHTTPError(http.StatusBadRequest, err.Error())
 		}
-		if errors.Is(err, ErrBranchAccessDenied) {
+		if errors.Is(err, domain.ErrBranchAccessDenied) {
 			return echo.NewHTTPError(http.StatusForbidden, err.Error())
 		}
 		if errors.Is(err, ErrSubjectBranchMismatch) {

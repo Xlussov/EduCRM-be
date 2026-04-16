@@ -39,6 +39,13 @@ definitions:
     - RoleSuperadmin
     - RoleAdmin
     - RoleTeacher
+  get.PricingGrid:
+    properties:
+      lessons:
+        type: integer
+      price:
+        type: number
+    type: object
   get.StudentResponse:
     properties:
       email:
@@ -53,6 +60,13 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  get.Subject:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
     type: object
   get.SubjectResponse:
     properties:
@@ -272,6 +286,28 @@ definitions:
   internal_plans_create.Response:
     properties:
       id:
+        type: string
+    type: object
+  internal_plans_get.Response:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+      pricing_grid:
+        items:
+          $ref: '#/definitions/get.PricingGrid'
+        type: array
+      subjects:
+        items:
+          $ref: '#/definitions/get.Subject'
+        type: array
+      type:
+        type: string
+    type: object
+  internal_plans_unarchive.Response:
+    properties:
+      message:
         type: string
     type: object
   internal_students_archive.Response:
@@ -1734,6 +1770,47 @@ paths:
       summary: Create plan
       tags:
       - plans
+  /api/v1/plans/{id}:
+    get:
+      parameters:
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Plan details
+          schema:
+            $ref: '#/definitions/internal_plans_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get Plan by ID
+      tags:
+      - plans
   /api/v1/plans/{id}/archive:
     patch:
       consumes:
@@ -1781,6 +1858,47 @@ paths:
       security:
       - BearerAuth: []
       summary: Update plan status
+      tags:
+      - plans
+  /api/v1/plans/{id}/unarchive:
+    patch:
+      parameters:
+      - description: Plan ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Unarchived
+          schema:
+            $ref: '#/definitions/internal_plans_unarchive.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Unarchive Plan
       tags:
       - plans
   /api/v1/students:

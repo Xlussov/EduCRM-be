@@ -59,9 +59,11 @@ type Handlers struct {
 	GroupsArchive      echo.HandlerFunc
 	GroupsUnarchive    echo.HandlerFunc
 
-	PlansCreate  echo.HandlerFunc
-	PlansList    echo.HandlerFunc
-	PlansArchive echo.HandlerFunc
+	PlansCreate    echo.HandlerFunc
+	PlansList      echo.HandlerFunc
+	PlansArchive   echo.HandlerFunc
+	PlansGet       echo.HandlerFunc
+	PlansUnarchive echo.HandlerFunc
 
 	SubscriptionsCreate echo.HandlerFunc
 	SubscriptionsList   echo.HandlerFunc
@@ -161,8 +163,11 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		groupsGroup.PATCH("/:id/unarchive", h.GroupsUnarchive, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin))
 
 		plansGroup := protected.Group("/plans")
+		plansGroup.Use(mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin))
 		plansGroup.POST("", h.PlansCreate)
 		plansGroup.GET("", h.PlansList)
+		plansGroup.GET("/:id", h.PlansGet)
 		plansGroup.PATCH("/:id/archive", h.PlansArchive)
+		plansGroup.PATCH("/:id/unarchive", h.PlansUnarchive)
 	}
 }

@@ -6,11 +6,9 @@ import (
 	"fmt"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
-	"github.com/google/uuid"
 )
 
 var (
-	ErrBranchAccessDenied    = errors.New("branch access denied")
 	ErrSubjectBranchMismatch = errors.New("all subjects must belong to the plan branch")
 )
 
@@ -28,30 +26,19 @@ func NewUseCase(tx domain.TxManager, pr domain.SubscriptionRepository, ur domain
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (Response, error) {
+	if domain.RequiresBranchAccess(caller.Role) {
+		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
+			return Response{}, domain.ErrBranchAccessDenied
+		}
+	}
+
 	isActive, err := uc.userRepo.IsBranchActive(ctx, req.BranchID)
 	if err != nil {
 		return Response{}, err
 	}
 	if !isActive {
 		return Response{}, domain.ErrArchivedReference
-	}
-
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return Response{}, err
-		}
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == req.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return Response{}, ErrBranchAccessDenied
-		}
 	}
 
 	matchedSubjectsCount, err := uc.planRepo.CountSubjectsInBranch(ctx, req.BranchID, req.SubjectIDs)

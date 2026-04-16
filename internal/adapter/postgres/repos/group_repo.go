@@ -65,6 +65,30 @@ func (r *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID,
 	return res, nil
 }
 
+func (r *GroupRepository) GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *domain.EntityStatus) ([]*domain.GroupWithCount, error) {
+	q := sqlc.New(r.db(ctx))
+	rows, err := q.GetGroupsByBranchIDAndTeacherID(ctx, sqlc.GetGroupsByBranchIDAndTeacherIDParams{
+		BranchID:  pgtype.UUID{Bytes: branchID, Valid: true},
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		Status:    toGroupNullEntityStatus(status),
+	})
+	if err != nil {
+		return nil, err
+	}
+	var res []*domain.GroupWithCount
+	for _, row := range rows {
+		res = append(res, &domain.GroupWithCount{
+			Group: domain.Group{
+				ID:     row.ID.Bytes,
+				Name:   row.Name,
+				Status: domain.EntityStatus(row.Status.EntityStatus),
+			},
+			StudentsCount: int(row.StudentsCount),
+		})
+	}
+	return res, nil
+}
+
 func toGroupNullEntityStatus(status *domain.EntityStatus) sqlc.NullEntityStatus {
 	if status == nil {
 		return sqlc.NullEntityStatus{}
@@ -193,6 +217,18 @@ func (r *GroupRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.U
 		return uuid.UUID{}, err
 	}
 	return row.Bytes, nil
+}
+
+func (r *GroupRepository) IsTeacherGroup(ctx context.Context, teacherID, groupID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	res, err := q.IsTeacherGroup(ctx, sqlc.IsTeacherGroupParams{
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		GroupID:   pgtype.UUID{Bytes: groupID, Valid: true},
+	})
+	if err != nil {
+		return false, err
+	}
+	return res, nil
 }
 
 func (r *GroupRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {

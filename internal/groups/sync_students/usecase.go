@@ -10,7 +10,6 @@ import (
 )
 
 var (
-	ErrBranchAccessDenied    = errors.New("branch access denied")
 	ErrStudentNotFound       = errors.New("student not found")
 	ErrStudentBranchMismatch = errors.New("student branch does not match group branch")
 	ErrStudentIDsRequired    = errors.New("student_ids is required")
@@ -18,21 +17,19 @@ var (
 
 type UseCase struct {
 	groupRepo   domain.GroupRepository
-	userRepo    domain.UserRepository
 	studentRepo domain.StudentRepository
 	txManager   domain.TxManager
 }
 
-func NewUseCase(gr domain.GroupRepository, ur domain.UserRepository, sr domain.StudentRepository, tx domain.TxManager) *UseCase {
+func NewUseCase(gr domain.GroupRepository, sr domain.StudentRepository, tx domain.TxManager) *UseCase {
 	return &UseCase{
 		groupRepo:   gr,
-		userRepo:    ur,
 		studentRepo: sr,
 		txManager:   tx,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, groupID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, groupID uuid.UUID, req Request) (Response, error) {
 	if req.StudentIDs == nil {
 		return Response{}, ErrStudentIDsRequired
 	}
@@ -42,21 +39,8 @@ func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, g
 		return Response{}, err
 	}
 
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
-		if err != nil {
-			return Response{}, err
-		}
-		hasAccess := false
-		for _, branchID := range branchIDs {
-			if branchID == group.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return Response{}, ErrBranchAccessDenied
-		}
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, group.BranchID) {
+		return Response{}, domain.ErrBranchAccessDenied
 	}
 
 	desiredIDs := uniqueUUIDs(req.StudentIDs)

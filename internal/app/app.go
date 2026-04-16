@@ -135,12 +135,12 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	studentsUpdateUC := studentsupdate.NewUseCase(studentRepo)
 
 	groupsCreateUC := groupscreate.NewUseCase(groupRepo, userRepo)
-	groupsListUC := groupslist.NewUseCase(groupRepo, userRepo)
-	groupsGetUC := groupsget.NewUseCase(groupRepo, userRepo)
-	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo, userRepo)
-	groupsSyncStudentsUC := groupssyncstudents.NewUseCase(groupRepo, userRepo, studentRepo, txManager)
-	groupsArchiveUC := groupsarchive.NewUseCase(groupRepo, userRepo)
-	groupsUnarchiveUC := groupsunarchive.NewUseCase(groupRepo, userRepo)
+	groupsListUC := groupslist.NewUseCase(groupRepo)
+	groupsGetUC := groupsget.NewUseCase(groupRepo)
+	groupsUpdateUC := groupsupdate.NewUseCase(groupRepo)
+	groupsSyncStudentsUC := groupssyncstudents.NewUseCase(groupRepo, studentRepo, txManager)
+	groupsArchiveUC := groupsarchive.NewUseCase(groupRepo)
+	groupsUnarchiveUC := groupsunarchive.NewUseCase(groupRepo)
 
 	plansCreateUC := planscreate.NewUseCase(txManager, planRepo, userRepo)
 	plansListUC := planslist.NewUseCase(planRepo, userRepo)

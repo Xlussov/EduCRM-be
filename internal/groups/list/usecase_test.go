@@ -16,18 +16,24 @@ func TestUseCase_Execute(t *testing.T) {
 	branch2 := uuid.New()
 	userID := uuid.New()
 
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branch1}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branch2}}
+	callerTeacher := domain.Caller{UserID: userID, Role: domain.RoleTeacher, BranchIDs: []uuid.UUID{branch1}}
+	callerTeacherNoAccess := domain.Caller{UserID: userID, Role: domain.RoleTeacher, BranchIDs: []uuid.UUID{branch2}}
+
 	tests := []struct {
 		name        string
-		role        string
+		caller      domain.Caller
 		req         Request
-		setupMocks  func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository)
+		setupMocks  func(mockGR *mocks.GroupRepository)
 		expectedErr error
 	}{
 		{
-			name: "Success_SUPERADMIN",
-			role: "SUPERADMIN",
-			req:  Request{BranchID: branch1},
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Success_SUPERADMIN",
+			caller: callerSuper,
+			req:    Request{BranchID: branch1},
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByBranchID", mock.Anything, branch1, (*domain.EntityStatus)(nil)).Return([]*domain.GroupWithCount{
 					{
 						Group: domain.Group{
@@ -42,43 +48,60 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: nil,
 		},
 		{
-			name: "Success_ADMIN_HasAccess",
-			role: "ADMIN",
-			req:  Request{BranchID: branch1},
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch1}, nil).Once()
+			name:   "Success_ADMIN_HasAccess",
+			caller: callerAdmin,
+			req:    Request{BranchID: branch1},
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByBranchID", mock.Anything, branch1, (*domain.EntityStatus)(nil)).Return([]*domain.GroupWithCount{}, nil).Once()
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Forbidden_ADMIN_NoAccess",
-			role: "ADMIN",
-			req:  Request{BranchID: branch1},
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branch2}, nil).Once()
+			name:   "Success_TEACHER_HasAccess",
+			caller: callerTeacher,
+			req:    Request{BranchID: branch1},
+			setupMocks: func(mockGR *mocks.GroupRepository) {
+				mockGR.On("GetByBranchIDAndTeacherID", mock.Anything, branch1, userID, (*domain.EntityStatus)(nil)).Return([]*domain.GroupWithCount{}, nil).Once()
 			},
-			expectedErr: ErrBranchAccessDenied,
+			expectedErr: nil,
+		},
+		{
+			name:        "Forbidden_ADMIN_NoAccess",
+			caller:      callerAdminNoAccess,
+			req:         Request{BranchID: branch1},
+			expectedErr: domain.ErrBranchAccessDenied,
+		},
+		{
+			name:        "Forbidden_TEACHER_NoAccess",
+			caller:      callerTeacherNoAccess,
+			req:         Request{BranchID: branch1},
+			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
 			name:        "Error_MissingBranchID",
-			role:        "SUPERADMIN",
+			caller:      callerSuper,
 			req:         Request{BranchID: uuid.Nil},
-			setupMocks:  func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {},
+			setupMocks:  func(mockGR *mocks.GroupRepository) {},
 			expectedErr: ErrBranchIDRequired,
+		},
+		{
+			name:        "Error_InvalidStatus",
+			caller:      callerSuper,
+			req:         Request{BranchID: branch1, Status: "BROKEN"},
+			setupMocks:  func(mockGR *mocks.GroupRepository) {},
+			expectedErr: domain.ErrInvalidInput,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockUR := new(mocks.UserRepository)
 			mockGR := new(mocks.GroupRepository)
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockUR, mockGR)
+				tt.setupMocks(mockGR)
 			}
 
-			uc := NewUseCase(mockGR, mockUR)
-			_, err := uc.Execute(context.Background(), userID, tt.role, tt.req)
+			uc := NewUseCase(mockGR)
+			_, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr)
@@ -86,7 +109,6 @@ func TestUseCase_Execute(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mockUR.AssertExpectations(t)
 			mockGR.AssertExpectations(t)
 		})
 	}

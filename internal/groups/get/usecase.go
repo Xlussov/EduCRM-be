@@ -9,42 +9,36 @@ import (
 )
 
 var (
-	ErrGroupNotFound      = errors.New("group not found")
-	ErrBranchAccessDenied = errors.New("branch access denied")
+	ErrGroupNotFound = errors.New("group not found")
 )
 
 type UseCase struct {
 	groupRepo domain.GroupRepository
-	userRepo  domain.UserRepository
 }
 
-func NewUseCase(gr domain.GroupRepository, ur domain.UserRepository) *UseCase {
+func NewUseCase(gr domain.GroupRepository) *UseCase {
 	return &UseCase{
 		groupRepo: gr,
-		userRepo:  ur,
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, userID uuid.UUID, role string, groupID uuid.UUID) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, groupID uuid.UUID) (Response, error) {
 	group, err := uc.groupRepo.GetByID(ctx, groupID)
 	if err != nil {
-		return Response{}, err
+		return Response{}, ErrGroupNotFound
 	}
 
-	if role == "ADMIN" {
-		branchIDs, err := uc.userRepo.GetUserBranchIDs(ctx, userID)
+	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, group.BranchID) {
+		return Response{}, domain.ErrBranchAccessDenied
+	}
+
+	if caller.Role == domain.RoleTeacher {
+		ok, err := uc.groupRepo.IsTeacherGroup(ctx, caller.UserID, groupID)
 		if err != nil {
 			return Response{}, err
 		}
-		hasAccess := false
-		for _, bid := range branchIDs {
-			if bid == group.BranchID {
-				hasAccess = true
-				break
-			}
-		}
-		if !hasAccess {
-			return Response{}, ErrBranchAccessDenied
+		if !ok {
+			return Response{}, domain.ErrBranchAccessDenied
 		}
 	}
 

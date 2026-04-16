@@ -213,6 +213,83 @@ func (q *Queries) GetGroupsByBranchID(ctx context.Context, arg GetGroupsByBranch
 	return items, nil
 }
 
+const getGroupsByBranchIDAndTeacherID = `-- name: GetGroupsByBranchIDAndTeacherID :many
+SELECT 
+    g.id, 
+    g.name, 
+    g.status, 
+    COALESCE(COUNT(sg.student_id), 0)::int as students_count
+FROM groups g
+LEFT JOIN student_groups sg ON g.id = sg.group_id AND sg.left_at IS NULL
+WHERE g.branch_id = $1
+    AND ($3::entity_status IS NULL OR g.status = $3::entity_status)
+    AND EXISTS (
+        SELECT 1
+        FROM lessons l
+        WHERE l.group_id = g.id AND l.teacher_id = $2
+    )
+GROUP BY g.id, g.name, g.status
+ORDER BY g.created_at DESC
+`
+
+type GetGroupsByBranchIDAndTeacherIDParams struct {
+	BranchID  pgtype.UUID      `json:"branch_id"`
+	TeacherID pgtype.UUID      `json:"teacher_id"`
+	Status    NullEntityStatus `json:"status"`
+}
+
+type GetGroupsByBranchIDAndTeacherIDRow struct {
+	ID            pgtype.UUID      `json:"id"`
+	Name          string           `json:"name"`
+	Status        NullEntityStatus `json:"status"`
+	StudentsCount int32            `json:"students_count"`
+}
+
+func (q *Queries) GetGroupsByBranchIDAndTeacherID(ctx context.Context, arg GetGroupsByBranchIDAndTeacherIDParams) ([]GetGroupsByBranchIDAndTeacherIDRow, error) {
+	rows, err := q.db.Query(ctx, getGroupsByBranchIDAndTeacherID, arg.BranchID, arg.TeacherID, arg.Status)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []GetGroupsByBranchIDAndTeacherIDRow
+	for rows.Next() {
+		var i GetGroupsByBranchIDAndTeacherIDRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.Name,
+			&i.Status,
+			&i.StudentsCount,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const isTeacherGroup = `-- name: IsTeacherGroup :one
+SELECT EXISTS (
+    SELECT 1
+    FROM lessons l
+    WHERE l.teacher_id = $1 AND l.group_id = $2
+) AS is_teacher_group
+`
+
+type IsTeacherGroupParams struct {
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	GroupID   pgtype.UUID `json:"group_id"`
+}
+
+func (q *Queries) IsTeacherGroup(ctx context.Context, arg IsTeacherGroupParams) (bool, error) {
+	row := q.db.QueryRow(ctx, isTeacherGroup, arg.TeacherID, arg.GroupID)
+	var is_teacher_group bool
+	err := row.Scan(&is_teacher_group)
+	return is_teacher_group, err
+}
+
 const removeStudentFromGroup = `-- name: RemoveStudentFromGroup :exec
 UPDATE student_groups
 SET left_at = $3

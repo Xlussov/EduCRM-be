@@ -32,6 +32,7 @@ type GroupStudent struct {
 type GroupRepository interface {
 	Create(ctx context.Context, group *Group) error
 	GetByBranchID(ctx context.Context, branchID uuid.UUID, status *EntityStatus) ([]*GroupWithCount, error)
+	GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *EntityStatus) ([]*GroupWithCount, error)
 	GetByID(ctx context.Context, id uuid.UUID) (*Group, error)
 	UpdateName(ctx context.Context, id uuid.UUID, name string) (*Group, error)
 	AddStudents(ctx context.Context, groupID uuid.UUID, studentIDs []uuid.UUID, joinedAt time.Time) error
@@ -39,5 +40,6 @@ type GroupRepository interface {
 	GetActiveStudentIDs(ctx context.Context, groupID uuid.UUID) ([]uuid.UUID, error)
 	GetStudents(ctx context.Context, groupID uuid.UUID) ([]*GroupStudent, error)
 	GetBranchID(ctx context.Context, id uuid.UUID) (uuid.UUID, error)
+	IsTeacherGroup(ctx context.Context, teacherID, groupID uuid.UUID) (bool, error)
 	UpdateStatus(ctx context.Context, id uuid.UUID, status EntityStatus) error
 }

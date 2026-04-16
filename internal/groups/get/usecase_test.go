@@ -16,19 +16,25 @@ func TestUseCase_Execute(t *testing.T) {
 	groupID := uuid.New()
 	branchID := uuid.New()
 	userID := uuid.New()
+	otherBranchID := uuid.New()
+
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}}
+	callerTeacher := domain.Caller{UserID: userID, Role: domain.RoleTeacher, BranchIDs: []uuid.UUID{branchID}}
 
 	tests := []struct {
 		name        string
-		role        string
+		caller      domain.Caller
 		groupID     uuid.UUID
-		setupMocks  func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository)
+		setupMocks  func(mockGR *mocks.GroupRepository)
 		expectedErr error
 	}{
 		{
 			name:    "Success_SUPERADMIN",
-			role:    "SUPERADMIN",
+			caller:  callerSuper,
 			groupID: groupID,
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
 				mockGR.On("GetStudents", mock.Anything, groupID).Return([]*domain.GroupStudent{
 					{ID: uuid.New(), FirstName: "John", LastName: "Doe", Status: domain.StatusActive},
@@ -38,46 +44,64 @@ func TestUseCase_Execute(t *testing.T) {
 		},
 		{
 			name:    "Success_ADMIN_HasAccess",
-			role:    "ADMIN",
+			caller:  callerAdmin,
 			groupID: groupID,
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil).Once()
 				mockGR.On("GetStudents", mock.Anything, groupID).Return([]*domain.GroupStudent{}, nil).Once()
 			},
 			expectedErr: nil,
 		},
 		{
-			name:    "Forbidden_ADMIN_NoAccess",
-			role:    "ADMIN",
+			name:    "Success_TEACHER_HasAccess",
+			caller:  callerTeacher,
 			groupID: groupID,
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{uuid.New()}, nil).Once()
+				mockGR.On("IsTeacherGroup", mock.Anything, userID, groupID).Return(true, nil).Once()
+				mockGR.On("GetStudents", mock.Anything, groupID).Return([]*domain.GroupStudent{}, nil).Once()
 			},
-			expectedErr: ErrBranchAccessDenied,
+			expectedErr: nil,
+		},
+		{
+			name:    "Forbidden_TEACHER_NotAssigned",
+			caller:  callerTeacher,
+			groupID: groupID,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
+				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
+				mockGR.On("IsTeacherGroup", mock.Anything, userID, groupID).Return(false, nil).Once()
+			},
+			expectedErr: domain.ErrBranchAccessDenied,
+		},
+		{
+			name:    "Forbidden_ADMIN_NoAccess",
+			caller:  callerAdminNoAccess,
+			groupID: groupID,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
+				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Name: "A1"}, nil).Once()
+			},
+			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
 			name:    "Error_GroupNotFound",
-			role:    "SUPERADMIN",
+			caller:  callerSuper,
 			groupID: groupID,
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return((*domain.Group)(nil), errors.New("no rows in result set")).Once()
 			},
-			expectedErr: errors.New("no rows in result set"),
+			expectedErr: ErrGroupNotFound,
 		},
 	}
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockUR := new(mocks.UserRepository)
 			mockGR := new(mocks.GroupRepository)
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockUR, mockGR)
+				tt.setupMocks(mockGR)
 			}
 
-			uc := NewUseCase(mockGR, mockUR)
-			_, err := uc.Execute(context.Background(), userID, tt.role, tt.groupID)
+			uc := NewUseCase(mockGR)
+			_, err := uc.Execute(context.Background(), tt.caller, tt.groupID)
 
 			if tt.expectedErr != nil {
 				require.EqualError(t, err, tt.expectedErr.Error())
@@ -85,7 +109,6 @@ func TestUseCase_Execute(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mockUR.AssertExpectations(t)
 			mockGR.AssertExpectations(t)
 		})
 	}

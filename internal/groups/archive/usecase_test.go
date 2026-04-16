@@ -16,53 +16,56 @@ func TestUseCase_Execute(t *testing.T) {
 	groupID := uuid.New()
 	branchID := uuid.New()
 	userID := uuid.New()
+	otherBranchID := uuid.New()
+
+	callerSuper := domain.Caller{UserID: userID, Role: domain.RoleSuperadmin}
+	callerAdmin := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}}
+	callerAdminNoAccess := domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{otherBranchID}}
 
 	tests := []struct {
 		name        string
-		role        string
-		setupMocks  func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository)
+		caller      domain.Caller
+		setupMocks  func(mockGR *mocks.GroupRepository)
 		expectedErr error
 	}{
 		{
-			name: "Success_SUPERADMIN",
-			role: "SUPERADMIN",
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Success_SUPERADMIN",
+			caller: callerSuper,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Status: domain.StatusActive}, nil).Once()
 				mockGR.On("UpdateStatus", mock.Anything, groupID, domain.StatusArchived).Return(nil).Once()
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Success_ADMIN_HasAccess",
-			role: "ADMIN",
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Success_ADMIN_HasAccess",
+			caller: callerAdmin,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Status: domain.StatusActive}, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{branchID}, nil).Once()
 				mockGR.On("UpdateStatus", mock.Anything, groupID, domain.StatusArchived).Return(nil).Once()
 			},
 			expectedErr: nil,
 		},
 		{
-			name: "Error_AlreadyArchived",
-			role: "SUPERADMIN",
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Error_AlreadyArchived",
+			caller: callerSuper,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Status: domain.StatusArchived}, nil).Once()
 			},
 			expectedErr: domain.ErrAlreadyArchived,
 		},
 		{
-			name: "Forbidden_ADMIN_NoAccess",
-			role: "ADMIN",
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Forbidden_ADMIN_NoAccess",
+			caller: callerAdminNoAccess,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return(&domain.Group{ID: groupID, BranchID: branchID, Status: domain.StatusActive}, nil).Once()
-				mockUR.On("GetUserBranchIDs", mock.Anything, userID).Return([]uuid.UUID{uuid.New()}, nil).Once()
 			},
 			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
-			name: "Error_GroupNotFound",
-			role: "SUPERADMIN",
-			setupMocks: func(mockUR *mocks.UserRepository, mockGR *mocks.GroupRepository) {
+			name:   "Error_GroupNotFound",
+			caller: callerSuper,
+			setupMocks: func(mockGR *mocks.GroupRepository) {
 				mockGR.On("GetByID", mock.Anything, groupID).Return((*domain.Group)(nil), errors.New("no rows in result set")).Once()
 			},
 			expectedErr: errors.New("no rows in result set"),
@@ -71,14 +74,13 @@ func TestUseCase_Execute(t *testing.T) {
 
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
-			mockUR := new(mocks.UserRepository)
 			mockGR := new(mocks.GroupRepository)
 			if tt.setupMocks != nil {
-				tt.setupMocks(mockUR, mockGR)
+				tt.setupMocks(mockGR)
 			}
 
-			uc := NewUseCase(mockGR, mockUR)
-			_, err := uc.Execute(context.Background(), userID, tt.role, groupID)
+			uc := NewUseCase(mockGR)
+			_, err := uc.Execute(context.Background(), tt.caller, groupID)
 
 			if tt.expectedErr != nil {
 				require.EqualError(t, err, tt.expectedErr.Error())
@@ -86,7 +88,6 @@ func TestUseCase_Execute(t *testing.T) {
 				require.NoError(t, err)
 			}
 
-			mockUR.AssertExpectations(t)
 			mockGR.AssertExpectations(t)
 		})
 	}

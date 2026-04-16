@@ -27,6 +27,15 @@ func (m *GroupRepository) GetByBranchID(ctx context.Context, branchID uuid.UUID,
 	return r0, args.Error(1)
 }
 
+func (m *GroupRepository) GetByBranchIDAndTeacherID(ctx context.Context, branchID, teacherID uuid.UUID, status *domain.EntityStatus) ([]*domain.GroupWithCount, error) {
+	args := m.Called(ctx, branchID, teacherID, status)
+	var r0 []*domain.GroupWithCount
+	if args.Get(0) != nil {
+		r0 = args.Get(0).([]*domain.GroupWithCount)
+	}
+	return r0, args.Error(1)
+}
+
 func (m *GroupRepository) GetByID(ctx context.Context, id uuid.UUID) (*domain.Group, error) {
 	args := m.Called(ctx, id)
 	var r0 *domain.Group
@@ -80,6 +89,11 @@ func (m *GroupRepository) GetBranchID(ctx context.Context, id uuid.UUID) (uuid.U
 		r0 = args.Get(0).(uuid.UUID)
 	}
 	return r0, args.Error(1)
+}
+
+func (m *GroupRepository) IsTeacherGroup(ctx context.Context, teacherID, groupID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, groupID)
+	return args.Bool(0), args.Error(1)
 }
 
 func (m *GroupRepository) UpdateStatus(ctx context.Context, id uuid.UUID, status domain.EntityStatus) error {

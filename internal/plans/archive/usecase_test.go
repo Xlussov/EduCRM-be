@@ -62,7 +62,7 @@ func TestUseCase_Execute(t *testing.T) {
 			}
 
 			uc := NewUseCase(mockPR)
-			res, err := uc.Execute(context.Background(), tt.caller, planID, Request{Status: string(domain.StatusArchived)})
+			res, err := uc.Execute(context.Background(), tt.caller, planID)
 
 			if tt.expectedErr != nil {
 				require.ErrorIs(t, err, tt.expectedErr)

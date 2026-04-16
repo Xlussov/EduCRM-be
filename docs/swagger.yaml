@@ -1,14 +1,4 @@
 definitions:
-  archive.Request:
-    properties:
-      status:
-        enum:
-        - ACTIVE
-        - ARCHIVED
-        type: string
-    required:
-    - status
-    type: object
   create.PricingGridItem:
     properties:
       lessons:
@@ -1822,12 +1812,6 @@ paths:
         name: id
         required: true
         type: string
-      - description: Archived
-        in: body
-        name: body
-        required: true
-        schema:
-          $ref: '#/definitions/archive.Request'
       produces:
       - application/json
       responses:

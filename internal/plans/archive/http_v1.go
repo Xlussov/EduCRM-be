@@ -7,7 +7,6 @@ import (
 	"github.com/Xlussov/EduCRM-be/internal/controller/http/middleware"
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/pkg/response"
-	"github.com/Xlussov/EduCRM-be/pkg/validator"
 	"github.com/google/uuid"
 	"github.com/labstack/echo/v4"
 )
@@ -28,7 +27,6 @@ func NewHandler(uc *UseCase) *Handler {
 // @Accept json
 // @Produce json
 // @Param id path string true "Plan ID" format(uuid)
-// @Param body body Request true "Archived"
 // @Success 200 {object} Response
 // @Failure 400 {object} response.ErrorResponse
 // @Failure 401 {object} response.ErrorResponse
@@ -48,17 +46,7 @@ func (h *Handler) Handle(c echo.Context) error {
 		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid plan id", nil)
 	}
 
-	var req Request
-	if err := c.Bind(&req); err != nil {
-		return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", "invalid request format", nil)
-	}
-
-	if err := c.Validate(&req); err != nil {
-		valErrs := validator.ParseError(err)
-		return response.Error(c, http.StatusBadRequest, "VALIDATION_FAILED", "invalid request data", valErrs)
-	}
-
-	res, err := h.usecase.Execute(c.Request().Context(), *caller, planID, req)
+	res, err := h.usecase.Execute(c.Request().Context(), *caller, planID)
 	if err != nil {
 		switch {
 		case errors.Is(err, domain.ErrBranchAccessDenied):

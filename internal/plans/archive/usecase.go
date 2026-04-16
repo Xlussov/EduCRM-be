@@ -17,7 +17,7 @@ func NewUseCase(pr domain.SubscriptionRepository) *UseCase {
 	}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, planID uuid.UUID, req Request) (Response, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, planID uuid.UUID) (Response, error) {
 	plan, err := uc.planRepo.GetPlanByID(ctx, planID)
 	if err != nil {
 		return Response{}, err
@@ -29,7 +29,7 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, planID uui
 		}
 	}
 
-	if err := uc.planRepo.UpdatePlanStatus(ctx, planID, domain.EntityStatus(req.Status)); err != nil {
+	if err := uc.planRepo.UpdatePlanStatus(ctx, planID, domain.StatusArchived); err != nil {
 		return Response{}, err
 	}
 

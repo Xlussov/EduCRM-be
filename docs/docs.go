@@ -1246,15 +1246,6 @@ const docTemplate = `{
                         "name": "id",
                         "in": "path",
                         "required": true
-                    },
-                    {
-                        "description": "Archived",
-                        "name": "body",
-                        "in": "body",
-                        "required": true,
-                        "schema": {
-                            "$ref": "#/definitions/archive.Request"
-                        }
                     }
                 ],
                 "responses": {
@@ -3016,21 +3007,6 @@ const docTemplate = `{
         }
     },
     "definitions": {
-        "archive.Request": {
-            "type": "object",
-            "required": [
-                "status"
-            ],
-            "properties": {
-                "status": {
-                    "type": "string",
-                    "enum": [
-                        "ACTIVE",
-                        "ARCHIVED"
-                    ]
-                }
-            }
-        },
         "create.PricingGridItem": {
             "type": "object",
             "required": [

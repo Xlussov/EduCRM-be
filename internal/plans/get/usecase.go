@@ -41,5 +41,6 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, planID uui
 		Type:        string(plan.Type),
 		Subjects:    subjects,
 		PricingGrid: grids,
+		Status:      string(plan.Status),
 	}, nil
 }

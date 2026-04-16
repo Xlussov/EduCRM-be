@@ -22,4 +22,5 @@ type PlanResponse struct {
 	Type        string        `json:"type"`
 	Subjects    []Subject     `json:"subjects"`
 	PricingGrid []PricingGrid `json:"pricing_grid"`
+	Status      string        `json:"status"`
 }

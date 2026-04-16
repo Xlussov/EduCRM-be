@@ -29,6 +29,10 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, planID uui
 		}
 	}
 
+	if plan.Status == domain.StatusArchived {
+		return Response{}, domain.ErrAlreadyArchived
+	}
+
 	if err := uc.planRepo.UpdatePlanStatus(ctx, planID, domain.StatusArchived); err != nil {
 		return Response{}, err
 	}

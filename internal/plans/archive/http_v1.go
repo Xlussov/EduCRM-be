@@ -21,7 +21,7 @@ func NewHandler(uc *UseCase) *Handler {
 	}
 }
 
-// @Summary Update plan status
+// @Summary Archive Plan
 // @Tags plans
 // @Security BearerAuth
 // @Accept json

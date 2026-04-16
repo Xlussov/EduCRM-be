@@ -52,7 +52,7 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
-			name:   "already_active",
+			name:   "Error_AlreadyActive",
 			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.SubscriptionRepository) {
 				repo.On("GetPlanByID", mock.Anything, planID).Return(activePlan, nil).Once()

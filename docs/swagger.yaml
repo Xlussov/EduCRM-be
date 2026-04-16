@@ -1841,7 +1841,7 @@ paths:
             $ref: '#/definitions/response.ErrorResponse'
       security:
       - BearerAuth: []
-      summary: Update plan status
+      summary: Archive Plan
       tags:
       - plans
   /api/v1/plans/{id}/unarchive:

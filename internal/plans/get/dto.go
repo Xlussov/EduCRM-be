@@ -1,6 +1,8 @@
 package get
 
-import "github.com/google/uuid"
+import (
+	"github.com/google/uuid"
+)
 
 type Subject struct {
 	ID   uuid.UUID `json:"id"`
@@ -18,4 +20,5 @@ type Response struct {
 	Type        string        `json:"type"`
 	Subjects    []Subject     `json:"subjects"`
 	PricingGrid []PricingGrid `json:"pricing_grid"`
+	Status      string        `json:"status"`
 }

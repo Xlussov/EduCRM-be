@@ -18,6 +18,13 @@ func TestUseCase_Execute(t *testing.T) {
 	plan := &domain.Plan{
 		ID:       planID,
 		BranchID: branchID,
+		Status:   domain.StatusActive,
+	}
+
+	archivedPlan := &domain.Plan{
+		ID:       planID,
+		BranchID: branchID,
+		Status:   domain.StatusArchived,
 	}
 
 	tests := []struct {
@@ -43,6 +50,14 @@ func TestUseCase_Execute(t *testing.T) {
 				mockPR.On("UpdatePlanStatus", mock.Anything, planID, domain.StatusArchived).Return(nil).Once()
 			},
 			expectedErr: nil,
+		},
+		{
+			name:   "Error_AlreadyArchived",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			setupMocks: func(mockPR *mocks.SubscriptionRepository) {
+				mockPR.On("GetPlanByID", mock.Anything, planID).Return(archivedPlan, nil).Once()
+			},
+			expectedErr: domain.ErrAlreadyArchived,
 		},
 		{
 			name:   "Forbidden_ADMIN_NoAccess",

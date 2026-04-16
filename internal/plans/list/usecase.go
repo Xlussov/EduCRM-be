@@ -62,6 +62,7 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 			Type:        string(p.Type),
 			Subjects:    subjects,
 			PricingGrid: grids,
+			Status:      string(p.Status),
 		})
 	}
 

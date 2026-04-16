@@ -1237,7 +1237,7 @@ const docTemplate = `{
                 "tags": [
                     "plans"
                 ],
-                "summary": "Update plan status",
+                "summary": "Archive Plan",
                 "parameters": [
                     {
                         "type": "string",

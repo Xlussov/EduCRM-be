@@ -14,16 +14,21 @@ type Querier interface {
 	AddStudentToGroup(ctx context.Context, arg AddStudentToGroupParams) error
 	AddStudentsToGroupBulk(ctx context.Context, arg AddStudentsToGroupBulkParams) error
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
+	BulkCreateLessons(ctx context.Context, arg []BulkCreateLessonsParams) (int64, error)
+	CheckStudentConflict(ctx context.Context, arg CheckStudentConflictParams) (bool, error)
+	CheckTeacherConflict(ctx context.Context, arg CheckTeacherConflictParams) (bool, error)
 	CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error)
 	CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error)
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
 	CreateGroup(ctx context.Context, arg CreateGroupParams) (pgtype.UUID, error)
+	CreateLesson(ctx context.Context, arg CreateLessonParams) (Lesson, error)
 	CreatePlanPricingGrid(ctx context.Context, arg CreatePlanPricingGridParams) error
 	CreatePlanSubject(ctx context.Context, arg CreatePlanSubjectParams) error
 	CreateStudent(ctx context.Context, arg CreateStudentParams) (pgtype.UUID, error)
 	CreateStudentSubscription(ctx context.Context, arg CreateStudentSubscriptionParams) (StudentSubscription, error)
 	CreateSubject(ctx context.Context, arg CreateSubjectParams) (Subject, error)
 	CreateSubscriptionPlan(ctx context.Context, arg CreateSubscriptionPlanParams) (SubscriptionPlan, error)
+	CreateTemplate(ctx context.Context, arg CreateTemplateParams) (LessonTemplate, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
 	DeleteUserBranches(ctx context.Context, userID pgtype.UUID) error
 	GetAdmins(ctx context.Context) ([]GetAdminsRow, error)
@@ -36,6 +41,7 @@ type Querier interface {
 	GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error)
 	GetGroupsByBranchID(ctx context.Context, arg GetGroupsByBranchIDParams) ([]GetGroupsByBranchIDRow, error)
 	GetGroupsByBranchIDAndTeacherID(ctx context.Context, arg GetGroupsByBranchIDAndTeacherIDParams) ([]GetGroupsByBranchIDAndTeacherIDRow, error)
+	GetLessonByID(ctx context.Context, id pgtype.UUID) (Lesson, error)
 	GetPlanByID(ctx context.Context, id pgtype.UUID) (SubscriptionPlan, error)
 	GetPlanPricingGrids(ctx context.Context, planID pgtype.UUID) ([]PlanPricingGrid, error)
 	GetPlanSubjects(ctx context.Context, planID pgtype.UUID) ([]GetPlanSubjectsRow, error)
@@ -49,6 +55,7 @@ type Querier interface {
 	GetSubject(ctx context.Context, arg GetSubjectParams) (Subject, error)
 	GetSubjectByID(ctx context.Context, id pgtype.UUID) (Subject, error)
 	GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error)
+	GetTeacherSchedule(ctx context.Context, arg GetTeacherScheduleParams) ([]Lesson, error)
 	GetTeachers(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetTeachersRow, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
@@ -67,6 +74,7 @@ type Querier interface {
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
 	UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) (Group, error)
 	UpdateGroupStatus(ctx context.Context, arg UpdateGroupStatusParams) error
+	UpdateLessonStatus(ctx context.Context, arg UpdateLessonStatusParams) error
 	UpdatePlanStatus(ctx context.Context, arg UpdatePlanStatusParams) error
 	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)
 	UpdateStudentStatus(ctx context.Context, arg UpdateStudentStatusParams) error

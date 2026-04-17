@@ -7,6 +7,7 @@ package postgres
 
 import (
 	"context"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -21,7 +22,7 @@ type CreateStudentSubscriptionParams struct {
 	StudentID pgtype.UUID `json:"student_id"`
 	PlanID    pgtype.UUID `json:"plan_id"`
 	SubjectID pgtype.UUID `json:"subject_id"`
-	StartDate pgtype.Date `json:"start_date"`
+	StartDate time.Time   `json:"start_date"`
 }
 
 func (q *Queries) CreateStudentSubscription(ctx context.Context, arg CreateStudentSubscriptionParams) (StudentSubscription, error) {
@@ -65,7 +66,7 @@ type GetStudentSubscriptionsRow struct {
 	StudentID   pgtype.UUID        `json:"student_id"`
 	PlanID      pgtype.UUID        `json:"plan_id"`
 	SubjectID   pgtype.UUID        `json:"subject_id"`
-	StartDate   pgtype.Date        `json:"start_date"`
+	StartDate   time.Time          `json:"start_date"`
 	CreatedAt   pgtype.Timestamptz `json:"created_at"`
 	PlanName    string             `json:"plan_name"`
 	SubjectName string             `json:"subject_name"`

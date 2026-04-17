@@ -1,4 +1,9 @@
 definitions:
+  cancel.Response:
+    properties:
+      message:
+        type: string
+    type: object
   create.PricingGridItem:
     properties:
       lessons:
@@ -10,6 +15,113 @@ definitions:
     required:
     - lessons
     - price
+    type: object
+  create_group.Request:
+    properties:
+      branch_id:
+        type: string
+      date:
+        type: string
+      end_time:
+        type: string
+      group_id:
+        type: string
+      start_time:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+    required:
+    - branch_id
+    - date
+    - end_time
+    - group_id
+    - start_time
+    - subject_id
+    - teacher_id
+    type: object
+  create_group.Response:
+    properties:
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  create_individual.Request:
+    properties:
+      branch_id:
+        type: string
+      date:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+      student_id:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+    required:
+    - branch_id
+    - date
+    - end_time
+    - start_time
+    - subject_id
+    - teacher_id
+    type: object
+  create_individual.Response:
+    properties:
+      id:
+        type: string
+      status:
+        type: string
+    type: object
+  create_template.Request:
+    properties:
+      branch_id:
+        type: string
+      day_of_week:
+        maximum: 6
+        minimum: 0
+        type: integer
+      end_date:
+        type: string
+      end_time:
+        type: string
+      group_id:
+        type: string
+      start_date:
+        type: string
+      start_time:
+        type: string
+      student_id:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+    required:
+    - branch_id
+    - end_date
+    - end_time
+    - start_date
+    - start_time
+    - subject_id
+    - teacher_id
+    type: object
+  create_template.Response:
+    properties:
+      conflicts:
+        items:
+          type: string
+        type: array
+      created_lessons_count:
+        type: integer
+      template_id:
+        type: string
     type: object
   domain.EntityStatus:
     enum:
@@ -288,6 +400,8 @@ definitions:
         items:
           $ref: '#/definitions/get.PricingGrid'
         type: array
+      status:
+        type: string
       subjects:
         items:
           $ref: '#/definitions/get.Subject'
@@ -834,6 +948,8 @@ definitions:
         items:
           $ref: '#/definitions/list.PricingGrid'
         type: array
+      status:
+        type: string
       subjects:
         items:
           $ref: '#/definitions/list.Subject'
@@ -1678,6 +1794,177 @@ paths:
       summary: Unarchive Group
       tags:
       - groups
+  /api/v1/lessons/{id}/cancel:
+    patch:
+      consumes:
+      - application/json
+      description: Cancels a specific lesson by ID
+      parameters:
+      - description: Lesson ID
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/cancel.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Cancel lesson
+      tags:
+      - lessons
+  /api/v1/lessons/group:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new lesson for a group of students
+      parameters:
+      - description: Lesson info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/create_group.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/create_group.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create group lesson
+      tags:
+      - lessons
+  /api/v1/lessons/individual:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new individual lesson for a student
+      parameters:
+      - description: Lesson info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/create_individual.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/create_individual.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create individual lesson
+      tags:
+      - lessons
+  /api/v1/lessons/templates:
+    post:
+      consumes:
+      - application/json
+      description: Creates a new recurring lesson template and schedules lessons
+      parameters:
+      - description: Template info
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/create_template.Request'
+      produces:
+      - application/json
+      responses:
+        "201":
+          description: Created
+          schema:
+            $ref: '#/definitions/create_template.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Create lesson template
+      tags:
+      - lessons
   /api/v1/plans:
     get:
       description: Returns list of subscription plans (with linked subjects and pricing

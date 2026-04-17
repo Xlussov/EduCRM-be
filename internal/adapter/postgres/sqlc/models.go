@@ -7,6 +7,7 @@ package postgres
 import (
 	"database/sql/driver"
 	"fmt"
+	"time"
 
 	"github.com/jackc/pgx/v5/pgtype"
 )
@@ -216,9 +217,9 @@ type Lesson struct {
 	SubjectID  pgtype.UUID        `json:"subject_id"`
 	StudentID  pgtype.UUID        `json:"student_id"`
 	GroupID    pgtype.UUID        `json:"group_id"`
-	Date       pgtype.Date        `json:"date"`
-	StartTime  pgtype.Time        `json:"start_time"`
-	EndTime    pgtype.Time        `json:"end_time"`
+	Date       time.Time          `json:"date"`
+	StartTime  time.Time          `json:"start_time"`
+	EndTime    time.Time          `json:"end_time"`
 	Status     NullLessonStatus   `json:"status"`
 	CreatedAt  pgtype.Timestamptz `json:"created_at"`
 }
@@ -231,10 +232,10 @@ type LessonTemplate struct {
 	StudentID pgtype.UUID `json:"student_id"`
 	GroupID   pgtype.UUID `json:"group_id"`
 	DayOfWeek int32       `json:"day_of_week"`
-	StartTime pgtype.Time `json:"start_time"`
-	EndTime   pgtype.Time `json:"end_time"`
-	StartDate pgtype.Date `json:"start_date"`
-	EndDate   pgtype.Date `json:"end_date"`
+	StartTime time.Time   `json:"start_time"`
+	EndTime   time.Time   `json:"end_time"`
+	StartDate time.Time   `json:"start_date"`
+	EndDate   time.Time   `json:"end_date"`
 	IsActive  pgtype.Bool `json:"is_active"`
 }
 
@@ -288,7 +289,7 @@ type StudentSubscription struct {
 	StudentID pgtype.UUID        `json:"student_id"`
 	PlanID    pgtype.UUID        `json:"plan_id"`
 	SubjectID pgtype.UUID        `json:"subject_id"`
-	StartDate pgtype.Date        `json:"start_date"`
+	StartDate time.Time          `json:"start_date"`
 	CreatedAt pgtype.Timestamptz `json:"created_at"`
 }
 

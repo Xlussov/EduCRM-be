@@ -197,7 +197,7 @@ func (r *SubscriptionRepository) AssignToStudent(ctx context.Context, sub *domai
 		StudentID: pgtype.UUID{Bytes: sub.StudentID, Valid: true},
 		PlanID:    pgtype.UUID{Bytes: sub.PlanID, Valid: true},
 		SubjectID: pgtype.UUID{Bytes: sub.SubjectID, Valid: true},
-		StartDate: pgtype.Date{Time: sub.StartDate, Valid: true},
+		StartDate: sub.StartDate,
 	})
 	if err != nil {
 		return err
@@ -219,7 +219,7 @@ func (r *SubscriptionRepository) GetStudentSubscriptions(ctx context.Context, st
 		res = append(res, &domain.StudentSubscriptionDetails{
 			ID:        row.ID.Bytes,
 			StudentID: row.StudentID.Bytes,
-			StartDate: row.StartDate.Time,
+			StartDate: row.StartDate,
 			CreatedAt: row.CreatedAt.Time,
 			Plan: domain.SubPlanDetails{
 				ID:   row.PlanID.Bytes,

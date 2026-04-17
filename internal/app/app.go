@@ -25,6 +25,10 @@ import (
 	groupssyncstudents "github.com/Xlussov/EduCRM-be/internal/groups/sync_students"
 	groupsunarchive "github.com/Xlussov/EduCRM-be/internal/groups/unarchive"
 	groupsupdate "github.com/Xlussov/EduCRM-be/internal/groups/update"
+	lessonscancel "github.com/Xlussov/EduCRM-be/internal/lessons/cancel"
+	lessonsgroupcreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_group"
+	lessonsindividualcreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_individual"
+	lessonstemplatescreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_template"
 	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
 	planscreate "github.com/Xlussov/EduCRM-be/internal/plans/create"
 	plansget "github.com/Xlussov/EduCRM-be/internal/plans/get"
@@ -95,6 +99,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	studentRepo := repo.NewStudentRepository(dbPool.Conn())
 	groupRepo := repo.NewGroupRepository(dbPool.Conn())
 	planRepo := repo.NewSubscriptionRepository(dbPool.Conn())
+	scheduleRepo := repo.NewScheduleRepository(dbPool.Conn())
 
 	txManager := postgres.NewTxManager(dbPool.Conn())
 
@@ -153,6 +158,11 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	subscriptionsCreateUC := subscriptionscreate.NewUseCase(planRepo, studentRepo)
 	subscriptionsListUC := subscriptionslist.NewUseCase(planRepo, studentRepo)
 
+	lessonsIndividualCreateUC := lessonsindividualcreate.NewUseCase(scheduleRepo)
+	lessonsGroupCreateUC := lessonsgroupcreate.NewUseCase(scheduleRepo, groupRepo)
+	lessonsTemplatesCreateUC := lessonstemplatescreate.NewUseCase(scheduleRepo, groupRepo)
+	lessonsCancelUC := lessonscancel.NewUseCase(scheduleRepo)
+
 	h := httprouter.Handlers{
 		AuthLogin:              login.NewHandler(loginUC).Handle,
 		AuthRefresh:            refresh.NewHandler(refreshUC).Handle,
@@ -208,6 +218,11 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 
 		SubscriptionsCreate: subscriptionscreate.NewHandler(subscriptionsCreateUC).Handle,
 		SubscriptionsList:   subscriptionslist.NewHandler(subscriptionsListUC).Handle,
+
+		LessonsIndividualCreate: lessonsindividualcreate.NewHandler(lessonsIndividualCreateUC).Handle,
+		LessonsGroupCreate:      lessonsgroupcreate.NewHandler(lessonsGroupCreateUC).Handle,
+		LessonsTemplatesCreate:  lessonstemplatescreate.NewHandler(lessonsTemplatesCreateUC).Handle,
+		LessonsCancel:           lessonscancel.NewHandler(lessonsCancelUC).Handle,
 	}
 
 	e.Validator = validator.New()

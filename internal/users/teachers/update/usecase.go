@@ -9,12 +9,13 @@ import (
 )
 
 type UseCase struct {
-	userRepo  domain.UserRepository
-	txManager domain.TxManager
+	userRepo     domain.UserRepository
+	scheduleRepo domain.ScheduleRepository
+	txManager    domain.TxManager
 }
 
-func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
-	return &UseCase{userRepo: ur, txManager: tm}
+func NewUseCase(ur domain.UserRepository, sr domain.ScheduleRepository, tm domain.TxManager) *UseCase {
+	return &UseCase{userRepo: ur, scheduleRepo: sr, txManager: tm}
 }
 
 func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID uuid.UUID, req Request) (Response, error) {
@@ -32,28 +33,43 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID 
 	}
 
 	if domain.RequiresBranchAccess(caller.Role) {
-		hasCurrentAccess := false
 		for _, teacherBranch := range existing.Branches {
-			if domain.HasBranchAccess(caller.BranchIDs, teacherBranch.ID) {
-				hasCurrentAccess = true
-				break
+			if !domain.HasBranchAccess(caller.BranchIDs, teacherBranch.ID) {
+				return Response{}, domain.ErrBranchAccessDenied
 			}
 		}
-		if !hasCurrentAccess {
-			return Response{}, domain.ErrBranchAccessDenied
+		for _, branchID := range req.BranchIDs {
+			if !domain.HasBranchAccess(caller.BranchIDs, branchID) {
+				return Response{}, domain.ErrBranchAccessDenied
+			}
+		}
+	}
+
+	removed := removedBranchIDs(existing.Branches, req.BranchIDs)
+	for _, branchID := range removed {
+		hasFutureLessons, err := uc.scheduleRepo.CheckTeacherFutureLessonsInBranch(ctx, teacherID, branchID)
+		if err != nil {
+			return Response{}, err
+		}
+		if hasFutureLessons {
+			return Response{}, domain.ErrTeacherHasFutureLessons
 		}
 
-		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
-			return Response{}, domain.ErrBranchAccessDenied
+		hasActiveTemplates, err := uc.scheduleRepo.CheckTeacherActiveTemplatesInBranch(ctx, teacherID, branchID)
+		if err != nil {
+			return Response{}, err
+		}
+		if hasActiveTemplates {
+			return Response{}, domain.ErrTeacherHasActiveTemplates
 		}
 	}
 
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
-		isActive, err := uc.userRepo.IsBranchActive(txCtx, req.BranchID)
+		activeCount, err := uc.userRepo.CountActiveBranchesByIDs(txCtx, req.BranchIDs)
 		if err != nil {
 			return err
 		}
-		if !isActive {
+		if activeCount != len(req.BranchIDs) {
 			return domain.ErrArchivedReference
 		}
 
@@ -73,7 +89,7 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID 
 			return err
 		}
 
-		if err := uc.userRepo.AssignToBranches(txCtx, teacherID, []uuid.UUID{req.BranchID}); err != nil {
+		if err := uc.userRepo.AssignToBranches(txCtx, teacherID, req.BranchIDs); err != nil {
 			return err
 		}
 
@@ -106,4 +122,20 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, teacherID 
 		Status:    status,
 		Branches:  branches,
 	}, nil
+}
+
+func removedBranchIDs(existing []domain.UserBranch, requested []uuid.UUID) []uuid.UUID {
+	requestedSet := make(map[uuid.UUID]struct{}, len(requested))
+	for _, id := range requested {
+		requestedSet[id] = struct{}{}
+	}
+
+	removed := make([]uuid.UUID, 0)
+	for _, b := range existing {
+		if _, ok := requestedSet[b.ID]; !ok {
+			removed = append(removed, b.ID)
+		}
+	}
+
+	return removed
 }

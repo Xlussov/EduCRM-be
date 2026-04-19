@@ -225,18 +225,18 @@ type Lesson struct {
 }
 
 type LessonTemplate struct {
-	ID        pgtype.UUID `json:"id"`
-	BranchID  pgtype.UUID `json:"branch_id"`
-	TeacherID pgtype.UUID `json:"teacher_id"`
-	SubjectID pgtype.UUID `json:"subject_id"`
-	StudentID pgtype.UUID `json:"student_id"`
-	GroupID   pgtype.UUID `json:"group_id"`
-	DayOfWeek int32       `json:"day_of_week"`
-	StartTime time.Time   `json:"start_time"`
-	EndTime   time.Time   `json:"end_time"`
-	StartDate time.Time   `json:"start_date"`
-	EndDate   time.Time   `json:"end_date"`
-	IsActive  pgtype.Bool `json:"is_active"`
+	ID         pgtype.UUID `json:"id"`
+	BranchID   pgtype.UUID `json:"branch_id"`
+	TeacherID  pgtype.UUID `json:"teacher_id"`
+	SubjectID  pgtype.UUID `json:"subject_id"`
+	StudentID  pgtype.UUID `json:"student_id"`
+	GroupID    pgtype.UUID `json:"group_id"`
+	StartTime  time.Time   `json:"start_time"`
+	EndTime    time.Time   `json:"end_time"`
+	StartDate  time.Time   `json:"start_date"`
+	EndDate    time.Time   `json:"end_date"`
+	IsActive   pgtype.Bool `json:"is_active"`
+	DaysOfWeek int         `json:"days_of_week"`
 }
 
 type PlanPricingGrid struct {

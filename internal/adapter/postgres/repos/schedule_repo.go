@@ -81,17 +81,17 @@ func (r *ScheduleRepository) CreateTemplate(ctx context.Context, template *domai
 	}
 
 	res, err := q.CreateTemplate(ctx, sqlc.CreateTemplateParams{
-		BranchID:  pgtype.UUID{Bytes: template.BranchID, Valid: true},
-		TeacherID: pgtype.UUID{Bytes: template.TeacherID, Valid: true},
-		SubjectID: pgtype.UUID{Bytes: template.SubjectID, Valid: true},
-		StudentID: studentID,
-		GroupID:   groupID,
-		DayOfWeek: int32(template.DayOfWeek),
-		StartTime: template.StartTime,
-		EndTime:   template.EndTime,
-		StartDate: template.StartDate,
-		EndDate:   template.EndDate,
-		IsActive:  pgtype.Bool{Bool: template.IsActive, Valid: true},
+		BranchID:   pgtype.UUID{Bytes: template.BranchID, Valid: true},
+		TeacherID:  pgtype.UUID{Bytes: template.TeacherID, Valid: true},
+		SubjectID:  pgtype.UUID{Bytes: template.SubjectID, Valid: true},
+		StudentID:  studentID,
+		GroupID:    groupID,
+		DaysOfWeek: template.DayOfWeek,
+		StartTime:  template.StartTime,
+		EndTime:    template.EndTime,
+		StartDate:  template.StartDate,
+		EndDate:    template.EndDate,
+		IsActive:   pgtype.Bool{Bool: template.IsActive, Valid: true},
 	})
 	if err != nil {
 		return err
@@ -254,4 +254,20 @@ func (r *ScheduleRepository) GetTeacherSchedule(ctx context.Context, teacherID u
 		}
 	}
 	return lessons, nil
+}
+
+func (r *ScheduleRepository) CheckTeacherFutureLessonsInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	return q.CheckTeacherFutureLessonsInBranch(ctx, sqlc.CheckTeacherFutureLessonsInBranchParams{
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		BranchID:  pgtype.UUID{Bytes: branchID, Valid: true},
+	})
+}
+
+func (r *ScheduleRepository) CheckTeacherActiveTemplatesInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	return q.CheckTeacherActiveTemplatesInBranch(ctx, sqlc.CheckTeacherActiveTemplatesInBranchParams{
+		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
+		BranchID:  pgtype.UUID{Bytes: branchID, Valid: true},
+	})
 }

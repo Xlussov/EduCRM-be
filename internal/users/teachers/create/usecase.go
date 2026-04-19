@@ -5,7 +5,6 @@ import (
 	"errors"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
-	"github.com/google/uuid"
 	"golang.org/x/crypto/bcrypt"
 )
 
@@ -20,8 +19,10 @@ func NewUseCase(ur domain.UserRepository, tm domain.TxManager) *UseCase {
 
 func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (Response, error) {
 	if domain.RequiresBranchAccess(caller.Role) {
-		if !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
-			return Response{}, domain.ErrBranchAccessDenied
+		for _, branchID := range req.BranchIDs {
+			if !domain.HasBranchAccess(caller.BranchIDs, branchID) {
+				return Response{}, domain.ErrBranchAccessDenied
+			}
 		}
 	}
 
@@ -39,11 +40,11 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 	}
 
 	err = uc.txManager.Transaction(ctx, func(txCtx context.Context) error {
-		isActive, err := uc.userRepo.IsBranchActive(txCtx, req.BranchID)
+		activeCount, err := uc.userRepo.CountActiveBranchesByIDs(txCtx, req.BranchIDs)
 		if err != nil {
 			return err
 		}
-		if !isActive {
+		if activeCount != len(req.BranchIDs) {
 			return domain.ErrArchivedReference
 		}
 
@@ -54,7 +55,7 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 			return err
 		}
 
-		if err := uc.userRepo.AssignToBranches(txCtx, user.ID, []uuid.UUID{req.BranchID}); err != nil {
+		if err := uc.userRepo.AssignToBranches(txCtx, user.ID, req.BranchIDs); err != nil {
 			return err
 		}
 

@@ -18,3 +18,5 @@ sql:
             go_type: time.Time
           - db_type: pg_catalog.time
             go_type: time.Time
+          - column: "lesson_templates.days_of_week"
+            go_type: "int"

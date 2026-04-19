@@ -68,6 +68,10 @@ func (h *Handler) Handle(c echo.Context) error {
 			return response.Error(c, http.StatusBadRequest, "CANNOT_EDIT_ARCHIVED", err.Error(), nil)
 		case errors.Is(err, domain.ErrNotFound):
 			return response.Error(c, http.StatusNotFound, "NOT_FOUND", "Teacher not found", nil)
+		case errors.Is(err, domain.ErrTeacherHasFutureLessons):
+			return response.Error(c, http.StatusConflict, "TEACHER_HAS_FUTURE_LESSONS", err.Error(), nil)
+		case errors.Is(err, domain.ErrTeacherHasActiveTemplates):
+			return response.Error(c, http.StatusConflict, "TEACHER_HAS_ACTIVE_TEMPLATES", err.Error(), nil)
 		default:
 			return response.Error(c, http.StatusInternalServerError, "INTERNAL_ERROR", err.Error(), nil)
 		}

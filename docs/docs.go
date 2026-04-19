@@ -4443,15 +4443,20 @@ const docTemplate = `{
         "internal_users_teachers_create.Request": {
             "type": "object",
             "required": [
-                "branch_id",
+                "branch_ids",
                 "first_name",
                 "last_name",
                 "password",
                 "phone"
             ],
             "properties": {
-                "branch_id": {
-                    "type": "string"
+                "branch_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "first_name": {
                     "type": "string",
@@ -4550,14 +4555,19 @@ const docTemplate = `{
         "internal_users_teachers_update.Request": {
             "type": "object",
             "required": [
-                "branch_id",
+                "branch_ids",
                 "first_name",
                 "last_name",
                 "phone"
             ],
             "properties": {
-                "branch_id": {
-                    "type": "string"
+                "branch_ids": {
+                    "type": "array",
+                    "minItems": 1,
+                    "uniqueItems": true,
+                    "items": {
+                        "type": "string"
+                    }
                 },
                 "first_name": {
                     "type": "string",

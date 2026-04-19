@@ -15,8 +15,13 @@ type Querier interface {
 	AddStudentsToGroupBulk(ctx context.Context, arg AddStudentsToGroupBulkParams) error
 	AssignUserToBranch(ctx context.Context, arg AssignUserToBranchParams) error
 	BulkCreateLessons(ctx context.Context, arg []BulkCreateLessonsParams) (int64, error)
+	CancelFutureLessonsByTemplate(ctx context.Context, templateID pgtype.UUID) error
 	CheckStudentConflict(ctx context.Context, arg CheckStudentConflictParams) (bool, error)
+	CheckStudentConflictExcludingLesson(ctx context.Context, arg CheckStudentConflictExcludingLessonParams) (bool, error)
+	CheckTeacherActiveTemplatesInBranch(ctx context.Context, arg CheckTeacherActiveTemplatesInBranchParams) (bool, error)
 	CheckTeacherConflict(ctx context.Context, arg CheckTeacherConflictParams) (bool, error)
+	CheckTeacherConflictExcludingLesson(ctx context.Context, arg CheckTeacherConflictExcludingLessonParams) (bool, error)
+	CheckTeacherFutureLessonsInBranch(ctx context.Context, arg CheckTeacherFutureLessonsInBranchParams) (bool, error)
 	CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error)
 	CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error)
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)
@@ -30,6 +35,7 @@ type Querier interface {
 	CreateSubscriptionPlan(ctx context.Context, arg CreateSubscriptionPlanParams) (SubscriptionPlan, error)
 	CreateTemplate(ctx context.Context, arg CreateTemplateParams) (LessonTemplate, error)
 	CreateUser(ctx context.Context, arg CreateUserParams) (User, error)
+	DeactivateTemplate(ctx context.Context, id pgtype.UUID) error
 	DeleteUserBranches(ctx context.Context, userID pgtype.UUID) error
 	GetAdmins(ctx context.Context) ([]GetAdminsRow, error)
 	GetAllBranches(ctx context.Context, status NullEntityStatus) ([]Branch, error)
@@ -64,6 +70,7 @@ type Querier interface {
 	IsBranchActive(ctx context.Context, id pgtype.UUID) (bool, error)
 	IsTeacherGroup(ctx context.Context, arg IsTeacherGroupParams) (bool, error)
 	IsTeacherStudent(ctx context.Context, arg IsTeacherStudentParams) (pgtype.Bool, error)
+	ListLessons(ctx context.Context, arg ListLessonsParams) ([]ListLessonsRow, error)
 	ListSubjects(ctx context.Context, arg ListSubjectsParams) ([]Subject, error)
 	RemoveStudentFromGroup(ctx context.Context, arg RemoveStudentFromGroupParams) error
 	RemoveStudentsFromGroupBulk(ctx context.Context, arg RemoveStudentsFromGroupBulkParams) error
@@ -74,6 +81,7 @@ type Querier interface {
 	UpdateBranchStatus(ctx context.Context, arg UpdateBranchStatusParams) error
 	UpdateGroupName(ctx context.Context, arg UpdateGroupNameParams) (Group, error)
 	UpdateGroupStatus(ctx context.Context, arg UpdateGroupStatusParams) error
+	UpdateLesson(ctx context.Context, arg UpdateLessonParams) (Lesson, error)
 	UpdateLessonStatus(ctx context.Context, arg UpdateLessonStatusParams) error
 	UpdatePlanStatus(ctx context.Context, arg UpdatePlanStatusParams) error
 	UpdateStudent(ctx context.Context, arg UpdateStudentParams) (Student, error)

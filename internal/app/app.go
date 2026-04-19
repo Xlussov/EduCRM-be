@@ -117,7 +117,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	teachersGetUC := teacherget.NewUseCase(userRepo)
 	teachersListUC := teacherlist.NewUseCase(userRepo)
 	teachersUnarchiveUC := teacherunarchive.NewUseCase(userRepo)
-	teachersUpdateUC := teacherupdate.NewUseCase(userRepo, txManager)
+	teachersUpdateUC := teacherupdate.NewUseCase(userRepo, scheduleRepo, txManager)
 	meUC := me.NewUseCase(userRepo)
 
 	branchesCreateUC := branchescreate.NewUseCase(branchRepo, userRepo, txManager)

@@ -25,6 +25,19 @@ type BulkCreateLessonsParams struct {
 	Status     NullLessonStatus `json:"status"`
 }
 
+const cancelFutureLessonsByTemplate = `-- name: CancelFutureLessonsByTemplate :exec
+UPDATE lessons
+SET status = 'CANCELLED'
+WHERE template_id = $1
+    AND date >= CURRENT_DATE
+    AND status = 'SCHEDULED'
+`
+
+func (q *Queries) CancelFutureLessonsByTemplate(ctx context.Context, templateID pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, cancelFutureLessonsByTemplate, templateID)
+	return err
+}
+
 const checkStudentConflict = `-- name: CheckStudentConflict :one
 SELECT EXISTS (
     SELECT 1 FROM lessons l
@@ -59,6 +72,65 @@ func (q *Queries) CheckStudentConflict(ctx context.Context, arg CheckStudentConf
 	return exists, err
 }
 
+const checkStudentConflictExcludingLesson = `-- name: CheckStudentConflictExcludingLesson :one
+SELECT EXISTS (
+    SELECT 1 FROM lessons l
+    LEFT JOIN student_groups sg ON l.group_id = sg.group_id 
+        AND sg.student_id = $1 
+        AND sg.joined_at <= NOW() 
+        AND (sg.left_at IS NULL OR sg.left_at > NOW())
+    WHERE (l.student_id = $1 OR sg.student_id = $1)
+      AND l.date = $2
+      AND l.status != 'CANCELLED'
+      AND l.start_time < $4
+      AND l.end_time > $3
+      AND l.id != $5
+)
+`
+
+type CheckStudentConflictExcludingLessonParams struct {
+	StudentID pgtype.UUID `json:"student_id"`
+	Date      time.Time   `json:"date"`
+	EndTime   time.Time   `json:"end_time"`
+	StartTime time.Time   `json:"start_time"`
+	ID        pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) CheckStudentConflictExcludingLesson(ctx context.Context, arg CheckStudentConflictExcludingLessonParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkStudentConflictExcludingLesson,
+		arg.StudentID,
+		arg.Date,
+		arg.EndTime,
+		arg.StartTime,
+		arg.ID,
+	)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkTeacherActiveTemplatesInBranch = `-- name: CheckTeacherActiveTemplatesInBranch :one
+SELECT EXISTS (
+        SELECT 1 FROM lesson_templates
+        WHERE teacher_id = $1
+            AND branch_id = $2
+            AND is_active = TRUE
+            AND end_date >= CURRENT_DATE
+)
+`
+
+type CheckTeacherActiveTemplatesInBranchParams struct {
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	BranchID  pgtype.UUID `json:"branch_id"`
+}
+
+func (q *Queries) CheckTeacherActiveTemplatesInBranch(ctx context.Context, arg CheckTeacherActiveTemplatesInBranchParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherActiveTemplatesInBranch, arg.TeacherID, arg.BranchID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const checkTeacherConflict = `-- name: CheckTeacherConflict :one
 SELECT EXISTS (
     SELECT 1 FROM lessons
@@ -84,6 +156,61 @@ func (q *Queries) CheckTeacherConflict(ctx context.Context, arg CheckTeacherConf
 		arg.EndTime,
 		arg.StartTime,
 	)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkTeacherConflictExcludingLesson = `-- name: CheckTeacherConflictExcludingLesson :one
+SELECT EXISTS (
+        SELECT 1 FROM lessons
+        WHERE teacher_id = $1
+            AND date = $2
+            AND status != 'CANCELLED'
+            AND start_time < $4
+            AND end_time > $3
+            AND id != $5
+)
+`
+
+type CheckTeacherConflictExcludingLessonParams struct {
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	Date      time.Time   `json:"date"`
+	EndTime   time.Time   `json:"end_time"`
+	StartTime time.Time   `json:"start_time"`
+	ID        pgtype.UUID `json:"id"`
+}
+
+func (q *Queries) CheckTeacherConflictExcludingLesson(ctx context.Context, arg CheckTeacherConflictExcludingLessonParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherConflictExcludingLesson,
+		arg.TeacherID,
+		arg.Date,
+		arg.EndTime,
+		arg.StartTime,
+		arg.ID,
+	)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
+const checkTeacherFutureLessonsInBranch = `-- name: CheckTeacherFutureLessonsInBranch :one
+SELECT EXISTS (
+        SELECT 1 FROM lessons
+        WHERE teacher_id = $1
+            AND branch_id = $2
+            AND status = 'SCHEDULED'
+            AND date >= CURRENT_DATE
+)
+`
+
+type CheckTeacherFutureLessonsInBranchParams struct {
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	BranchID  pgtype.UUID `json:"branch_id"`
+}
+
+func (q *Queries) CheckTeacherFutureLessonsInBranch(ctx context.Context, arg CheckTeacherFutureLessonsInBranchParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherFutureLessonsInBranch, arg.TeacherID, arg.BranchID)
 	var exists bool
 	err := row.Scan(&exists)
 	return exists, err
@@ -143,24 +270,24 @@ func (q *Queries) CreateLesson(ctx context.Context, arg CreateLessonParams) (Les
 
 const createTemplate = `-- name: CreateTemplate :one
 INSERT INTO lesson_templates (
-    branch_id, teacher_id, subject_id, student_id, group_id, day_of_week, start_time, end_time, start_date, end_date, is_active
+    branch_id, teacher_id, subject_id, student_id, group_id, days_of_week, start_time, end_time, start_date, end_date, is_active
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-) RETURNING id, branch_id, teacher_id, subject_id, student_id, group_id, day_of_week, start_time, end_time, start_date, end_date, is_active
+) RETURNING id, branch_id, teacher_id, subject_id, student_id, group_id, start_time, end_time, start_date, end_date, is_active, days_of_week
 `
 
 type CreateTemplateParams struct {
-	BranchID  pgtype.UUID `json:"branch_id"`
-	TeacherID pgtype.UUID `json:"teacher_id"`
-	SubjectID pgtype.UUID `json:"subject_id"`
-	StudentID pgtype.UUID `json:"student_id"`
-	GroupID   pgtype.UUID `json:"group_id"`
-	DayOfWeek int32       `json:"day_of_week"`
-	StartTime time.Time   `json:"start_time"`
-	EndTime   time.Time   `json:"end_time"`
-	StartDate time.Time   `json:"start_date"`
-	EndDate   time.Time   `json:"end_date"`
-	IsActive  pgtype.Bool `json:"is_active"`
+	BranchID   pgtype.UUID `json:"branch_id"`
+	TeacherID  pgtype.UUID `json:"teacher_id"`
+	SubjectID  pgtype.UUID `json:"subject_id"`
+	StudentID  pgtype.UUID `json:"student_id"`
+	GroupID    pgtype.UUID `json:"group_id"`
+	DaysOfWeek int         `json:"days_of_week"`
+	StartTime  time.Time   `json:"start_time"`
+	EndTime    time.Time   `json:"end_time"`
+	StartDate  time.Time   `json:"start_date"`
+	EndDate    time.Time   `json:"end_date"`
+	IsActive   pgtype.Bool `json:"is_active"`
 }
 
 func (q *Queries) CreateTemplate(ctx context.Context, arg CreateTemplateParams) (LessonTemplate, error) {
@@ -170,7 +297,7 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg CreateTemplateParams) 
 		arg.SubjectID,
 		arg.StudentID,
 		arg.GroupID,
-		arg.DayOfWeek,
+		arg.DaysOfWeek,
 		arg.StartTime,
 		arg.EndTime,
 		arg.StartDate,
@@ -185,14 +312,25 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg CreateTemplateParams) 
 		&i.SubjectID,
 		&i.StudentID,
 		&i.GroupID,
-		&i.DayOfWeek,
 		&i.StartTime,
 		&i.EndTime,
 		&i.StartDate,
 		&i.EndDate,
 		&i.IsActive,
+		&i.DaysOfWeek,
 	)
 	return i, err
+}
+
+const deactivateTemplate = `-- name: DeactivateTemplate :exec
+UPDATE lesson_templates
+SET is_active = FALSE
+WHERE id = $1
+`
+
+func (q *Queries) DeactivateTemplate(ctx context.Context, id pgtype.UUID) error {
+	_, err := q.db.Exec(ctx, deactivateTemplate, id)
+	return err
 }
 
 const getLessonByID = `-- name: GetLessonByID :one
@@ -264,6 +402,163 @@ func (q *Queries) GetTeacherSchedule(ctx context.Context, arg GetTeacherSchedule
 		return nil, err
 	}
 	return items, nil
+}
+
+const listLessons = `-- name: ListLessons :many
+SELECT
+        l.id,
+        l.branch_id,
+        l.template_id,
+        l.teacher_id,
+        t.first_name AS teacher_first_name,
+        t.last_name AS teacher_last_name,
+        l.subject_id,
+        s.name AS subject_name,
+        l.student_id,
+        st.first_name AS student_first_name,
+        st.last_name AS student_last_name,
+        l.group_id,
+        g.name AS group_name,
+        l.date,
+        l.start_time,
+        l.end_time,
+        l.status,
+        l.created_at
+FROM lessons l
+JOIN users t ON t.id = l.teacher_id
+JOIN subjects s ON s.id = l.subject_id
+LEFT JOIN students st ON st.id = l.student_id
+LEFT JOIN groups g ON g.id = l.group_id
+WHERE l.date >= $1
+    AND l.date <= $2
+    AND ($3::uuid IS NULL OR l.teacher_id = $3)
+    AND ($4::uuid IS NULL OR l.student_id = $4)
+    AND ($5::uuid IS NULL OR l.group_id = $5)
+    AND ($6::uuid[] IS NULL OR l.branch_id = ANY($6))
+ORDER BY l.date ASC, l.start_time ASC
+`
+
+type ListLessonsParams struct {
+	Date    time.Time     `json:"date"`
+	Date_2  time.Time     `json:"date_2"`
+	Column3 pgtype.UUID   `json:"column_3"`
+	Column4 pgtype.UUID   `json:"column_4"`
+	Column5 pgtype.UUID   `json:"column_5"`
+	Column6 []pgtype.UUID `json:"column_6"`
+}
+
+type ListLessonsRow struct {
+	ID               pgtype.UUID        `json:"id"`
+	BranchID         pgtype.UUID        `json:"branch_id"`
+	TemplateID       pgtype.UUID        `json:"template_id"`
+	TeacherID        pgtype.UUID        `json:"teacher_id"`
+	TeacherFirstName string             `json:"teacher_first_name"`
+	TeacherLastName  string             `json:"teacher_last_name"`
+	SubjectID        pgtype.UUID        `json:"subject_id"`
+	SubjectName      string             `json:"subject_name"`
+	StudentID        pgtype.UUID        `json:"student_id"`
+	StudentFirstName pgtype.Text        `json:"student_first_name"`
+	StudentLastName  pgtype.Text        `json:"student_last_name"`
+	GroupID          pgtype.UUID        `json:"group_id"`
+	GroupName        pgtype.Text        `json:"group_name"`
+	Date             time.Time          `json:"date"`
+	StartTime        time.Time          `json:"start_time"`
+	EndTime          time.Time          `json:"end_time"`
+	Status           NullLessonStatus   `json:"status"`
+	CreatedAt        pgtype.Timestamptz `json:"created_at"`
+}
+
+func (q *Queries) ListLessons(ctx context.Context, arg ListLessonsParams) ([]ListLessonsRow, error) {
+	rows, err := q.db.Query(ctx, listLessons,
+		arg.Date,
+		arg.Date_2,
+		arg.Column3,
+		arg.Column4,
+		arg.Column5,
+		arg.Column6,
+	)
+	if err != nil {
+		return nil, err
+	}
+	defer rows.Close()
+	var items []ListLessonsRow
+	for rows.Next() {
+		var i ListLessonsRow
+		if err := rows.Scan(
+			&i.ID,
+			&i.BranchID,
+			&i.TemplateID,
+			&i.TeacherID,
+			&i.TeacherFirstName,
+			&i.TeacherLastName,
+			&i.SubjectID,
+			&i.SubjectName,
+			&i.StudentID,
+			&i.StudentFirstName,
+			&i.StudentLastName,
+			&i.GroupID,
+			&i.GroupName,
+			&i.Date,
+			&i.StartTime,
+			&i.EndTime,
+			&i.Status,
+			&i.CreatedAt,
+		); err != nil {
+			return nil, err
+		}
+		items = append(items, i)
+	}
+	if err := rows.Err(); err != nil {
+		return nil, err
+	}
+	return items, nil
+}
+
+const updateLesson = `-- name: UpdateLesson :one
+UPDATE lessons
+SET date = $2,
+    start_time = $3,
+    end_time = $4,
+    teacher_id = $5,
+    subject_id = $6
+WHERE id = $1
+RETURNING id, branch_id, template_id, teacher_id, subject_id, student_id, group_id, date, start_time, end_time, status, created_at
+`
+
+type UpdateLessonParams struct {
+	ID        pgtype.UUID `json:"id"`
+	Date      time.Time   `json:"date"`
+	StartTime time.Time   `json:"start_time"`
+	EndTime   time.Time   `json:"end_time"`
+	TeacherID pgtype.UUID `json:"teacher_id"`
+	SubjectID pgtype.UUID `json:"subject_id"`
+}
+
+func (q *Queries) UpdateLesson(ctx context.Context, arg UpdateLessonParams) (Lesson, error) {
+	row := q.db.QueryRow(ctx, updateLesson,
+		arg.ID,
+		arg.Date,
+		arg.StartTime,
+		arg.EndTime,
+		arg.TeacherID,
+		arg.SubjectID,
+	)
+	var i Lesson
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.TemplateID,
+		&i.TeacherID,
+		&i.SubjectID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.Date,
+		&i.StartTime,
+		&i.EndTime,
+		&i.Status,
+		&i.CreatedAt,
+	)
+	return i, err
 }
 
 const updateLessonStatus = `-- name: UpdateLessonStatus :exec

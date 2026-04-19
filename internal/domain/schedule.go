@@ -53,5 +53,7 @@ type ScheduleRepository interface {
 	GetLessonByID(ctx context.Context, id uuid.UUID) (*Lesson, error)
 	CheckTeacherConflict(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time) (bool, error)
 	CheckStudentConflict(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time) (bool, error)
+	CheckTeacherFutureLessonsInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error)
+	CheckTeacherActiveTemplatesInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error)
 	GetTeacherSchedule(ctx context.Context, teacherID uuid.UUID, from, to time.Time) ([]Lesson, error)
 }

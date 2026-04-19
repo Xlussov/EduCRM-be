@@ -52,6 +52,16 @@ func (m *ScheduleRepository) CheckStudentConflict(ctx context.Context, studentID
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *ScheduleRepository) CheckTeacherFutureLessonsInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, branchID)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *ScheduleRepository) CheckTeacherActiveTemplatesInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, branchID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *ScheduleRepository) GetTeacherSchedule(ctx context.Context, teacherID uuid.UUID, from, to time.Time) ([]domain.Lesson, error) {
 	args := m.Called(ctx, teacherID, from, to)
 	if args.Get(0) == nil {

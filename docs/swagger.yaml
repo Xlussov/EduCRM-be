@@ -796,8 +796,12 @@ definitions:
     type: object
   internal_users_teachers_create.Request:
     properties:
-      branch_id:
-        type: string
+      branch_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+        uniqueItems: true
       first_name:
         maxLength: 50
         minLength: 2
@@ -812,7 +816,7 @@ definitions:
       phone:
         type: string
     required:
-    - branch_id
+    - branch_ids
     - first_name
     - last_name
     - password
@@ -868,8 +872,12 @@ definitions:
     type: object
   internal_users_teachers_update.Request:
     properties:
-      branch_id:
-        type: string
+      branch_ids:
+        items:
+          type: string
+        minItems: 1
+        type: array
+        uniqueItems: true
       first_name:
         maxLength: 50
         minLength: 2
@@ -881,7 +889,7 @@ definitions:
       phone:
         type: string
     required:
-    - branch_id
+    - branch_ids
     - first_name
     - last_name
     - phone

@@ -17,4 +17,6 @@ var (
 	ErrStudentScheduleConflict   = errors.New("student schedule conflict")
 	ErrTeacherHasFutureLessons   = errors.New("teacher has future lessons in branch")
 	ErrTeacherHasActiveTemplates = errors.New("teacher has active templates in branch")
+	ErrLessonNotScheduled        = errors.New("lesson is not scheduled")
+	ErrTeacherNotInBranch        = errors.New("teacher is not in branch")
 )

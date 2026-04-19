@@ -58,4 +58,5 @@ type UserRepository interface {
 	GetUserBranchIDs(ctx context.Context, userID uuid.UUID) ([]uuid.UUID, error)
 	IsBranchActive(ctx context.Context, branchID uuid.UUID) (bool, error)
 	CountActiveBranchesByIDs(ctx context.Context, branchIDs []uuid.UUID) (int, error)
+	CheckTeacherInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error)
 }

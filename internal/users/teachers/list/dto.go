@@ -2,7 +2,9 @@ package list
 
 import "github.com/google/uuid"
 
-type Request struct{}
+type Request struct {
+	BranchID *uuid.UUID `query:"branch_id"`
+}
 
 type BranchResponse struct {
 	ID   uuid.UUID `json:"id"`

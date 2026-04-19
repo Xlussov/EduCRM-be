@@ -15,14 +15,26 @@ func NewUseCase(ur domain.UserRepository) *UseCase {
 	return &UseCase{userRepo: ur}
 }
 
-func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, _ Request) ([]TeacherResponse, error) {
+func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) ([]TeacherResponse, error) {
 	var filter []uuid.UUID
 
-	if domain.RequiresBranchAccess(caller.Role) {
+	if caller.Role == domain.RoleSuperadmin {
+		if req.BranchID != nil {
+			filter = []uuid.UUID{*req.BranchID}
+		}
+	} else if domain.RequiresBranchAccess(caller.Role) {
 		if len(caller.BranchIDs) == 0 {
 			return []TeacherResponse{}, nil
 		}
-		filter = caller.BranchIDs
+
+		if req.BranchID != nil {
+			if !domain.HasBranchAccess(caller.BranchIDs, *req.BranchID) {
+				return nil, domain.ErrBranchAccessDenied
+			}
+			filter = []uuid.UUID{*req.BranchID}
+		} else {
+			filter = caller.BranchIDs
+		}
 	}
 
 	teachers, err := uc.userRepo.GetTeachers(ctx, filter)

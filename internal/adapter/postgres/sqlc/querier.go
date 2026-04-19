@@ -22,6 +22,7 @@ type Querier interface {
 	CheckTeacherConflict(ctx context.Context, arg CheckTeacherConflictParams) (bool, error)
 	CheckTeacherConflictExcludingLesson(ctx context.Context, arg CheckTeacherConflictExcludingLessonParams) (bool, error)
 	CheckTeacherFutureLessonsInBranch(ctx context.Context, arg CheckTeacherFutureLessonsInBranchParams) (bool, error)
+	CheckTeacherInBranch(ctx context.Context, arg CheckTeacherInBranchParams) (bool, error)
 	CountActiveBranchesByIDs(ctx context.Context, dollar_1 []pgtype.UUID) (int32, error)
 	CountSubjectsInBranch(ctx context.Context, arg CountSubjectsInBranchParams) (int32, error)
 	CreateBranch(ctx context.Context, arg CreateBranchParams) (pgtype.UUID, error)

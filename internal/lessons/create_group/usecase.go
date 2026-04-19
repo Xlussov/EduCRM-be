@@ -10,18 +10,28 @@ import (
 type UseCase struct {
 	scheduleRepo domain.ScheduleRepository
 	groupRepo    domain.GroupRepository
+	userRepo     domain.UserRepository
 }
 
-func NewUseCase(sr domain.ScheduleRepository, gr domain.GroupRepository) *UseCase {
+func NewUseCase(sr domain.ScheduleRepository, gr domain.GroupRepository, ur domain.UserRepository) *UseCase {
 	return &UseCase{
 		scheduleRepo: sr,
 		groupRepo:    gr,
+		userRepo:     ur,
 	}
 }
 
 func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Request) (Response, error) {
 	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
 		return Response{}, domain.ErrBranchAccessDenied
+	}
+
+	teacherInBranch, err := uc.userRepo.CheckTeacherInBranch(ctx, req.TeacherID, req.BranchID)
+	if err != nil {
+		return Response{}, err
+	}
+	if !teacherInBranch {
+		return Response{}, domain.ErrTeacherNotInBranch
 	}
 
 	date, err := time.Parse("2006-01-02", req.Date)

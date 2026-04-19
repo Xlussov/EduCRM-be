@@ -236,7 +236,7 @@ type LessonTemplate struct {
 	StartDate  time.Time   `json:"start_date"`
 	EndDate    time.Time   `json:"end_date"`
 	IsActive   pgtype.Bool `json:"is_active"`
-	DaysOfWeek int         `json:"days_of_week"`
+	DaysOfWeek []int32     `json:"days_of_week"`
 }
 
 type PlanPricingGrid struct {

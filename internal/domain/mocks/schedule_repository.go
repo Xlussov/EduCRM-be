@@ -34,6 +34,11 @@ func (m *ScheduleRepository) UpdateLessonStatus(ctx context.Context, id uuid.UUI
 	return args.Error(0)
 }
 
+func (m *ScheduleRepository) UpdateLesson(ctx context.Context, lesson *domain.Lesson) error {
+	args := m.Called(ctx, lesson)
+	return args.Error(0)
+}
+
 func (m *ScheduleRepository) GetLessonByID(ctx context.Context, id uuid.UUID) (*domain.Lesson, error) {
 	args := m.Called(ctx, id)
 	if args.Get(0) == nil {
@@ -47,8 +52,18 @@ func (m *ScheduleRepository) CheckTeacherConflict(ctx context.Context, teacherID
 	return args.Bool(0), args.Error(1)
 }
 
+func (m *ScheduleRepository) CheckTeacherConflictExcludingLesson(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time, lessonID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, date, start, end, lessonID)
+	return args.Bool(0), args.Error(1)
+}
+
 func (m *ScheduleRepository) CheckStudentConflict(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time) (bool, error) {
 	args := m.Called(ctx, studentID, date, start, end)
+	return args.Bool(0), args.Error(1)
+}
+
+func (m *ScheduleRepository) CheckStudentConflictExcludingLesson(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time, lessonID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, studentID, date, start, end, lessonID)
 	return args.Bool(0), args.Error(1)
 }
 
@@ -60,6 +75,14 @@ func (m *ScheduleRepository) CheckTeacherFutureLessonsInBranch(ctx context.Conte
 func (m *ScheduleRepository) CheckTeacherActiveTemplatesInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
 	args := m.Called(ctx, teacherID, branchID)
 	return args.Bool(0), args.Error(1)
+}
+
+func (m *ScheduleRepository) ListLessons(ctx context.Context, from, to time.Time, teacherID, studentID, groupID *uuid.UUID, branchIDs []uuid.UUID) ([]domain.LessonDetails, error) {
+	args := m.Called(ctx, from, to, teacherID, studentID, groupID, branchIDs)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).([]domain.LessonDetails), args.Error(1)
 }
 
 func (m *ScheduleRepository) GetTeacherSchedule(ctx context.Context, teacherID uuid.UUID, from, to time.Time) ([]domain.Lesson, error) {

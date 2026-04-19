@@ -2,11 +2,12 @@
         db-up db-down db-reset db-logs \
         sqlc sqlc-watch \
         migrate-up migrate-down migrate-force migrate-create migrate-reset \
-        dev-init dev-reset check
+        dev-init dev-reset check test-log
 
 include .env
 export
 
+DATETIME = $(shell powershell -Command "Get-Date -format 'yyyy-MM-dd_HH-mm-ss'")
 MIGRATIONS_PATH=internal/adapter/postgres/migrations
 
 fmt:
@@ -21,10 +22,14 @@ lint:
 test:
 	go test -v ./... -count=1
 
+test-log:
+	@if not exist logs mkdir logs
+	go test -v ./... -count=1 > logs/test_$(DATETIME).log
+
 run:
 	go run cmd/app/main.go
 
-build: sqlc
+build: test swagger
 	go build -o bin/app cmd/app/main.go
 
 # --- DOCKER ---

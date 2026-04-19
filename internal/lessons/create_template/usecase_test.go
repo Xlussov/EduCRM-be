@@ -24,22 +24,34 @@ func TestUseCase_Execute(t *testing.T) {
 	student2 := uuid.New()
 
 	validReq := Request{
-		BranchID:  branchID,
-		TeacherID: teacherID,
-		SubjectID: subjectID,
-		GroupID:   &groupID,
-		DayOfWeek: 5, // Friday
-		StartTime: "10:00",
-		EndTime:   "11:00",
-		StartDate: "2026-05-01", // Friday
-		EndDate:   "2026-05-15", // Friday (total 3 matches: 1st, 8th, 15th)
+		BranchID:   branchID,
+		TeacherID:  teacherID,
+		SubjectID:  subjectID,
+		GroupID:    &groupID,
+		DaysOfWeek: []int32{5}, // Friday
+		StartTime:  "10:00",
+		EndTime:    "11:00",
+		StartDate:  "2026-05-01", // Friday
+		EndDate:    "2026-05-15", // Friday (total 3 matches: 1st, 8th, 15th)
+	}
+
+	multiDayReq := Request{
+		BranchID:   branchID,
+		TeacherID:  teacherID,
+		SubjectID:  subjectID,
+		GroupID:    &groupID,
+		DaysOfWeek: []int32{1, 5}, // Monday, Friday
+		StartTime:  "10:00",
+		EndTime:    "11:00",
+		StartDate:  "2026-05-01", // Friday
+		EndDate:    "2026-05-11", // Monday (total 4 matches: 1st, 4th, 8th, 11th)
 	}
 
 	tests := []struct {
 		name        string
 		req         Request
 		caller      domain.Caller
-		mockSetup   func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository)
+		mockSetup   func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository)
 		expectedErr error
 		expectedCnt int
 		expectedCnf int
@@ -48,7 +60,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "full success",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
 
 				sRepo.On("CreateTemplate", mock.Anything, mock.MatchedBy(func(tmp *domain.Template) bool {
@@ -71,10 +84,38 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedCnf: 0,
 		},
 		{
+			name:   "multi-day success",
+			req:    multiDayReq,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
+
+				sRepo.On("CreateTemplate", mock.Anything, mock.MatchedBy(func(tmp *domain.Template) bool {
+					return tmp.BranchID == branchID && tmp.TeacherID == teacherID
+				})).Return(nil).Run(func(args mock.Arguments) {
+					l := args.Get(1).(*domain.Template)
+					l.ID = uuid.New()
+				})
+
+				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil).Times(4)
+				sRepo.On("CheckStudentConflict", mock.Anything, student1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil).Times(4)
+				sRepo.On("CheckStudentConflict", mock.Anything, student2, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil).Times(4)
+
+				sRepo.On("BulkCreateLessons", mock.Anything, mock.MatchedBy(func(ls []domain.Lesson) bool {
+					return len(ls) == 4
+				})).Return(nil)
+			},
+			expectedErr: nil,
+			expectedCnt: 4,
+			expectedCnf: 0,
+		},
+		{
 			name:   "partial success (1 date conflicted)",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
 
 				sRepo.On("CreateTemplate", mock.Anything, mock.MatchedBy(func(tmp *domain.Template) bool {
@@ -113,10 +154,22 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedCnf: 0,
 		},
 		{
+			name:   "teacher not in branch",
+			req:    validReq,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(false, nil)
+			},
+			expectedErr: domain.ErrTeacherNotInBranch,
+			expectedCnt: 0,
+			expectedCnf: 0,
+		},
+		{
 			name:   "db error during get students",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return(nil, errors.New("db error"))
 			},
 			expectedErr: errors.New("db error"),
@@ -129,11 +182,12 @@ func TestUseCase_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sRepo := new(mocks.ScheduleRepository)
 			gRepo := new(mocks.GroupRepository)
+			uRepo := new(mocks.UserRepository)
 			if tt.mockSetup != nil {
-				tt.mockSetup(sRepo, gRepo)
+				tt.mockSetup(sRepo, gRepo, uRepo)
 			}
 
-			uc := NewUseCase(sRepo, gRepo)
+			uc := NewUseCase(sRepo, gRepo, uRepo)
 			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedErr != nil {
@@ -152,6 +206,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 			sRepo.AssertExpectations(t)
 			gRepo.AssertExpectations(t)
+			uRepo.AssertExpectations(t)
 		})
 	}
 }

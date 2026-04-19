@@ -36,14 +36,15 @@ func TestUseCase_Execute(t *testing.T) {
 		name        string
 		req         Request
 		caller      domain.Caller
-		mockSetup   func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository)
+		mockSetup   func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository)
 		expectedErr error
 	}{
 		{
 			name:   "success",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
 				sRepo.On("CheckStudentConflict", mock.Anything, student1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
@@ -62,7 +63,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "teacher conflict",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
 			},
 			expectedErr: domain.ErrTeacherScheduleConflict,
@@ -71,7 +73,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "second student conflict aborts",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
 				sRepo.On("CheckStudentConflict", mock.Anything, student1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil).Once()
@@ -87,6 +90,15 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: domain.ErrBranchAccessDenied,
 		},
 		{
+			name:   "teacher not in branch",
+			req:    validReq,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(false, nil)
+			},
+			expectedErr: domain.ErrTeacherNotInBranch,
+		},
+		{
 			name: "invalid time input",
 			req: Request{
 				BranchID:  branchID,
@@ -97,15 +109,18 @@ func TestUseCase_Execute(t *testing.T) {
 				StartTime: "25:00",
 				EndTime:   "11:00",
 			},
-			caller:      domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup:   nil,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+			},
 			expectedErr: domain.ErrInvalidInput,
 		},
 		{
 			name:   "group repo error",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository) {
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return(nil, errors.New("db error"))
 			},
@@ -117,11 +132,12 @@ func TestUseCase_Execute(t *testing.T) {
 		t.Run(tt.name, func(t *testing.T) {
 			sRepo := new(mocks.ScheduleRepository)
 			gRepo := new(mocks.GroupRepository)
+			uRepo := new(mocks.UserRepository)
 			if tt.mockSetup != nil {
-				tt.mockSetup(sRepo, gRepo)
+				tt.mockSetup(sRepo, gRepo, uRepo)
 			}
 
-			uc := NewUseCase(sRepo, gRepo)
+			uc := NewUseCase(sRepo, gRepo, uRepo)
 			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedErr != nil {
@@ -139,6 +155,7 @@ func TestUseCase_Execute(t *testing.T) {
 
 			sRepo.AssertExpectations(t)
 			gRepo.AssertExpectations(t)
+			uRepo.AssertExpectations(t)
 		})
 	}
 }

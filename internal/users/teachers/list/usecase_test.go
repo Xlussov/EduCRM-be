@@ -15,7 +15,9 @@ import (
 
 func TestUseCase_Execute(t *testing.T) {
 	branchID := uuid.New()
+	otherBranchID := uuid.New()
 	teacherID := uuid.New()
+	errDB := errors.New("db error")
 
 	tests := []struct {
 		name          string
@@ -46,6 +48,15 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: nil,
 		},
 		{
+			name:   "superadmin_branch_filter",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			mockSetup: func(repo *mocks.UserRepository) {
+				repo.On("GetTeachers", mock.Anything, []uuid.UUID{branchID}).Return([]*domain.UserWithBranches{}, nil).Once()
+			},
+			expectedCount: 0,
+			expectedError: nil,
+		},
+		{
 			name:   "admin_success_filtered",
 			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
 			mockSetup: func(repo *mocks.UserRepository) {
@@ -53,6 +64,22 @@ func TestUseCase_Execute(t *testing.T) {
 			},
 			expectedCount: 0,
 			expectedError: nil,
+		},
+		{
+			name:   "admin_branch_filter_allowed",
+			caller: domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID, otherBranchID}},
+			mockSetup: func(repo *mocks.UserRepository) {
+				repo.On("GetTeachers", mock.Anything, []uuid.UUID{otherBranchID}).Return([]*domain.UserWithBranches{}, nil).Once()
+			},
+			expectedCount: 0,
+			expectedError: nil,
+		},
+		{
+			name:          "admin_branch_filter_denied",
+			caller:        domain.Caller{Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup:     func(repo *mocks.UserRepository) {},
+			expectedCount: 0,
+			expectedError: domain.ErrBranchAccessDenied,
 		},
 		{
 			name:   "admin_no_branches",
@@ -66,10 +93,10 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "repo_error",
 			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			mockSetup: func(repo *mocks.UserRepository) {
-				repo.On("GetTeachers", mock.Anything, []uuid.UUID(nil)).Return(nil, errors.New("db error")).Once()
+				repo.On("GetTeachers", mock.Anything, []uuid.UUID(nil)).Return(nil, errDB).Once()
 			},
 			expectedCount: 0,
-			expectedError: errors.New("db error"),
+			expectedError: errDB,
 		},
 	}
 
@@ -79,10 +106,19 @@ func TestUseCase_Execute(t *testing.T) {
 			tt.mockSetup(repo)
 
 			uc := NewUseCase(repo)
-			res, err := uc.Execute(context.Background(), tt.caller, Request{})
+			var req Request
+			switch tt.name {
+			case "superadmin_branch_filter":
+				req = Request{BranchID: &branchID}
+			case "admin_branch_filter_allowed", "admin_branch_filter_denied":
+				req = Request{BranchID: &otherBranchID}
+			default:
+				req = Request{}
+			}
+			res, err := uc.Execute(context.Background(), tt.caller, req)
 
 			if tt.expectedError != nil {
-				assert.Error(t, err)
+				assert.ErrorIs(t, err, tt.expectedError)
 			} else {
 				assert.NoError(t, err)
 				assert.Len(t, res, tt.expectedCount)

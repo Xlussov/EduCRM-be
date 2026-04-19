@@ -12,12 +12,14 @@ import (
 type UseCase struct {
 	scheduleRepo domain.ScheduleRepository
 	groupRepo    domain.GroupRepository
+	userRepo     domain.UserRepository
 }
 
-func NewUseCase(sr domain.ScheduleRepository, gr domain.GroupRepository) *UseCase {
+func NewUseCase(sr domain.ScheduleRepository, gr domain.GroupRepository, ur domain.UserRepository) *UseCase {
 	return &UseCase{
 		scheduleRepo: sr,
 		groupRepo:    gr,
+		userRepo:     ur,
 	}
 }
 
@@ -28,6 +30,14 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 
 	if domain.RequiresBranchAccess(caller.Role) && !domain.HasBranchAccess(caller.BranchIDs, req.BranchID) {
 		return Response{}, domain.ErrBranchAccessDenied
+	}
+
+	teacherInBranch, err := uc.userRepo.CheckTeacherInBranch(ctx, req.TeacherID, req.BranchID)
+	if err != nil {
+		return Response{}, err
+	}
+	if !teacherInBranch {
+		return Response{}, domain.ErrTeacherNotInBranch
 	}
 
 	startDate, err := time.Parse("2006-01-02", req.StartDate)
@@ -58,6 +68,23 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 		return Response{}, domain.ErrInvalidInput
 	}
 
+	daysSet := make(map[int]struct{}, len(req.DaysOfWeek))
+	daysList := make([]int32, 0, len(req.DaysOfWeek))
+	for _, day := range req.DaysOfWeek {
+		dayInt := int(day)
+		if dayInt < 0 || dayInt > 6 {
+			return Response{}, domain.ErrInvalidInput
+		}
+		if _, exists := daysSet[dayInt]; exists {
+			continue
+		}
+		daysSet[dayInt] = struct{}{}
+		daysList = append(daysList, day)
+	}
+	if len(daysList) == 0 {
+		return Response{}, domain.ErrInvalidInput
+	}
+
 	var studentIDs []uuid.UUID
 	if req.GroupID != nil {
 		ids, err := uc.groupRepo.GetActiveStudentIDs(ctx, *req.GroupID)
@@ -70,17 +97,17 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 	}
 
 	template := &domain.Template{
-		BranchID:  req.BranchID,
-		TeacherID: req.TeacherID,
-		SubjectID: req.SubjectID,
-		StudentID: req.StudentID,
-		GroupID:   req.GroupID,
-		DayOfWeek: req.DayOfWeek,
-		StartTime: start,
-		EndTime:   end,
-		StartDate: startDate,
-		EndDate:   endDate,
-		IsActive:  true,
+		BranchID:   req.BranchID,
+		TeacherID:  req.TeacherID,
+		SubjectID:  req.SubjectID,
+		StudentID:  req.StudentID,
+		GroupID:    req.GroupID,
+		DaysOfWeek: daysList,
+		StartTime:  start,
+		EndTime:    end,
+		StartDate:  startDate,
+		EndDate:    endDate,
+		IsActive:   true,
 	}
 
 	if err := uc.scheduleRepo.CreateTemplate(ctx, template); err != nil {
@@ -92,7 +119,7 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 
 	currentDate := startDate
 	for !currentDate.After(endDate) {
-		if int(currentDate.Weekday()) == req.DayOfWeek {
+		if _, ok := daysSet[int(currentDate.Weekday())]; ok {
 			hasConflict := false
 
 			tConflict, err := uc.scheduleRepo.CheckTeacherConflict(ctx, req.TeacherID, currentDate, start, end)

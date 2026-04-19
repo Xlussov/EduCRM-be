@@ -83,10 +83,11 @@ definitions:
     properties:
       branch_id:
         type: string
-      day_of_week:
-        maximum: 6
-        minimum: 0
-        type: integer
+      days_of_week:
+        items:
+          type: integer
+        minItems: 1
+        type: array
       end_date:
         type: string
       end_time:
@@ -105,6 +106,7 @@ definitions:
         type: string
     required:
     - branch_id
+    - days_of_week
     - end_date
     - end_time
     - start_date
@@ -351,6 +353,39 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  internal_lessons_list.SubjectRef:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
+  internal_lessons_update.Request:
+    properties:
+      date:
+        type: string
+      end_time:
+        type: string
+      start_time:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+    required:
+    - date
+    - end_time
+    - start_time
+    - subject_id
+    - teacher_id
+    type: object
+  internal_lessons_update.Response:
+    properties:
+      id:
+        type: string
+      status:
+        type: string
     type: object
   internal_plans_archive.Response:
     properties:
@@ -667,6 +702,13 @@ definitions:
       id:
         type: string
     type: object
+  internal_subscriptions_list.SubjectRef:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   internal_users_admins_archive.Response:
     properties:
       message:
@@ -928,6 +970,13 @@ definitions:
       status:
         type: string
     type: object
+  list.GroupRef:
+    properties:
+      id:
+        type: string
+      name:
+        type: string
+    type: object
   list.GroupResponse:
     properties:
       id:
@@ -938,6 +987,27 @@ definitions:
         $ref: '#/definitions/domain.EntityStatus'
       students_count:
         type: integer
+    type: object
+  list.LessonResponse:
+    properties:
+      date:
+        type: string
+      end_time:
+        type: string
+      group:
+        $ref: '#/definitions/list.GroupRef'
+      id:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      student:
+        $ref: '#/definitions/list.StudentRef'
+      subject:
+        $ref: '#/definitions/internal_lessons_list.SubjectRef'
+      teacher:
+        $ref: '#/definitions/list.TeacherRef'
     type: object
   list.PlanRef:
     properties:
@@ -972,6 +1042,15 @@ definitions:
       price:
         type: number
     type: object
+  list.StudentRef:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
+    type: object
   list.StudentResponse:
     properties:
       email:
@@ -988,13 +1067,6 @@ definitions:
         $ref: '#/definitions/domain.EntityStatus'
     type: object
   list.Subject:
-    properties:
-      id:
-        type: string
-      name:
-        type: string
-    type: object
-  list.SubjectRef:
     properties:
       id:
         type: string
@@ -1029,7 +1101,16 @@ definitions:
       start_date:
         type: string
       subject:
-        $ref: '#/definitions/list.SubjectRef'
+        $ref: '#/definitions/internal_subscriptions_list.SubjectRef'
+    type: object
+  list.TeacherRef:
+    properties:
+      first_name:
+        type: string
+      id:
+        type: string
+      last_name:
+        type: string
     type: object
   list.TeacherResponse:
     properties:
@@ -1802,6 +1883,120 @@ paths:
       summary: Unarchive Group
       tags:
       - groups
+  /api/v1/lessons:
+    get:
+      parameters:
+      - description: From date
+        format: date
+        in: query
+        name: from_date
+        required: true
+        type: string
+      - description: To date
+        format: date
+        in: query
+        name: to_date
+        required: true
+        type: string
+      - description: Teacher ID
+        format: uuid
+        in: query
+        name: teacher_id
+        type: string
+      - description: Student ID
+        format: uuid
+        in: query
+        name: student_id
+        type: string
+      - description: Group ID
+        format: uuid
+        in: query
+        name: group_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: Lessons
+          schema:
+            items:
+              $ref: '#/definitions/list.LessonResponse'
+            type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: List lessons
+      tags:
+      - lessons
+  /api/v1/lessons/{id}:
+    patch:
+      consumes:
+      - application/json
+      description: Updates lesson date, time, teacher, and subject
+      parameters:
+      - description: Lesson ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Lesson update payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/internal_lessons_update.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_lessons_update.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "409":
+          description: Conflict
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Update lesson
+      tags:
+      - lessons
   /api/v1/lessons/{id}/cancel:
     patch:
       consumes:
@@ -2999,6 +3194,12 @@ paths:
       - admins
   /api/v1/users/teachers:
     get:
+      parameters:
+      - description: Branch ID
+        format: uuid
+        in: query
+        name: branch_id
+        type: string
       produces:
       - application/json
       responses:
@@ -3008,6 +3209,10 @@ paths:
             items:
               $ref: '#/definitions/list.TeacherResponse'
             type: array
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
         "401":
           description: Unauthorized
           schema:

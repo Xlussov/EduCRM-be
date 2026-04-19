@@ -52,6 +52,9 @@ func (h *Handler) Handle(c echo.Context) error {
 		if errors.Is(err, domain.ErrInvalidInput) {
 			return response.Error(c, http.StatusBadRequest, "BAD_REQUEST", err.Error(), nil)
 		}
+		if errors.Is(err, domain.ErrTeacherNotInBranch) {
+			return response.Error(c, http.StatusBadRequest, "TEACHER_NOT_IN_BRANCH", err.Error(), nil)
+		}
 		if errors.Is(err, domain.ErrBranchAccessDenied) {
 			return response.Error(c, http.StatusForbidden, "FORBIDDEN", err.Error(), nil)
 		}

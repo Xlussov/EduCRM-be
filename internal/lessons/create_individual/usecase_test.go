@@ -3,10 +3,11 @@ package create_individual
 import (
 	"context"
 	"errors"
+	"testing"
+
 	"github.com/google/uuid"
 	"github.com/stretchr/testify/assert"
 	"github.com/stretchr/testify/mock"
-	"testing"
 
 	"github.com/Xlussov/EduCRM-be/internal/domain"
 	"github.com/Xlussov/EduCRM-be/internal/domain/mocks"
@@ -35,7 +36,7 @@ func TestUseCase_Execute(t *testing.T) {
 		name          string
 		req           Request
 		caller        domain.Caller
-		mockSetup     func(repo *mocks.ScheduleRepository)
+		mockSetup     func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository)
 		expectedErr   error
 		expectedCount int
 	}{
@@ -43,7 +44,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "admin - success",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(repo *mocks.ScheduleRepository) {
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				repo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				repo.On("CreateLesson", mock.Anything, mock.MatchedBy(func(l *domain.Lesson) bool {
@@ -60,7 +62,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "admin - teacher conflict",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(repo *mocks.ScheduleRepository) {
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				repo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
 			},
@@ -70,7 +73,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "admin - student conflict",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
-			mockSetup: func(repo *mocks.ScheduleRepository) {
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
 			},
 			expectedErr: domain.ErrStudentScheduleConflict,
@@ -81,6 +85,15 @@ func TestUseCase_Execute(t *testing.T) {
 			caller:      domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}}, // Diff branch
 			mockSetup:   nil,
 			expectedErr: domain.ErrBranchAccessDenied,
+		},
+		{
+			name:   "admin - teacher not in branch",
+			req:    validReq,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(false, nil)
+			},
+			expectedErr: domain.ErrTeacherNotInBranch,
 		},
 		{
 			name: "superadmin - success without branch access check",
@@ -94,7 +107,8 @@ func TestUseCase_Execute(t *testing.T) {
 				EndTime:   "11:00",
 			},
 			caller: domain.Caller{UserID: userID, Role: domain.RoleSuperadmin, BranchIDs: []uuid.UUID{}},
-			mockSetup: func(repo *mocks.ScheduleRepository) {
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				repo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
 				repo.On("CreateLesson", mock.Anything, mock.MatchedBy(func(l *domain.Lesson) bool {
 					return l.BranchID == branchID && l.StudentID == nil && l.Status == domain.LessonStatusScheduled
@@ -110,7 +124,8 @@ func TestUseCase_Execute(t *testing.T) {
 			name:   "db error",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleSuperadmin},
-			mockSetup: func(repo *mocks.ScheduleRepository) {
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
 				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, errDB)
 			},
 			expectedErr: errDB,
@@ -125,8 +140,10 @@ func TestUseCase_Execute(t *testing.T) {
 				StartTime: "25:00",
 				EndTime:   "11:00",
 			},
-			caller:      domain.Caller{UserID: userID, Role: domain.RoleSuperadmin},
-			mockSetup:   nil,
+			caller: domain.Caller{UserID: userID, Role: domain.RoleSuperadmin},
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+			},
 			expectedErr: domain.ErrInvalidInput,
 		},
 	}
@@ -134,11 +151,12 @@ func TestUseCase_Execute(t *testing.T) {
 	for _, tt := range tests {
 		t.Run(tt.name, func(t *testing.T) {
 			repo := new(mocks.ScheduleRepository)
+			userRepo := new(mocks.UserRepository)
 			if tt.mockSetup != nil {
-				tt.mockSetup(repo)
+				tt.mockSetup(repo, userRepo)
 			}
 
-			uc := NewUseCase(repo)
+			uc := NewUseCase(repo, userRepo)
 			res, err := uc.Execute(context.Background(), tt.caller, tt.req)
 
 			if tt.expectedErr != nil {
@@ -151,6 +169,7 @@ func TestUseCase_Execute(t *testing.T) {
 			}
 
 			repo.AssertExpectations(t)
+			userRepo.AssertExpectations(t)
 		})
 	}
 }

@@ -26,6 +26,29 @@ func (q *Queries) AssignUserToBranch(ctx context.Context, arg AssignUserToBranch
 	return err
 }
 
+const checkTeacherInBranch = `-- name: CheckTeacherInBranch :one
+SELECT EXISTS (
+	SELECT 1
+	FROM user_branches ub
+	JOIN users u ON u.id = ub.user_id
+	WHERE ub.user_id = $1
+	  AND ub.branch_id = $2
+	  AND u.role = 'TEACHER'
+)
+`
+
+type CheckTeacherInBranchParams struct {
+	UserID   pgtype.UUID `json:"user_id"`
+	BranchID pgtype.UUID `json:"branch_id"`
+}
+
+func (q *Queries) CheckTeacherInBranch(ctx context.Context, arg CheckTeacherInBranchParams) (bool, error) {
+	row := q.db.QueryRow(ctx, checkTeacherInBranch, arg.UserID, arg.BranchID)
+	var exists bool
+	err := row.Scan(&exists)
+	return exists, err
+}
+
 const createUser = `-- name: CreateUser :one
 INSERT INTO users (phone, password_hash, first_name, last_name, role)
 VALUES ($1, $2, $3, $4, $5)
@@ -154,12 +177,7 @@ LEFT JOIN branches b ON b.id = ub.branch_id
 WHERE u.role = 'TEACHER'
   AND (
 	  $1::uuid[] IS NULL
-	  OR EXISTS (
-		  SELECT 1
-		  FROM user_branches ub2
-		  WHERE ub2.user_id = u.id
-			AND ub2.branch_id = ANY($1::uuid[])
-	  )
+	  OR ub.branch_id = ANY($1::uuid[])
   )
 ORDER BY u.created_at DESC, b.name ASC
 `

@@ -1033,6 +1033,96 @@ const docTemplate = `{
                 }
             }
         },
+        "/api/v1/lessons": {
+            "get": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lessons"
+                ],
+                "summary": "List lessons",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "description": "From date",
+                        "name": "from_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "date",
+                        "description": "To date",
+                        "name": "to_date",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Teacher ID",
+                        "name": "teacher_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Student ID",
+                        "name": "student_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Group ID",
+                        "name": "group_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "Lessons",
+                        "schema": {
+                            "type": "array",
+                            "items": {
+                                "$ref": "#/definitions/list.LessonResponse"
+                            }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/lessons/group": {
             "post": {
                 "security": [
@@ -1221,6 +1311,89 @@ const docTemplate = `{
                     },
                     "403": {
                         "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/lessons/{id}": {
+            "patch": {
+                "security": [
+                    {
+                        "BearerAuth": []
+                    }
+                ],
+                "description": "Updates lesson date, time, teacher, and subject",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "lessons"
+                ],
+                "summary": "Update lesson",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Lesson ID",
+                        "name": "id",
+                        "in": "path",
+                        "required": true
+                    },
+                    {
+                        "description": "Lesson update payload",
+                        "name": "request",
+                        "in": "body",
+                        "required": true,
+                        "schema": {
+                            "$ref": "#/definitions/internal_lessons_update.Request"
+                        }
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/internal_lessons_update.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "404": {
+                        "description": "Not Found",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "409": {
+                        "description": "Conflict",
                         "schema": {
                             "$ref": "#/definitions/response.ErrorResponse"
                         }
@@ -2908,6 +3081,15 @@ const docTemplate = `{
                     "teachers"
                 ],
                 "summary": "List Teachers",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "format": "uuid",
+                        "description": "Branch ID",
+                        "name": "branch_id",
+                        "in": "query"
+                    }
+                ],
                 "responses": {
                     "200": {
                         "description": "List of teachers",
@@ -2916,6 +3098,12 @@ const docTemplate = `{
                             "items": {
                                 "$ref": "#/definitions/list.TeacherResponse"
                             }
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
                         }
                     },
                     "401": {
@@ -3395,6 +3583,7 @@ const docTemplate = `{
             "type": "object",
             "required": [
                 "branch_id",
+                "days_of_week",
                 "end_date",
                 "end_time",
                 "start_date",
@@ -3406,10 +3595,12 @@ const docTemplate = `{
                 "branch_id": {
                     "type": "string"
                 },
-                "day_of_week": {
-                    "type": "integer",
-                    "maximum": 6,
-                    "minimum": 0
+                "days_of_week": {
+                    "type": "array",
+                    "minItems": 1,
+                    "items": {
+                        "type": "integer"
+                    }
                 },
                 "end_date": {
                     "type": "string"
@@ -3791,6 +3982,55 @@ const docTemplate = `{
                 },
                 "status": {
                     "$ref": "#/definitions/domain.EntityStatus"
+                }
+            }
+        },
+        "internal_lessons_list.SubjectRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_lessons_update.Request": {
+            "type": "object",
+            "required": [
+                "date",
+                "end_time",
+                "start_time",
+                "subject_id",
+                "teacher_id"
+            ],
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "subject_id": {
+                    "type": "string"
+                },
+                "teacher_id": {
+                    "type": "string"
+                }
+            }
+        },
+        "internal_lessons_update.Response": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
                 }
             }
         },
@@ -4254,6 +4494,17 @@ const docTemplate = `{
                 }
             }
         },
+        "internal_subscriptions_list.SubjectRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "internal_users_admins_archive.Response": {
             "type": "object",
             "properties": {
@@ -4636,6 +4887,17 @@ const docTemplate = `{
                 }
             }
         },
+        "list.GroupRef": {
+            "type": "object",
+            "properties": {
+                "id": {
+                    "type": "string"
+                },
+                "name": {
+                    "type": "string"
+                }
+            }
+        },
         "list.GroupResponse": {
             "type": "object",
             "properties": {
@@ -4650,6 +4912,38 @@ const docTemplate = `{
                 },
                 "students_count": {
                     "type": "integer"
+                }
+            }
+        },
+        "list.LessonResponse": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "end_time": {
+                    "type": "string"
+                },
+                "group": {
+                    "$ref": "#/definitions/list.GroupRef"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "start_time": {
+                    "type": "string"
+                },
+                "status": {
+                    "type": "string"
+                },
+                "student": {
+                    "$ref": "#/definitions/list.StudentRef"
+                },
+                "subject": {
+                    "$ref": "#/definitions/internal_lessons_list.SubjectRef"
+                },
+                "teacher": {
+                    "$ref": "#/definitions/list.TeacherRef"
                 }
             }
         },
@@ -4704,6 +4998,20 @@ const docTemplate = `{
                 }
             }
         },
+        "list.StudentRef": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
+                }
+            }
+        },
         "list.StudentResponse": {
             "type": "object",
             "properties": {
@@ -4728,17 +5036,6 @@ const docTemplate = `{
             }
         },
         "list.Subject": {
-            "type": "object",
-            "properties": {
-                "id": {
-                    "type": "string"
-                },
-                "name": {
-                    "type": "string"
-                }
-            }
-        },
-        "list.SubjectRef": {
             "type": "object",
             "properties": {
                 "id": {
@@ -4791,7 +5088,21 @@ const docTemplate = `{
                     "type": "string"
                 },
                 "subject": {
-                    "$ref": "#/definitions/list.SubjectRef"
+                    "$ref": "#/definitions/internal_subscriptions_list.SubjectRef"
+                }
+            }
+        },
+        "list.TeacherRef": {
+            "type": "object",
+            "properties": {
+                "first_name": {
+                    "type": "string"
+                },
+                "id": {
+                    "type": "string"
+                },
+                "last_name": {
+                    "type": "string"
                 }
             }
         },

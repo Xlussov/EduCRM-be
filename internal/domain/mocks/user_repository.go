@@ -94,3 +94,8 @@ func (m *UserRepository) CountActiveBranchesByIDs(ctx context.Context, branchIDs
 	args := m.Called(ctx, branchIDs)
 	return args.Int(0), args.Error(1)
 }
+
+func (m *UserRepository) CheckTeacherInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	args := m.Called(ctx, teacherID, branchID)
+	return args.Bool(0), args.Error(1)
+}

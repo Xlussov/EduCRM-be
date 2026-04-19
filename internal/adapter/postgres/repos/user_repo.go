@@ -231,6 +231,14 @@ func (r *UserRepository) GetUserBranchIDs(ctx context.Context, userID uuid.UUID)
 	return res, nil
 }
 
+func (r *UserRepository) CheckTeacherInBranch(ctx context.Context, teacherID, branchID uuid.UUID) (bool, error) {
+	q := sqlc.New(r.db(ctx))
+	return q.CheckTeacherInBranch(ctx, sqlc.CheckTeacherInBranchParams{
+		UserID:   pgtype.UUID{Bytes: teacherID, Valid: true},
+		BranchID: pgtype.UUID{Bytes: branchID, Valid: true},
+	})
+}
+
 func (r *UserRepository) IsBranchActive(ctx context.Context, branchID uuid.UUID) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.IsBranchActive(ctx, pgtype.UUID{Bytes: branchID, Valid: true})

@@ -71,6 +71,8 @@ type Handlers struct {
 	LessonsIndividualCreate echo.HandlerFunc
 	LessonsGroupCreate      echo.HandlerFunc
 	LessonsTemplatesCreate  echo.HandlerFunc
+	LessonsList             echo.HandlerFunc
+	LessonsUpdate           echo.HandlerFunc
 	LessonsCancel           echo.HandlerFunc
 }
 
@@ -180,6 +182,10 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		lessonsGroup.POST("/individual", h.LessonsIndividualCreate)
 		lessonsGroup.POST("/group", h.LessonsGroupCreate)
 		lessonsGroup.POST("/templates", h.LessonsTemplatesCreate)
-		lessonsGroup.POST("/:id/cancel", h.LessonsCancel)
+		lessonsGroup.PATCH("/:id", h.LessonsUpdate)
+		lessonsGroup.PATCH("/:id/cancel", h.LessonsCancel)
+
+		lessonsReadGroup := protected.Group("/lessons")
+		lessonsReadGroup.GET("", h.LessonsList, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
 	}
 }

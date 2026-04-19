@@ -17,6 +17,16 @@ SELECT branch_id
 FROM user_branches
 WHERE user_id = $1;
 
+-- name: CheckTeacherInBranch :one
+SELECT EXISTS (
+	SELECT 1
+	FROM user_branches ub
+	JOIN users u ON u.id = ub.user_id
+	WHERE ub.user_id = $1
+	  AND ub.branch_id = $2
+	  AND u.role = 'TEACHER'
+);
+
 -- name: GetUserByID :one
 SELECT id, phone, password_hash, first_name, last_name, role, is_active, created_at, updated_at
 FROM users
@@ -58,12 +68,7 @@ LEFT JOIN branches b ON b.id = ub.branch_id
 WHERE u.role = 'TEACHER'
   AND (
 	  $1::uuid[] IS NULL
-	  OR EXISTS (
-		  SELECT 1
-		  FROM user_branches ub2
-		  WHERE ub2.user_id = u.id
-			AND ub2.branch_id = ANY($1::uuid[])
-	  )
+	  OR ub.branch_id = ANY($1::uuid[])
   )
 ORDER BY u.created_at DESC, b.name ASC;
 

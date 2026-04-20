@@ -125,6 +125,11 @@ definitions:
       template_id:
         type: string
     type: object
+  deactivate_template.Response:
+    properties:
+      message:
+        type: string
+    type: object
   domain.EntityStatus:
     enum:
     - ACTIVE
@@ -353,6 +358,31 @@ definitions:
         type: string
       status:
         $ref: '#/definitions/domain.EntityStatus'
+    type: object
+  internal_lessons_get.Response:
+    properties:
+      branch_id:
+        type: string
+      date:
+        type: string
+      end_time:
+        type: string
+      group_id:
+        type: string
+      id:
+        type: string
+      start_time:
+        type: string
+      status:
+        type: string
+      student_id:
+        type: string
+      subject_id:
+        type: string
+      teacher_id:
+        type: string
+      template_id:
+        type: string
     type: object
   internal_lessons_list.SubjectRef:
     properties:
@@ -1008,6 +1038,8 @@ definitions:
         $ref: '#/definitions/internal_lessons_list.SubjectRef'
       teacher:
         $ref: '#/definitions/list.TeacherRef'
+      template_id:
+        type: string
     type: object
   list.PlanRef:
     properties:
@@ -1944,6 +1976,47 @@ paths:
       tags:
       - lessons
   /api/v1/lessons/{id}:
+    get:
+      description: Returns lesson details for editing
+      parameters:
+      - description: Lesson ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_lessons_get.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get lesson by ID
+      tags:
+      - lessons
     patch:
       consumes:
       - application/json
@@ -2166,6 +2239,50 @@ paths:
       security:
       - BearerAuth: []
       summary: Create lesson template
+      tags:
+      - lessons
+  /api/v1/lessons/templates/{id}/deactivate:
+    patch:
+      consumes:
+      - application/json
+      description: Deactivates a lesson template and cancels future scheduled lessons
+      parameters:
+      - description: Template ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/deactivate_template.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Deactivate lesson template
       tags:
       - lessons
   /api/v1/plans:

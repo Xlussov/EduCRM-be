@@ -64,6 +64,7 @@ type Querier interface {
 	GetSubscriptionBranchIDs(ctx context.Context, arg GetSubscriptionBranchIDsParams) (GetSubscriptionBranchIDsRow, error)
 	GetTeacherSchedule(ctx context.Context, arg GetTeacherScheduleParams) ([]Lesson, error)
 	GetTeachers(ctx context.Context, dollar_1 []pgtype.UUID) ([]GetTeachersRow, error)
+	GetTemplateByID(ctx context.Context, id pgtype.UUID) (LessonTemplate, error)
 	GetUserBranchIDs(ctx context.Context, userID pgtype.UUID) ([]pgtype.UUID, error)
 	GetUserByID(ctx context.Context, id pgtype.UUID) (User, error)
 	GetUserByPhone(ctx context.Context, phone string) (User, error)

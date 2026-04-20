@@ -33,13 +33,14 @@ type GroupRef struct {
 }
 
 type LessonResponse struct {
-	ID        uuid.UUID   `json:"id"`
-	Date      string      `json:"date"`
-	StartTime string      `json:"start_time"`
-	EndTime   string      `json:"end_time"`
-	Status    string      `json:"status"`
-	Teacher   TeacherRef  `json:"teacher"`
-	Subject   SubjectRef  `json:"subject"`
-	Student   *StudentRef `json:"student,omitempty"`
-	Group     *GroupRef   `json:"group,omitempty"`
+	ID         uuid.UUID   `json:"id"`
+	TemplateID *uuid.UUID  `json:"template_id"`
+	Date       string      `json:"date"`
+	StartTime  string      `json:"start_time"`
+	EndTime    string      `json:"end_time"`
+	Status     string      `json:"status"`
+	Teacher    TeacherRef  `json:"teacher"`
+	Subject    SubjectRef  `json:"subject"`
+	Student    *StudentRef `json:"student,omitempty"`
+	Group      *GroupRef   `json:"group,omitempty"`
 }

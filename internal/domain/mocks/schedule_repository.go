@@ -47,6 +47,24 @@ func (m *ScheduleRepository) GetLessonByID(ctx context.Context, id uuid.UUID) (*
 	return args.Get(0).(*domain.Lesson), args.Error(1)
 }
 
+func (m *ScheduleRepository) GetTemplateByID(ctx context.Context, id uuid.UUID) (*domain.Template, error) {
+	args := m.Called(ctx, id)
+	if args.Get(0) == nil {
+		return nil, args.Error(1)
+	}
+	return args.Get(0).(*domain.Template), args.Error(1)
+}
+
+func (m *ScheduleRepository) DeactivateTemplate(ctx context.Context, id uuid.UUID) error {
+	args := m.Called(ctx, id)
+	return args.Error(0)
+}
+
+func (m *ScheduleRepository) CancelFutureLessonsByTemplate(ctx context.Context, templateID uuid.UUID) error {
+	args := m.Called(ctx, templateID)
+	return args.Error(0)
+}
+
 func (m *ScheduleRepository) CheckTeacherConflict(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time) (bool, error) {
 	args := m.Called(ctx, teacherID, date, start, end)
 	return args.Bool(0), args.Error(1)

@@ -68,15 +68,16 @@ func (uc *UseCase) Execute(ctx context.Context, caller domain.Caller, req Reques
 		}
 
 		res = append(res, LessonResponse{
-			ID:        l.ID,
-			Date:      l.Date.Format(dateLayout),
-			StartTime: l.StartTime.Format(timeLayout),
-			EndTime:   l.EndTime.Format(timeLayout),
-			Status:    string(l.Status),
-			Teacher:   TeacherRef{ID: l.TeacherID, FirstName: l.TeacherFirstName, LastName: l.TeacherLastName},
-			Subject:   SubjectRef{ID: l.SubjectID, Name: l.SubjectName},
-			Student:   student,
-			Group:     group,
+			ID:         l.ID,
+			TemplateID: l.TemplateID,
+			Date:       l.Date.Format(dateLayout),
+			StartTime:  l.StartTime.Format(timeLayout),
+			EndTime:    l.EndTime.Format(timeLayout),
+			Status:     string(l.Status),
+			Teacher:    TeacherRef{ID: l.TeacherID, FirstName: l.TeacherFirstName, LastName: l.TeacherLastName},
+			Subject:    SubjectRef{ID: l.SubjectID, Name: l.SubjectName},
+			Student:    student,
+			Group:      group,
 		})
 	}
 

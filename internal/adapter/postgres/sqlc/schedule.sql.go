@@ -404,6 +404,30 @@ func (q *Queries) GetTeacherSchedule(ctx context.Context, arg GetTeacherSchedule
 	return items, nil
 }
 
+const getTemplateByID = `-- name: GetTemplateByID :one
+SELECT id, branch_id, teacher_id, subject_id, student_id, group_id, start_time, end_time, start_date, end_date, is_active, days_of_week FROM lesson_templates WHERE id = $1
+`
+
+func (q *Queries) GetTemplateByID(ctx context.Context, id pgtype.UUID) (LessonTemplate, error) {
+	row := q.db.QueryRow(ctx, getTemplateByID, id)
+	var i LessonTemplate
+	err := row.Scan(
+		&i.ID,
+		&i.BranchID,
+		&i.TeacherID,
+		&i.SubjectID,
+		&i.StudentID,
+		&i.GroupID,
+		&i.StartTime,
+		&i.EndTime,
+		&i.StartDate,
+		&i.EndDate,
+		&i.IsActive,
+		&i.DaysOfWeek,
+	)
+	return i, err
+}
+
 const listLessons = `-- name: ListLessons :many
 SELECT
         l.id,

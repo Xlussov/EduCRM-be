@@ -29,6 +29,8 @@ import (
 	lessonsgroupcreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_group"
 	lessonsindividualcreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_individual"
 	lessonstemplatescreate "github.com/Xlussov/EduCRM-be/internal/lessons/create_template"
+	lessonstemplatesdeactivate "github.com/Xlussov/EduCRM-be/internal/lessons/deactivate_template"
+	lessonsget "github.com/Xlussov/EduCRM-be/internal/lessons/get"
 	lessonslist "github.com/Xlussov/EduCRM-be/internal/lessons/list"
 	lessonsupdate "github.com/Xlussov/EduCRM-be/internal/lessons/update"
 	plansarchive "github.com/Xlussov/EduCRM-be/internal/plans/archive"
@@ -163,6 +165,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	lessonsIndividualCreateUC := lessonsindividualcreate.NewUseCase(scheduleRepo, userRepo)
 	lessonsGroupCreateUC := lessonsgroupcreate.NewUseCase(scheduleRepo, groupRepo, userRepo)
 	lessonsTemplatesCreateUC := lessonstemplatescreate.NewUseCase(scheduleRepo, groupRepo, userRepo)
+	lessonsTemplatesDeactivateUC := lessonstemplatesdeactivate.NewUseCase(scheduleRepo, txManager)
+	lessonsGetUC := lessonsget.NewUseCase(scheduleRepo)
 	lessonsListUC := lessonslist.NewUseCase(scheduleRepo)
 	lessonsUpdateUC := lessonsupdate.NewUseCase(scheduleRepo, groupRepo, userRepo)
 	lessonsCancelUC := lessonscancel.NewUseCase(scheduleRepo)
@@ -223,12 +227,14 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		SubscriptionsCreate: subscriptionscreate.NewHandler(subscriptionsCreateUC).Handle,
 		SubscriptionsList:   subscriptionslist.NewHandler(subscriptionsListUC).Handle,
 
-		LessonsIndividualCreate: lessonsindividualcreate.NewHandler(lessonsIndividualCreateUC).Handle,
-		LessonsGroupCreate:      lessonsgroupcreate.NewHandler(lessonsGroupCreateUC).Handle,
-		LessonsTemplatesCreate:  lessonstemplatescreate.NewHandler(lessonsTemplatesCreateUC).Handle,
-		LessonsList:             lessonslist.NewHandler(lessonsListUC).Handle,
-		LessonsUpdate:           lessonsupdate.NewHandler(lessonsUpdateUC).Handle,
-		LessonsCancel:           lessonscancel.NewHandler(lessonsCancelUC).Handle,
+		LessonsIndividualCreate:    lessonsindividualcreate.NewHandler(lessonsIndividualCreateUC).Handle,
+		LessonsGroupCreate:         lessonsgroupcreate.NewHandler(lessonsGroupCreateUC).Handle,
+		LessonsTemplatesCreate:     lessonstemplatescreate.NewHandler(lessonsTemplatesCreateUC).Handle,
+		LessonsTemplatesDeactivate: lessonstemplatesdeactivate.NewHandler(lessonsTemplatesDeactivateUC).Handle,
+		LessonsGet:                 lessonsget.NewHandler(lessonsGetUC).Handle,
+		LessonsList:                lessonslist.NewHandler(lessonsListUC).Handle,
+		LessonsUpdate:              lessonsupdate.NewHandler(lessonsUpdateUC).Handle,
+		LessonsCancel:              lessonscancel.NewHandler(lessonsCancelUC).Handle,
 	}
 
 	e.Validator = validator.New()

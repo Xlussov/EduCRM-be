@@ -221,6 +221,54 @@ func (r *ScheduleRepository) GetLessonByID(ctx context.Context, id uuid.UUID) (*
 	}, nil
 }
 
+func (r *ScheduleRepository) GetTemplateByID(ctx context.Context, id uuid.UUID) (*domain.Template, error) {
+	q := sqlc.New(r.db(ctx))
+	res, err := q.GetTemplateByID(ctx, pgtype.UUID{Bytes: id, Valid: true})
+	if err != nil {
+		if errors.Is(err, pgx.ErrNoRows) {
+			return nil, domain.ErrNotFound
+		}
+		return nil, err
+	}
+
+	var studentID *uuid.UUID
+	if res.StudentID.Valid {
+		id := uuid.UUID(res.StudentID.Bytes)
+		studentID = &id
+	}
+
+	var groupID *uuid.UUID
+	if res.GroupID.Valid {
+		id := uuid.UUID(res.GroupID.Bytes)
+		groupID = &id
+	}
+
+	return &domain.Template{
+		ID:         res.ID.Bytes,
+		BranchID:   res.BranchID.Bytes,
+		TeacherID:  res.TeacherID.Bytes,
+		SubjectID:  res.SubjectID.Bytes,
+		StudentID:  studentID,
+		GroupID:    groupID,
+		DaysOfWeek: res.DaysOfWeek,
+		StartTime:  res.StartTime,
+		EndTime:    res.EndTime,
+		StartDate:  res.StartDate,
+		EndDate:    res.EndDate,
+		IsActive:   res.IsActive.Bool,
+	}, nil
+}
+
+func (r *ScheduleRepository) DeactivateTemplate(ctx context.Context, id uuid.UUID) error {
+	q := sqlc.New(r.db(ctx))
+	return q.DeactivateTemplate(ctx, pgtype.UUID{Bytes: id, Valid: true})
+}
+
+func (r *ScheduleRepository) CancelFutureLessonsByTemplate(ctx context.Context, templateID uuid.UUID) error {
+	q := sqlc.New(r.db(ctx))
+	return q.CancelFutureLessonsByTemplate(ctx, pgtype.UUID{Bytes: templateID, Valid: true})
+}
+
 func (r *ScheduleRepository) CheckTeacherConflict(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.CheckTeacherConflict(ctx, sqlc.CheckTeacherConflictParams{

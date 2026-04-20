@@ -73,6 +73,9 @@ type ScheduleRepository interface {
 	UpdateLessonStatus(ctx context.Context, id uuid.UUID, status LessonStatus) error
 	UpdateLesson(ctx context.Context, lesson *Lesson) error
 	GetLessonByID(ctx context.Context, id uuid.UUID) (*Lesson, error)
+	GetTemplateByID(ctx context.Context, id uuid.UUID) (*Template, error)
+	DeactivateTemplate(ctx context.Context, id uuid.UUID) error
+	CancelFutureLessonsByTemplate(ctx context.Context, templateID uuid.UUID) error
 	CheckTeacherConflict(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time) (bool, error)
 	CheckTeacherConflictExcludingLesson(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time, lessonID uuid.UUID) (bool, error)
 	CheckStudentConflict(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time) (bool, error)

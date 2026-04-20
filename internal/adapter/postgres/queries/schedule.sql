@@ -37,6 +37,9 @@ RETURNING *;
 -- name: GetLessonByID :one
 SELECT * FROM lessons WHERE id = $1;
 
+-- name: GetTemplateByID :one
+SELECT * FROM lesson_templates WHERE id = $1;
+
 -- name: CheckTeacherConflict :one
 SELECT EXISTS (
     SELECT 1 FROM lessons

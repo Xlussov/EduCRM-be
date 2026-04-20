@@ -68,12 +68,14 @@ type Handlers struct {
 	SubscriptionsCreate echo.HandlerFunc
 	SubscriptionsList   echo.HandlerFunc
 
-	LessonsIndividualCreate echo.HandlerFunc
-	LessonsGroupCreate      echo.HandlerFunc
-	LessonsTemplatesCreate  echo.HandlerFunc
-	LessonsList             echo.HandlerFunc
-	LessonsUpdate           echo.HandlerFunc
-	LessonsCancel           echo.HandlerFunc
+	LessonsIndividualCreate    echo.HandlerFunc
+	LessonsGroupCreate         echo.HandlerFunc
+	LessonsTemplatesCreate     echo.HandlerFunc
+	LessonsTemplatesDeactivate echo.HandlerFunc
+	LessonsGet                 echo.HandlerFunc
+	LessonsList                echo.HandlerFunc
+	LessonsUpdate              echo.HandlerFunc
+	LessonsCancel              echo.HandlerFunc
 }
 
 type Logger interface {
@@ -182,10 +184,14 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		lessonsGroup.POST("/individual", h.LessonsIndividualCreate)
 		lessonsGroup.POST("/group", h.LessonsGroupCreate)
 		lessonsGroup.POST("/templates", h.LessonsTemplatesCreate)
+		lessonsGroup.PATCH("/templates/:id/deactivate", h.LessonsTemplatesDeactivate)
 		lessonsGroup.PATCH("/:id", h.LessonsUpdate)
 		lessonsGroup.PATCH("/:id/cancel", h.LessonsCancel)
 
 		lessonsReadGroup := protected.Group("/lessons")
-		lessonsReadGroup.GET("", h.LessonsList, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
+		lessonsReadGroup.Use(mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
+
+		lessonsReadGroup.GET("", h.LessonsList)
+		lessonsReadGroup.GET("/:id", h.LessonsGet)
 	}
 }

@@ -19,4 +19,5 @@ var (
 	ErrTeacherHasActiveTemplates = errors.New("teacher has active templates in branch")
 	ErrLessonNotScheduled        = errors.New("lesson is not scheduled")
 	ErrTeacherNotInBranch        = errors.New("teacher is not in branch")
+	ErrTemplateNotActive         = errors.New("template is not active")
 )

@@ -194,6 +194,13 @@ definitions:
       updated_at:
         type: string
     type: object
+  internal_attendance_list.Response:
+    properties:
+      attendance:
+        items:
+          $ref: '#/definitions/list.StudentAttendance'
+        type: array
+    type: object
   internal_branches_archive.Response:
     properties:
       message:
@@ -1074,6 +1081,21 @@ definitions:
       price:
         type: number
     type: object
+  list.StudentAttendance:
+    properties:
+      first_name:
+        type: string
+      is_present:
+        type: boolean
+      last_name:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+      student_id:
+        type: string
+    type: object
   list.StudentRef:
     properties:
       first_name:
@@ -1203,6 +1225,44 @@ definitions:
       message:
         type: string
     type: object
+  mark.AttendanceItem:
+    properties:
+      is_present:
+        type: boolean
+      notes:
+        type: string
+      student_id:
+        type: string
+    type: object
+  mark.Request:
+    properties:
+      attendance:
+        items:
+          $ref: '#/definitions/mark.AttendanceItem'
+        type: array
+    type: object
+  mark.Response:
+    properties:
+      attendance:
+        items:
+          $ref: '#/definitions/mark.StudentAttendance'
+        type: array
+    type: object
+  mark.StudentAttendance:
+    properties:
+      first_name:
+        type: string
+      is_present:
+        type: boolean
+      last_name:
+        type: string
+      notes:
+        type: string
+      status:
+        type: string
+      student_id:
+        type: string
+    type: object
   me.Response:
     properties:
       first_name:
@@ -1264,6 +1324,97 @@ info:
   title: EduCRM API
   version: "1.0"
 paths:
+  /api/v1/attendance/{id}:
+    get:
+      description: Returns students for the lesson with current attendance status
+      parameters:
+      - description: Lesson ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/internal_attendance_list.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Get lesson attendance
+      tags:
+      - attendance
+    put:
+      consumes:
+      - application/json
+      description: Marks attendance for the lesson students
+      parameters:
+      - description: Lesson ID
+        format: uuid
+        in: path
+        name: id
+        required: true
+        type: string
+      - description: Attendance payload
+        in: body
+        name: request
+        required: true
+        schema:
+          $ref: '#/definitions/mark.Request'
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/mark.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "404":
+          description: Not Found
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - BearerAuth: []
+      summary: Mark lesson attendance
+      tags:
+      - attendance
   /api/v1/auth/login:
     post:
       consumes:

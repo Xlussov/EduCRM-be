@@ -48,6 +48,7 @@ type Querier interface {
 	GetGroupStudents(ctx context.Context, groupID pgtype.UUID) ([]GetGroupStudentsRow, error)
 	GetGroupsByBranchID(ctx context.Context, arg GetGroupsByBranchIDParams) ([]GetGroupsByBranchIDRow, error)
 	GetGroupsByBranchIDAndTeacherID(ctx context.Context, arg GetGroupsByBranchIDAndTeacherIDParams) ([]GetGroupsByBranchIDAndTeacherIDRow, error)
+	GetLessonAttendance(ctx context.Context, id pgtype.UUID) ([]GetLessonAttendanceRow, error)
 	GetLessonByID(ctx context.Context, id pgtype.UUID) (Lesson, error)
 	GetPlanByID(ctx context.Context, id pgtype.UUID) (SubscriptionPlan, error)
 	GetPlanPricingGrids(ctx context.Context, planID pgtype.UUID) ([]PlanPricingGrid, error)
@@ -92,6 +93,7 @@ type Querier interface {
 	UpdateSubjectStatus(ctx context.Context, arg UpdateSubjectStatusParams) error
 	UpdateUser(ctx context.Context, arg UpdateUserParams) (int64, error)
 	UpdateUserStatus(ctx context.Context, arg UpdateUserStatusParams) (int64, error)
+	UpsertAttendance(ctx context.Context, arg UpsertAttendanceParams) error
 	ValidatePlanSubject(ctx context.Context, arg ValidatePlanSubjectParams) (bool, error)
 }
 

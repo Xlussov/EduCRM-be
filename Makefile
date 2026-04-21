@@ -2,13 +2,16 @@
         db-up db-down db-reset db-logs \
         sqlc sqlc-watch \
         migrate-up migrate-down migrate-force migrate-create migrate-reset \
-        dev-init dev-reset check test-log
+        dev-init dev-reset check test-log db-create-superadmin swagger pre-commit db-seed
 
 include .env
 export
 
 DATETIME = $(shell powershell -Command "Get-Date -format 'yyyy-MM-dd_HH-mm-ss'")
 MIGRATIONS_PATH=internal/adapter/postgres/migrations
+
+setup:
+	sh scripts/sh/init.sh
 
 fmt:
 	go fmt ./...
@@ -58,8 +61,12 @@ db-logs:
 	docker compose logs -f postgres
 
 db-seed:
-	psql "$(DATABASE_URL)" -f ./db_seed.sql
+	psql "$(DATABASE_URL)" -f ./scripts/db/db_seed.sql
 	@echo "Seeding completed"
+
+db-create-superadmin:
+	psql "$(DATABASE_URL)" -f ./scripts/db/create_superadmin.sql
+	@echo "Superadmin created"
 
 # --- SQLC ---
 sqlc:

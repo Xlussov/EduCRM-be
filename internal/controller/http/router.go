@@ -76,6 +76,8 @@ type Handlers struct {
 	LessonsList                echo.HandlerFunc
 	LessonsUpdate              echo.HandlerFunc
 	LessonsCancel              echo.HandlerFunc
+	AttendanceList             echo.HandlerFunc
+	AttendanceMark             echo.HandlerFunc
 }
 
 type Logger interface {
@@ -190,8 +192,12 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 
 		lessonsReadGroup := protected.Group("/lessons")
 		lessonsReadGroup.Use(mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
-
 		lessonsReadGroup.GET("", h.LessonsList)
 		lessonsReadGroup.GET("/:id", h.LessonsGet)
+
+		attendance := protected.Group("/attendance")
+		attendance.Use(mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
+		attendance.GET("/:id", h.AttendanceList)
+		attendance.PUT("/:id", h.AttendanceMark)
 	}
 }

@@ -7,8 +7,10 @@ import (
 
 	"github.com/Xlussov/EduCRM-be/internal/adapter/postgres/postgres"
 	repo "github.com/Xlussov/EduCRM-be/internal/adapter/postgres/repos"
+	attendancelist "github.com/Xlussov/EduCRM-be/internal/attendance/list"
+	attendancemark "github.com/Xlussov/EduCRM-be/internal/attendance/mark"
 	"github.com/Xlussov/EduCRM-be/internal/auth/login"
-	logout "github.com/Xlussov/EduCRM-be/internal/auth/logut"
+	logout "github.com/Xlussov/EduCRM-be/internal/auth/logout"
 	"github.com/Xlussov/EduCRM-be/internal/auth/me"
 	"github.com/Xlussov/EduCRM-be/internal/auth/refresh"
 	branchesarchive "github.com/Xlussov/EduCRM-be/internal/branches/archive"
@@ -104,6 +106,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	groupRepo := repo.NewGroupRepository(dbPool.Conn())
 	planRepo := repo.NewSubscriptionRepository(dbPool.Conn())
 	scheduleRepo := repo.NewScheduleRepository(dbPool.Conn())
+	attendanceRepo := repo.NewAttendanceRepository(dbPool.Conn())
 
 	txManager := postgres.NewTxManager(dbPool.Conn())
 
@@ -170,6 +173,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	lessonsListUC := lessonslist.NewUseCase(scheduleRepo)
 	lessonsUpdateUC := lessonsupdate.NewUseCase(scheduleRepo, groupRepo, userRepo)
 	lessonsCancelUC := lessonscancel.NewUseCase(scheduleRepo)
+	attendanceListUC := attendancelist.NewUseCase(scheduleRepo, attendanceRepo)
+	attendanceMarkUC := attendancemark.NewUseCase(scheduleRepo, attendanceRepo, txManager)
 
 	h := httprouter.Handlers{
 		AuthLogin:              login.NewHandler(loginUC).Handle,
@@ -235,6 +240,8 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		LessonsList:                lessonslist.NewHandler(lessonsListUC).Handle,
 		LessonsUpdate:              lessonsupdate.NewHandler(lessonsUpdateUC).Handle,
 		LessonsCancel:              lessonscancel.NewHandler(lessonsCancelUC).Handle,
+		AttendanceList:             attendancelist.NewHandler(attendanceListUC).Handle,
+		AttendanceMark:             attendancemark.NewHandler(attendanceMarkUC).Handle,
 	}
 
 	e.Validator = validator.New()

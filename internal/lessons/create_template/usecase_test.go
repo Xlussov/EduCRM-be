@@ -111,6 +111,71 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedCnf: 0,
 		},
 		{
+			name: "partial overlap teacher conflict",
+			req: Request{
+				BranchID:   branchID,
+				TeacherID:  teacherID,
+				SubjectID:  subjectID,
+				GroupID:    &groupID,
+				DaysOfWeek: []int32{5}, // Friday
+				StartTime:  "10:30",
+				EndTime:    "11:30", // overlaps with 10:00 - 11:00
+				StartDate:  "2026-05-01",
+				EndDate:    "2026-05-01", // Friday (just 1 match)
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
+
+				sRepo.On("CreateTemplate", mock.Anything, mock.MatchedBy(func(tmp *domain.Template) bool {
+					return true
+				})).Return(nil).Run(func(args mock.Arguments) {
+					l := args.Get(1).(*domain.Template)
+					l.ID = uuid.New()
+				})
+
+				date1, _ := time.Parse("2006-01-02", "2026-05-01")
+				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, date1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil).Once() // partial overlap conflict
+			},
+			expectedErr: nil,
+			expectedCnt: 0,
+			expectedCnf: 1,
+		},
+		{
+			name: "partial overlap student conflict",
+			req: Request{
+				BranchID:   branchID,
+				TeacherID:  teacherID,
+				SubjectID:  subjectID,
+				GroupID:    &groupID,
+				DaysOfWeek: []int32{5}, // Friday
+				StartTime:  "09:30",
+				EndTime:    "10:30", // overlaps with 10:00 - 11:00
+				StartDate:  "2026-05-01",
+				EndDate:    "2026-05-01", // Friday (just 1 match)
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
+
+				sRepo.On("CreateTemplate", mock.Anything, mock.MatchedBy(func(tmp *domain.Template) bool {
+					return true
+				})).Return(nil).Run(func(args mock.Arguments) {
+					l := args.Get(1).(*domain.Template)
+					l.ID = uuid.New()
+				})
+
+				date1, _ := time.Parse("2006-01-02", "2026-05-01")
+				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, date1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil).Once()
+				sRepo.On("CheckStudentConflict", mock.Anything, student1, date1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil).Once() // partial overlap conflict
+			},
+			expectedErr: nil,
+			expectedCnt: 0,
+			expectedCnf: 1,
+		},
+		{
 			name:   "partial success (1 date conflicted)",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},

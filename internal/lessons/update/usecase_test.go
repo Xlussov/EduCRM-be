@@ -165,6 +165,43 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedError: domain.ErrStudentScheduleConflict,
 		},
 		{
+			name:   "partial overlap teacher conflict",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			req: Request{
+				Date:      "2026-05-15",
+				StartTime: "10:30",
+				EndTime:   "11:30",
+				TeacherID: newTeacherID,
+				SubjectID: newSubjectID,
+			},
+			lesson: validLesson,
+			mockSetup: func(repo *mocks.ScheduleRepository, groupRepo *mocks.GroupRepository, userRepo *mocks.UserRepository) {
+				repo.On("GetLessonByID", mock.Anything, lessonID).Return(validLesson, nil).Once()
+				userRepo.On("CheckTeacherInBranch", mock.Anything, newTeacherID, branchID).Return(true, nil).Once()
+				repo.On("CheckStudentConflictExcludingLesson", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), lessonID).Return(false, nil).Once()
+				repo.On("CheckTeacherConflictExcludingLesson", mock.Anything, newTeacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), lessonID).Return(true, nil).Once()
+			},
+			expectedError: domain.ErrTeacherScheduleConflict,
+		},
+		{
+			name:   "partial overlap student conflict",
+			caller: domain.Caller{Role: domain.RoleSuperadmin},
+			req: Request{
+				Date:      "2026-05-15",
+				StartTime: "09:30",
+				EndTime:   "10:30",
+				TeacherID: newTeacherID,
+				SubjectID: newSubjectID,
+			},
+			lesson: validLesson,
+			mockSetup: func(repo *mocks.ScheduleRepository, groupRepo *mocks.GroupRepository, userRepo *mocks.UserRepository) {
+				repo.On("GetLessonByID", mock.Anything, lessonID).Return(validLesson, nil).Once()
+				userRepo.On("CheckTeacherInBranch", mock.Anything, newTeacherID, branchID).Return(true, nil).Once()
+				repo.On("CheckStudentConflictExcludingLesson", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), lessonID).Return(true, nil).Once()
+			},
+			expectedError: domain.ErrStudentScheduleConflict,
+		},
+		{
 			name:   "group_students_error",
 			caller: domain.Caller{Role: domain.RoleSuperadmin},
 			req:    validReq,

@@ -47,25 +47,25 @@ SELECT EXISTS (
         AND (sg.left_at IS NULL OR sg.left_at > NOW())
     WHERE (l.student_id = $1 OR sg.student_id = $1)
       AND l.date = $2
+      AND l.start_time < $3
+      AND $4 < l.end_time
       AND l.status != 'CANCELLED'
-      AND l.start_time < $4
-      AND l.end_time > $3
 )
 `
 
 type CheckStudentConflictParams struct {
-	StudentID pgtype.UUID `json:"student_id"`
-	Date      time.Time   `json:"date"`
-	EndTime   time.Time   `json:"end_time"`
-	StartTime time.Time   `json:"start_time"`
+	StudentID    pgtype.UUID `json:"student_id"`
+	Date         time.Time   `json:"date"`
+	NewEndTime   time.Time   `json:"new_end_time"`
+	NewStartTime time.Time   `json:"new_start_time"`
 }
 
 func (q *Queries) CheckStudentConflict(ctx context.Context, arg CheckStudentConflictParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkStudentConflict,
 		arg.StudentID,
 		arg.Date,
-		arg.EndTime,
-		arg.StartTime,
+		arg.NewEndTime,
+		arg.NewStartTime,
 	)
 	var exists bool
 	err := row.Scan(&exists)
@@ -81,28 +81,28 @@ SELECT EXISTS (
         AND (sg.left_at IS NULL OR sg.left_at > NOW())
     WHERE (l.student_id = $1 OR sg.student_id = $1)
       AND l.date = $2
+      AND l.start_time < $3
+      AND $4 < l.end_time
       AND l.status != 'CANCELLED'
-      AND l.start_time < $4
-      AND l.end_time > $3
       AND l.id != $5
 )
 `
 
 type CheckStudentConflictExcludingLessonParams struct {
-	StudentID pgtype.UUID `json:"student_id"`
-	Date      time.Time   `json:"date"`
-	EndTime   time.Time   `json:"end_time"`
-	StartTime time.Time   `json:"start_time"`
-	ID        pgtype.UUID `json:"id"`
+	StudentID       pgtype.UUID `json:"student_id"`
+	Date            time.Time   `json:"date"`
+	NewEndTime      time.Time   `json:"new_end_time"`
+	NewStartTime    time.Time   `json:"new_start_time"`
+	ExcludeLessonID pgtype.UUID `json:"exclude_lesson_id"`
 }
 
 func (q *Queries) CheckStudentConflictExcludingLesson(ctx context.Context, arg CheckStudentConflictExcludingLessonParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkStudentConflictExcludingLesson,
 		arg.StudentID,
 		arg.Date,
-		arg.EndTime,
-		arg.StartTime,
-		arg.ID,
+		arg.NewEndTime,
+		arg.NewStartTime,
+		arg.ExcludeLessonID,
 	)
 	var exists bool
 	err := row.Scan(&exists)
@@ -136,25 +136,25 @@ SELECT EXISTS (
     SELECT 1 FROM lessons
     WHERE teacher_id = $1
       AND date = $2
+      AND start_time < $3
+      AND $4 < end_time
       AND status != 'CANCELLED'
-      AND start_time < $4
-      AND end_time > $3
 )
 `
 
 type CheckTeacherConflictParams struct {
-	TeacherID pgtype.UUID `json:"teacher_id"`
-	Date      time.Time   `json:"date"`
-	EndTime   time.Time   `json:"end_time"`
-	StartTime time.Time   `json:"start_time"`
+	TeacherID    pgtype.UUID `json:"teacher_id"`
+	Date         time.Time   `json:"date"`
+	NewEndTime   time.Time   `json:"new_end_time"`
+	NewStartTime time.Time   `json:"new_start_time"`
 }
 
 func (q *Queries) CheckTeacherConflict(ctx context.Context, arg CheckTeacherConflictParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTeacherConflict,
 		arg.TeacherID,
 		arg.Date,
-		arg.EndTime,
-		arg.StartTime,
+		arg.NewEndTime,
+		arg.NewStartTime,
 	)
 	var exists bool
 	err := row.Scan(&exists)
@@ -166,28 +166,28 @@ SELECT EXISTS (
         SELECT 1 FROM lessons
         WHERE teacher_id = $1
             AND date = $2
+            AND start_time < $3
+            AND $4 < end_time
             AND status != 'CANCELLED'
-            AND start_time < $4
-            AND end_time > $3
             AND id != $5
 )
 `
 
 type CheckTeacherConflictExcludingLessonParams struct {
-	TeacherID pgtype.UUID `json:"teacher_id"`
-	Date      time.Time   `json:"date"`
-	EndTime   time.Time   `json:"end_time"`
-	StartTime time.Time   `json:"start_time"`
-	ID        pgtype.UUID `json:"id"`
+	TeacherID       pgtype.UUID `json:"teacher_id"`
+	Date            time.Time   `json:"date"`
+	NewEndTime      time.Time   `json:"new_end_time"`
+	NewStartTime    time.Time   `json:"new_start_time"`
+	ExcludeLessonID pgtype.UUID `json:"exclude_lesson_id"`
 }
 
 func (q *Queries) CheckTeacherConflictExcludingLesson(ctx context.Context, arg CheckTeacherConflictExcludingLessonParams) (bool, error) {
 	row := q.db.QueryRow(ctx, checkTeacherConflictExcludingLesson,
 		arg.TeacherID,
 		arg.Date,
-		arg.EndTime,
-		arg.StartTime,
-		arg.ID,
+		arg.NewEndTime,
+		arg.NewStartTime,
+		arg.ExcludeLessonID,
 	)
 	var exists bool
 	err := row.Scan(&exists)

@@ -43,51 +43,51 @@ SELECT * FROM lesson_templates WHERE id = $1;
 -- name: CheckTeacherConflict :one
 SELECT EXISTS (
     SELECT 1 FROM lessons
-    WHERE teacher_id = $1
-      AND date = $2
+    WHERE teacher_id = sqlc.arg(teacher_id)
+      AND date = sqlc.arg(date)
+      AND start_time < sqlc.arg(new_end_time)
+      AND sqlc.arg(new_start_time) < end_time
       AND status != 'CANCELLED'
-      AND start_time < $4
-      AND end_time > $3
 );
 
 -- name: CheckTeacherConflictExcludingLesson :one
 SELECT EXISTS (
         SELECT 1 FROM lessons
-        WHERE teacher_id = $1
-            AND date = $2
+        WHERE teacher_id = sqlc.arg(teacher_id)
+            AND date = sqlc.arg(date)
+            AND start_time < sqlc.arg(new_end_time)
+            AND sqlc.arg(new_start_time) < end_time
             AND status != 'CANCELLED'
-            AND start_time < $4
-            AND end_time > $3
-            AND id != $5
+            AND id != sqlc.arg(exclude_lesson_id)
 );
 
 -- name: CheckStudentConflict :one
 SELECT EXISTS (
     SELECT 1 FROM lessons l
     LEFT JOIN student_groups sg ON l.group_id = sg.group_id 
-        AND sg.student_id = $1 
+        AND sg.student_id = sqlc.arg(student_id) 
         AND sg.joined_at <= NOW() 
         AND (sg.left_at IS NULL OR sg.left_at > NOW())
-    WHERE (l.student_id = $1 OR sg.student_id = $1)
-      AND l.date = $2
+    WHERE (l.student_id = sqlc.arg(student_id) OR sg.student_id = sqlc.arg(student_id))
+      AND l.date = sqlc.arg(date)
+      AND l.start_time < sqlc.arg(new_end_time)
+      AND sqlc.arg(new_start_time) < l.end_time
       AND l.status != 'CANCELLED'
-      AND l.start_time < $4
-      AND l.end_time > $3
 );
 
 -- name: CheckStudentConflictExcludingLesson :one
 SELECT EXISTS (
     SELECT 1 FROM lessons l
     LEFT JOIN student_groups sg ON l.group_id = sg.group_id 
-        AND sg.student_id = $1 
+        AND sg.student_id = sqlc.arg(student_id) 
         AND sg.joined_at <= NOW() 
         AND (sg.left_at IS NULL OR sg.left_at > NOW())
-    WHERE (l.student_id = $1 OR sg.student_id = $1)
-      AND l.date = $2
+    WHERE (l.student_id = sqlc.arg(student_id) OR sg.student_id = sqlc.arg(student_id))
+      AND l.date = sqlc.arg(date)
+      AND l.start_time < sqlc.arg(new_end_time)
+      AND sqlc.arg(new_start_time) < l.end_time
       AND l.status != 'CANCELLED'
-      AND l.start_time < $4
-      AND l.end_time > $3
-      AND l.id != $5
+      AND l.id != sqlc.arg(exclude_lesson_id)
 );
 
 -- name: GetTeacherSchedule :many

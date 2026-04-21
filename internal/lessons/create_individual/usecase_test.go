@@ -80,6 +80,43 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: domain.ErrStudentScheduleConflict,
 		},
 		{
+			name: "admin - partial overlap teacher conflict",
+			req: Request{
+				BranchID:  branchID,
+				TeacherID: teacherID,
+				SubjectID: subjectID,
+				StudentID: &studentID,
+				Date:      "2026-05-15",
+				StartTime: "10:30",
+				EndTime:   "11:30", // overlaps with 10:00 - 11:00
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
+				repo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
+			},
+			expectedErr: domain.ErrTeacherScheduleConflict,
+		},
+		{
+			name: "admin - partial overlap student conflict",
+			req: Request{
+				BranchID:  branchID,
+				TeacherID: teacherID,
+				SubjectID: subjectID,
+				StudentID: &studentID,
+				Date:      "2026-05-15",
+				StartTime: "09:30",
+				EndTime:   "10:30", // overlaps with 10:00 - 11:00
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(repo *mocks.ScheduleRepository, userRepo *mocks.UserRepository) {
+				userRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				repo.On("CheckStudentConflict", mock.Anything, studentID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
+			},
+			expectedErr: domain.ErrStudentScheduleConflict,
+		},
+		{
 			name:        "admin - branch access denied",
 			req:         validReq,
 			caller:      domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{uuid.New()}}, // Diff branch

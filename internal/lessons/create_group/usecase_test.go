@@ -70,6 +70,44 @@ func TestUseCase_Execute(t *testing.T) {
 			expectedErr: domain.ErrTeacherScheduleConflict,
 		},
 		{
+			name: "partial overlap teacher conflict",
+			req: Request{
+				BranchID:  branchID,
+				TeacherID: teacherID,
+				SubjectID: subjectID,
+				GroupID:   groupID,
+				Date:      "2026-05-15",
+				StartTime: "10:30",
+				EndTime:   "11:30",
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil)
+			},
+			expectedErr: domain.ErrTeacherScheduleConflict,
+		},
+		{
+			name: "partial overlap student conflict",
+			req: Request{
+				BranchID:  branchID,
+				TeacherID: teacherID,
+				SubjectID: subjectID,
+				GroupID:   groupID,
+				Date:      "2026-05-15",
+				StartTime: "09:30",
+				EndTime:   "10:30",
+			},
+			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},
+			mockSetup: func(sRepo *mocks.ScheduleRepository, gRepo *mocks.GroupRepository, uRepo *mocks.UserRepository) {
+				uRepo.On("CheckTeacherInBranch", mock.Anything, teacherID, branchID).Return(true, nil)
+				sRepo.On("CheckTeacherConflict", mock.Anything, teacherID, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(false, nil)
+				gRepo.On("GetActiveStudentIDs", mock.Anything, groupID).Return([]uuid.UUID{student1, student2}, nil)
+				sRepo.On("CheckStudentConflict", mock.Anything, student1, mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time"), mock.AnythingOfType("time.Time")).Return(true, nil).Once()
+			},
+			expectedErr: domain.ErrStudentScheduleConflict,
+		},
+		{
 			name:   "second student conflict aborts",
 			req:    validReq,
 			caller: domain.Caller{UserID: userID, Role: domain.RoleAdmin, BranchIDs: []uuid.UUID{branchID}},

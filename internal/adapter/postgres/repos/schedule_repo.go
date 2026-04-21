@@ -272,42 +272,42 @@ func (r *ScheduleRepository) CancelFutureLessonsByTemplate(ctx context.Context, 
 func (r *ScheduleRepository) CheckTeacherConflict(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.CheckTeacherConflict(ctx, sqlc.CheckTeacherConflictParams{
-		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
-		Date:      date,
-		StartTime: start,
-		EndTime:   end,
+		TeacherID:    pgtype.UUID{Bytes: teacherID, Valid: true},
+		Date:         date,
+		NewStartTime: start,
+		NewEndTime:   end,
 	})
 }
 
 func (r *ScheduleRepository) CheckTeacherConflictExcludingLesson(ctx context.Context, teacherID uuid.UUID, date time.Time, start, end time.Time, lessonID uuid.UUID) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.CheckTeacherConflictExcludingLesson(ctx, sqlc.CheckTeacherConflictExcludingLessonParams{
-		TeacherID: pgtype.UUID{Bytes: teacherID, Valid: true},
-		Date:      date,
-		StartTime: start,
-		EndTime:   end,
-		ID:        pgtype.UUID{Bytes: lessonID, Valid: true},
+		TeacherID:       pgtype.UUID{Bytes: teacherID, Valid: true},
+		Date:            date,
+		NewStartTime:    start,
+		NewEndTime:      end,
+		ExcludeLessonID: pgtype.UUID{Bytes: lessonID, Valid: true},
 	})
 }
 
 func (r *ScheduleRepository) CheckStudentConflict(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.CheckStudentConflict(ctx, sqlc.CheckStudentConflictParams{
-		StudentID: pgtype.UUID{Bytes: studentID, Valid: true},
-		Date:      date,
-		StartTime: start,
-		EndTime:   end,
+		StudentID:    pgtype.UUID{Bytes: studentID, Valid: true},
+		Date:         date,
+		NewStartTime: start,
+		NewEndTime:   end,
 	})
 }
 
 func (r *ScheduleRepository) CheckStudentConflictExcludingLesson(ctx context.Context, studentID uuid.UUID, date time.Time, start, end time.Time, lessonID uuid.UUID) (bool, error) {
 	q := sqlc.New(r.db(ctx))
 	return q.CheckStudentConflictExcludingLesson(ctx, sqlc.CheckStudentConflictExcludingLessonParams{
-		StudentID: pgtype.UUID{Bytes: studentID, Valid: true},
-		Date:      date,
-		StartTime: start,
-		EndTime:   end,
-		ID:        pgtype.UUID{Bytes: lessonID, Valid: true},
+		StudentID:       pgtype.UUID{Bytes: studentID, Valid: true},
+		Date:            date,
+		NewStartTime:    start,
+		NewEndTime:      end,
+		ExcludeLessonID: pgtype.UUID{Bytes: lessonID, Valid: true},
 	})
 }
 

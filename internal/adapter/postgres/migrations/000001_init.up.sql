@@ -141,7 +141,7 @@ CREATE TABLE lesson_templates (
     subject_id UUID REFERENCES subjects(id) ON DELETE RESTRICT,
     student_id UUID REFERENCES students(id) ON DELETE RESTRICT,
     group_id UUID REFERENCES groups(id) ON DELETE RESTRICT,
-    day_of_week INT NOT NULL,
+    days_of_week INT[] NOT NULL,
     start_time TIME NOT NULL,
     end_time TIME NOT NULL,
     start_date DATE NOT NULL,

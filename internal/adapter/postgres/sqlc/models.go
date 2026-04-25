@@ -231,12 +231,12 @@ type LessonTemplate struct {
 	SubjectID  pgtype.UUID `json:"subject_id"`
 	StudentID  pgtype.UUID `json:"student_id"`
 	GroupID    pgtype.UUID `json:"group_id"`
+	DaysOfWeek []int32     `json:"days_of_week"`
 	StartTime  time.Time   `json:"start_time"`
 	EndTime    time.Time   `json:"end_time"`
 	StartDate  time.Time   `json:"start_date"`
 	EndDate    time.Time   `json:"end_date"`
 	IsActive   pgtype.Bool `json:"is_active"`
-	DaysOfWeek []int32     `json:"days_of_week"`
 }
 
 type PlanPricingGrid struct {

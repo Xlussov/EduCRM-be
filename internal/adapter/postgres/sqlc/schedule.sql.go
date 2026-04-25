@@ -273,7 +273,7 @@ INSERT INTO lesson_templates (
     branch_id, teacher_id, subject_id, student_id, group_id, days_of_week, start_time, end_time, start_date, end_date, is_active
 ) VALUES (
     $1, $2, $3, $4, $5, $6, $7, $8, $9, $10, $11
-) RETURNING id, branch_id, teacher_id, subject_id, student_id, group_id, start_time, end_time, start_date, end_date, is_active, days_of_week
+) RETURNING id, branch_id, teacher_id, subject_id, student_id, group_id, days_of_week, start_time, end_time, start_date, end_date, is_active
 `
 
 type CreateTemplateParams struct {
@@ -312,12 +312,12 @@ func (q *Queries) CreateTemplate(ctx context.Context, arg CreateTemplateParams) 
 		&i.SubjectID,
 		&i.StudentID,
 		&i.GroupID,
+		&i.DaysOfWeek,
 		&i.StartTime,
 		&i.EndTime,
 		&i.StartDate,
 		&i.EndDate,
 		&i.IsActive,
-		&i.DaysOfWeek,
 	)
 	return i, err
 }
@@ -405,7 +405,7 @@ func (q *Queries) GetTeacherSchedule(ctx context.Context, arg GetTeacherSchedule
 }
 
 const getTemplateByID = `-- name: GetTemplateByID :one
-SELECT id, branch_id, teacher_id, subject_id, student_id, group_id, start_time, end_time, start_date, end_date, is_active, days_of_week FROM lesson_templates WHERE id = $1
+SELECT id, branch_id, teacher_id, subject_id, student_id, group_id, days_of_week, start_time, end_time, start_date, end_date, is_active FROM lesson_templates WHERE id = $1
 `
 
 func (q *Queries) GetTemplateByID(ctx context.Context, id pgtype.UUID) (LessonTemplate, error) {
@@ -418,12 +418,12 @@ func (q *Queries) GetTemplateByID(ctx context.Context, id pgtype.UUID) (LessonTe
 		&i.SubjectID,
 		&i.StudentID,
 		&i.GroupID,
+		&i.DaysOfWeek,
 		&i.StartTime,
 		&i.EndTime,
 		&i.StartDate,
 		&i.EndDate,
 		&i.IsActive,
-		&i.DaysOfWeek,
 	)
 	return i, err
 }

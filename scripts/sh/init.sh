@@ -14,9 +14,9 @@ export PATH="$GOPATH_DIR/bin:$PATH"
 
 echo "🛠 Current PATH: $PATH"
 
-echo "📦 Installing golangci-lint v2.10.1..."
+echo "📦 Installing golangci-lint v2.11.4..."
 
-LINTER_VERSION="2.10.1"
+LINTER_VERSION="2.11.4"
 
 curl -sSfL "https://github.com/golangci/golangci-lint/releases/download/v$LINTER_VERSION/golangci-lint-$LINTER_VERSION-windows-amd64.zip" \
   -o golangci-lint.zip

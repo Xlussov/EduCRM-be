@@ -4,7 +4,7 @@
         migrate-up migrate-down migrate-force migrate-create migrate-reset \
         dev-init dev-reset check test-log db-create-superadmin swagger pre-commit db-seed
 
-include .env
+-include .env
 export
 
 MIGRATIONS_PATH=internal/adapter/postgres/migrations

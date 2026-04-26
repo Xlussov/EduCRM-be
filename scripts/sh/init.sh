@@ -38,7 +38,7 @@ echo "🔧 Installing Git hooks..."
 pre-commit install
 
 echo "📦 Installing sqlc..."
-go install github.com/kyleconroy/sqlc/cmd/sqlc@latest
+go install github.com/sqlc-dev/sqlc/cmd/sqlc@latest
 
 echo "📦 Installing golang-migrate with postgres support..."
 go install -tags "postgres" github.com/golang-migrate/migrate/v4/cmd/migrate@latest

@@ -24,14 +24,11 @@ jobs:
     - name: Download Go modules
       run: go mod download
 
-    - name: Install Swagger CLI
-      run: go install github.com/swaggo/swag/cmd/swag@latest
-      
     - name: Run golangci-lint
       uses: golangci/golangci-lint-action@v6
       with:
         version: latest
-        args: --timeout=5m
+        install-mode: binary
 
     - name: Run Unit Tests
       run: make test

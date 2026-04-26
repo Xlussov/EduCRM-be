@@ -1,4 +1,15 @@
 definitions:
+  branch_statistics.Response:
+    properties:
+      active_students:
+        type: integer
+      attendance_percentage:
+        type: number
+      cancelled_lessons:
+        type: integer
+      completed_lessons:
+        type: integer
+    type: object
   cancel.Response:
     properties:
       message:
@@ -1306,6 +1317,39 @@ definitions:
       error:
         $ref: '#/definitions/response.ErrorDetail'
     type: object
+  student_attendance.ReportItem:
+    properties:
+      date:
+        type: string
+      is_present:
+        type: boolean
+      notes:
+        type: string
+      subject_name:
+        type: string
+      time:
+        type: string
+    type: object
+  student_attendance.Response:
+    properties:
+      items:
+        items:
+          $ref: '#/definitions/student_attendance.ReportItem'
+        type: array
+      summary:
+        $ref: '#/definitions/student_attendance.Summary'
+    type: object
+  student_attendance.Summary:
+    properties:
+      attendance_percentage:
+        type: number
+      attended:
+        type: integer
+      missed:
+        type: integer
+      total_lessons:
+        type: integer
+    type: object
   syncstudents.Request:
     properties:
       student_ids:
@@ -1317,6 +1361,15 @@ definitions:
     properties:
       message:
         type: string
+    type: object
+  teacher_statistics.Response:
+    properties:
+      cancelled_lessons:
+        type: integer
+      completed_lessons:
+        type: integer
+      scheduled_lessons:
+        type: integer
     type: object
 info:
   contact: {}
@@ -2643,6 +2696,152 @@ paths:
       summary: Unarchive Plan
       tags:
       - plans
+  /api/v1/reports/branch-statistics:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics for a specific branch including active students,
+        completed/cancelled lessons, and attendance percentage.
+      parameters:
+      - description: Branch ID
+        in: query
+        name: branch_id
+        required: true
+        type: string
+      - description: Start Date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End Date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/branch_statistics.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Branch Statistics
+      tags:
+      - reports
+  /api/v1/reports/student-attendance:
+    get:
+      consumes:
+      - application/json
+      description: Get a detailed report of a student's attendance history and a summary
+        of statistics.
+      parameters:
+      - description: Student ID
+        in: query
+        name: student_id
+        required: true
+        type: string
+      - description: Start Date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End Date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      - description: Subject ID
+        in: query
+        name: subject_id
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/student_attendance.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Student Attendance History
+      tags:
+      - reports
+  /api/v1/reports/teacher-statistics:
+    get:
+      consumes:
+      - application/json
+      description: Get statistics for a specific teacher.
+      parameters:
+      - description: Teacher ID (required for admins)
+        in: query
+        name: teacher_id
+        type: string
+      - description: Start Date (YYYY-MM-DD)
+        in: query
+        name: start_date
+        type: string
+      - description: End Date (YYYY-MM-DD)
+        in: query
+        name: end_date
+        type: string
+      produces:
+      - application/json
+      responses:
+        "200":
+          description: OK
+          schema:
+            $ref: '#/definitions/teacher_statistics.Response'
+        "400":
+          description: Bad Request
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "401":
+          description: Unauthorized
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "403":
+          description: Forbidden
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+        "500":
+          description: Internal Server Error
+          schema:
+            $ref: '#/definitions/response.ErrorResponse'
+      security:
+      - Bearer: []
+      summary: Get Teacher Statistics
+      tags:
+      - reports
   /api/v1/students:
     get:
       parameters:

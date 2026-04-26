@@ -78,6 +78,10 @@ type Handlers struct {
 	LessonsCancel              echo.HandlerFunc
 	AttendanceList             echo.HandlerFunc
 	AttendanceMark             echo.HandlerFunc
+
+	ReportsStudentAttendance echo.HandlerFunc
+	ReportsBranchStatistics  echo.HandlerFunc
+	ReportsTeacherStatistics echo.HandlerFunc
 }
 
 type Logger interface {
@@ -199,5 +203,10 @@ func Init(log Logger, cfg *config.Config, e *echo.Echo, h Handlers) {
 		attendance.Use(mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
 		attendance.GET("/:id", h.AttendanceList)
 		attendance.PUT("/:id", h.AttendanceMark)
+
+		reports := protected.Group("/reports")
+		reports.GET("/student-attendance", h.ReportsStudentAttendance, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin))
+		reports.GET("/branch-statistics", h.ReportsBranchStatistics, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin))
+		reports.GET("/teacher-statistics", h.ReportsTeacherStatistics, mw.RequireRoles(domain.RoleSuperadmin, domain.RoleAdmin, domain.RoleTeacher))
 	}
 }

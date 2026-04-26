@@ -2056,6 +2056,230 @@
                 }
             }
         },
+        "/api/v1/reports/branch-statistics": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get statistics for a specific branch including active students, completed/cancelled lessons, and attendance percentage.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get Branch Statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Branch ID",
+                        "name": "branch_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start Date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/branch_statistics.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/student-attendance": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get a detailed report of a student's attendance history and a summary of statistics.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get Student Attendance History",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Student ID",
+                        "name": "student_id",
+                        "in": "query",
+                        "required": true
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start Date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Subject ID",
+                        "name": "subject_id",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/student_attendance.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
+        "/api/v1/reports/teacher-statistics": {
+            "get": {
+                "security": [
+                    {
+                        "Bearer": []
+                    }
+                ],
+                "description": "Get statistics for a specific teacher.",
+                "consumes": [
+                    "application/json"
+                ],
+                "produces": [
+                    "application/json"
+                ],
+                "tags": [
+                    "reports"
+                ],
+                "summary": "Get Teacher Statistics",
+                "parameters": [
+                    {
+                        "type": "string",
+                        "description": "Teacher ID (required for admins)",
+                        "name": "teacher_id",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "Start Date (YYYY-MM-DD)",
+                        "name": "start_date",
+                        "in": "query"
+                    },
+                    {
+                        "type": "string",
+                        "description": "End Date (YYYY-MM-DD)",
+                        "name": "end_date",
+                        "in": "query"
+                    }
+                ],
+                "responses": {
+                    "200": {
+                        "description": "OK",
+                        "schema": {
+                            "$ref": "#/definitions/teacher_statistics.Response"
+                        }
+                    },
+                    "400": {
+                        "description": "Bad Request",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "401": {
+                        "description": "Unauthorized",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "403": {
+                        "description": "Forbidden",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    },
+                    "500": {
+                        "description": "Internal Server Error",
+                        "schema": {
+                            "$ref": "#/definitions/response.ErrorResponse"
+                        }
+                    }
+                }
+            }
+        },
         "/api/v1/students": {
             "get": {
                 "security": [
@@ -3726,6 +3950,23 @@
         }
     },
     "definitions": {
+        "branch_statistics.Response": {
+            "type": "object",
+            "properties": {
+                "active_students": {
+                    "type": "integer"
+                },
+                "attendance_percentage": {
+                    "type": "number"
+                },
+                "cancelled_lessons": {
+                    "type": "integer"
+                },
+                "completed_lessons": {
+                    "type": "integer"
+                }
+            }
+        },
         "cancel.Response": {
             "type": "object",
             "properties": {
@@ -5669,6 +5910,57 @@
                 }
             }
         },
+        "student_attendance.ReportItem": {
+            "type": "object",
+            "properties": {
+                "date": {
+                    "type": "string"
+                },
+                "is_present": {
+                    "type": "boolean"
+                },
+                "notes": {
+                    "type": "string"
+                },
+                "subject_name": {
+                    "type": "string"
+                },
+                "time": {
+                    "type": "string"
+                }
+            }
+        },
+        "student_attendance.Response": {
+            "type": "object",
+            "properties": {
+                "items": {
+                    "type": "array",
+                    "items": {
+                        "$ref": "#/definitions/student_attendance.ReportItem"
+                    }
+                },
+                "summary": {
+                    "$ref": "#/definitions/student_attendance.Summary"
+                }
+            }
+        },
+        "student_attendance.Summary": {
+            "type": "object",
+            "properties": {
+                "attendance_percentage": {
+                    "type": "number"
+                },
+                "attended": {
+                    "type": "integer"
+                },
+                "missed": {
+                    "type": "integer"
+                },
+                "total_lessons": {
+                    "type": "integer"
+                }
+            }
+        },
         "syncstudents.Request": {
             "type": "object",
             "properties": {
@@ -5685,6 +5977,20 @@
             "properties": {
                 "message": {
                     "type": "string"
+                }
+            }
+        },
+        "teacher_statistics.Response": {
+            "type": "object",
+            "properties": {
+                "cancelled_lessons": {
+                    "type": "integer"
+                },
+                "completed_lessons": {
+                    "type": "integer"
+                },
+                "scheduled_lessons": {
+                    "type": "integer"
                 }
             }
         }

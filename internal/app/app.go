@@ -40,6 +40,9 @@ import (
 	plansget "github.com/Xlussov/EduCRM-be/internal/plans/get"
 	planslist "github.com/Xlussov/EduCRM-be/internal/plans/list"
 	plansunarchive "github.com/Xlussov/EduCRM-be/internal/plans/unarchive"
+	branchstatisticsget "github.com/Xlussov/EduCRM-be/internal/reports/branch_statistics"
+	studentattendanceget "github.com/Xlussov/EduCRM-be/internal/reports/student_attendance"
+	teacherstatisticsget "github.com/Xlussov/EduCRM-be/internal/reports/teacher_statistics"
 	studentsarchive "github.com/Xlussov/EduCRM-be/internal/students/archive"
 	studentscreate "github.com/Xlussov/EduCRM-be/internal/students/create"
 	studentsget "github.com/Xlussov/EduCRM-be/internal/students/get"
@@ -107,6 +110,7 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	planRepo := repo.NewSubscriptionRepository(dbPool.Conn())
 	scheduleRepo := repo.NewScheduleRepository(dbPool.Conn())
 	attendanceRepo := repo.NewAttendanceRepository(dbPool.Conn())
+	reportRepo := repo.NewReportRepository(dbPool.Conn())
 
 	txManager := postgres.NewTxManager(dbPool.Conn())
 
@@ -176,6 +180,10 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 	attendanceListUC := attendancelist.NewUseCase(scheduleRepo, attendanceRepo)
 	attendanceMarkUC := attendancemark.NewUseCase(scheduleRepo, attendanceRepo, txManager)
 
+	reportsBranchStatisticsUC := branchstatisticsget.NewUseCase(reportRepo)
+	reportsStudentAttendanceUC := studentattendanceget.NewUseCase(reportRepo, studentRepo)
+	reportsTeacherStatisticsUC := teacherstatisticsget.NewUseCase(reportRepo, userRepo)
+
 	h := httprouter.Handlers{
 		AuthLogin:              login.NewHandler(loginUC).Handle,
 		AuthRefresh:            refresh.NewHandler(refreshUC).Handle,
@@ -242,6 +250,10 @@ func New(ctx context.Context, cfg *config.Config, log Logger) (*App, error) {
 		LessonsCancel:              lessonscancel.NewHandler(lessonsCancelUC).Handle,
 		AttendanceList:             attendancelist.NewHandler(attendanceListUC).Handle,
 		AttendanceMark:             attendancemark.NewHandler(attendanceMarkUC).Handle,
+
+		ReportsStudentAttendance: studentattendanceget.NewHandler(reportsStudentAttendanceUC).Handle,
+		ReportsBranchStatistics:  branchstatisticsget.NewHandler(reportsBranchStatisticsUC).Handle,
+		ReportsTeacherStatistics: teacherstatisticsget.NewHandler(reportsTeacherStatisticsUC).Handle,
 	}
 
 	e.Validator = validator.New()

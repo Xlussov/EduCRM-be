@@ -7,9 +7,8 @@ Backend system for an educational center to manage branches, teachers, students,
 - Go 1.25.7
 - Docker and Docker Compose
 - Make
-- [golang-migrate](https://github.com/golang-migrate/migrate) (for local CLI usage)
-- [sqlc](https://sqlc.dev/) (for local code generation)
-- [swag](https://github.com/swaggo/swag) (for Swagger documentation)
+
+*Note: Required CLI dependencies for local development (`golang-migrate`, `sqlc`, `swag`) are installed automatically via the initialization script. Run `make setup` (which executes `sh scripts/sh/init.sh`) to install them.*
 
 ## Configuration
 
@@ -22,13 +21,22 @@ cp example.env .env
 ```
 Ensure the following core variables are defined in your `.env` file:
 - `CONFIG_PATH`: Path to the configuration file (e.g., `config/local.yaml`).
-- `APP_ENV`: Application environment (`local`, `dev`, `prod`).
 - `DATABASE_URL`: PostgreSQL connection string (used by Make, migrations, and the application).
 - JWT configurations (`JWT_SECRET`, `JWT_ACCESS_TTL`, `JWT_REFRESH_TTL`).
 - PostgreSQL parameters (`POSTGRES_USER`, `POSTGRES_PASSWORD`, `POSTGRES_DB_NAME`, `POSTGRES_PORT`).
 
 ### 2. YAML Configuration (config.yaml)
-Configuration variables not managed by environment secrets should reside in the YAML file specified by `CONFIG_PATH`. Ensure the file exists at the specified path before starting the server.
+Application settings not managed by environment secrets must reside in the YAML file specified by the `CONFIG_PATH` environment variable. This includes the application environment state and server network parameters.
+
+Example configuration structure:
+```yaml
+env: "local" # Available options: local, dev, prod
+http_server:
+  address: ":8080"
+  read_timeout: 5s
+  write_timeout: 10s
+```
+Ensure the file exists at the specified path and is properly configured before starting the server.
 
 ## Running the Application
 
@@ -135,6 +143,9 @@ A comprehensive list of all available `make` commands to manage the project life
 | `make test` | Runs all unit tests verbosely without caching (`-count=1`). |
 | `make pre-commit` | Manually triggers `pre-commit` hooks on all files. |
 | `make swagger` | Updates Swagger documentation using `swag init`. |
+
+## License
+This project is licensed under the MIT License - see the [LICENSE](LICENSE) file for details.
 
 ---
 
